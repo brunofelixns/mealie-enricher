@@ -138,3 +138,4 @@ Solo se marcarán tareas completadas después de registrar su evidencia. Un bloq
 - README reorganizado con presentación, navegación, instalación Docker, vista de actividad, etiquetas, configuración, API, desarrollo y créditos.
 - Primera publicación en preparación: comprobar índice, enlaces, calidad y pruebas antes de subir.
 - Verificación previa a la subida: 189 pruebas aprobadas, Ruff/mypy correctos, 237 archivos preparados sin patrones de credenciales ni archivos locales excluidos. README renderizado mediante GFM de GitHub con portada y logo. Se conservan los espacios finales heredados de NOTICE.
+- Publicación completada: commit de código e7e737507553be41913704167c04fb10407fe4dd en main. Rama remota, README, código, Compose e imágenes verificados por hash. El repositorio conserva la visibilidad privada; GHCR sigue sin publicación.

@@ -1,5 +1,7 @@
 # Revisión final y resoluciones de ejecución
 
+Estas resoluciones describen la migración inicial. La inicialización de Git y la subida posterior del código fueron autorizadas después por el usuario y se registran en [publicación en GitHub](10-publicacion-github.md).
+
 ## Revisión
 
 Se realizó una revisión independiente, de solo lectura, del conjunto implementado frente al plan y las fuentes originales. No se detectaron hallazgos críticos. Los hallazgos importantes se reprodujeron antes de corregirlos y se verificaron en la suite completa; no se realizó una segunda revisión que sustituyera esas pruebas.

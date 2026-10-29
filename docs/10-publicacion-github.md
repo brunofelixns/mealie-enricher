@@ -37,3 +37,12 @@ La publicación de la imagen de GHCR y una ejecución remota de CI siguen siendo
 - Enlaces y recursos locales de 16 documentos Markdown comprobados.
 - README renderizado por la API GFM de GitHub: 5 tablas y 7 imágenes, incluidos la portada y el logo.
 - NOTICE se conserva de la referencia sin reformatear; sus espacios finales y salto final adicionales son heredados. Los archivos propios pasan la comprobación de whitespace.
+
+## Publicación verificada
+
+- Código subido a main en el commit e7e737507553be41913704167c04fb10407fe4dd.
+- La referencia remota se comparó con HEAD local y coincidía.
+- README, app.py, Compose de despliegue, logo oficial y portada comprobados contra sus hashes remotos.
+- GitHub reconoce main como rama predeterminada y conserva la visibilidad privada del repositorio.
+- Este registro se añade después de la subida del código para documentar el resultado observado.
+- No se ha publicado una imagen Docker en GHCR.

@@ -15,7 +15,7 @@
 | E2E Docker separado | 2 pruebas aprobadas en 42.17 s |
 | Runtime de imagen | Python 3.14.6, uid 1000, Agents SDK 0.24.0; sin Node ni pytest |
 | Interfaz | HTML idéntico, claro/oscuro y polling revisados en navegador |
-| LLM real / CI remoto / publicación | Sin ejecutar; no equivalen a las pruebas locales |
+| LLM real / CI remoto / publicación de imagen | Sin ejecutar; no equivalen a las pruebas locales |
 
 Las secciones siguientes conservan la secuencia de avance. Los recuentos anteriores pertenecen a cada fase, no al estado final.
 
@@ -202,3 +202,13 @@ Para el ensayo se usó --pull never como override de la política de descarga, s
 - Vista web existente confirmada mediante código y pruebas del historial: /estimator/history, actualización cada 2 s, filtros y detalle de las ejecuciones.
 - Imagen local reconstruida con el cambio; **2 pruebas Docker aprobadas en 51.53 s**, con los nombres españoles devueltos por Mealie v3.19.2 y un webhook posterior omitido por hash. El entorno aislado se retiró al terminar.
 - No se ha actualizado una instancia del usuario ni publicado una imagen remota.
+
+## Publicación del código y README visual
+
+Código publicado en [brunofelixns/mealie-enricher](https://github.com/brunofelixns/mealie-enricher), rama main. El commit de código e7e737507553be41913704167c04fb10407fe4dd se verificó contra la referencia remota.
+
+README, código de aplicación, Compose de despliegue, logo y portada comprobados por hash en GitHub. README renderizado con la API GFM: 5 tablas y 7 imágenes. El índice incluía 237 archivos, sin archivos .env reales, entornos o cachés, y sin hallazgos de patrones de credenciales.
+
+Comprobación previa a la publicación: 189 pruebas Python aprobadas en 11.22 s y 2 Docker opt-in omitidas; Ruff y mypy correctos. La ejecución Docker anterior permanece documentada en su apartado y no se repitió para este cambio de presentación.
+
+Se conserva la visibilidad privada. Publicar el código no ha publicado una imagen en GHCR ni acredita una ejecución remota de CI. [Detalles y atribución](10-publicacion-github.md).

@@ -10,8 +10,9 @@ Esta carpeta conserva el alcance, las decisiones, el diseño y el avance de la m
 - Fase 0 completada: referencia fijada, typecheck correcto y 140 pruebas upstream aprobadas.
 - 125 capturas reproducibles, 40 contratos identificados y una base de caché heredada generados.
 - Fases 0–8 completadas: 187 pruebas Python y 2 Docker aprobadas, cobertura 95 %, revisión final corregida. Agents SDK verificado con transporte simulado.
-- Proveedor LLM real, CI remoto y publicación sin ejecutar.
+- Proveedor LLM real, CI remoto y publicación de imagen en GHCR sin ejecutar.
 - Adaptación posterior D07: etiquetas automáticas en español; 189 pruebas Python y 2 Docker aprobadas. Reglas y umbrales conservados.
+- Código publicado en [brunofelixns/mealie-enricher, rama main](https://github.com/brunofelixns/mealie-enricher/tree/main), con README visual, portada y logo oficial de Mealie.
 - [Resultados y evidencia de ejecución](06-resultados-ejecucion.md).
 
 ## Lectura recomendada
