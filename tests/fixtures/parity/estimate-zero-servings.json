@@ -1,0 +1,152 @@
+{
+  "id": "estimate-zero-servings",
+  "area": "estimator",
+  "contracts": [
+    "C19",
+    "C21",
+    "C22",
+    "C25"
+  ],
+  "input": {
+    "slug": "synthetic-recipe",
+    "name": "Synthetic recipe",
+    "recipeYield": "2 servings",
+    "recipeYieldQuantity": null,
+    "recipeServings": 0,
+    "recipeIngredient": [
+      {
+        "quantity": 100,
+        "unit": {
+          "id": "g",
+          "name": "g",
+          "pluralName": null,
+          "abbreviation": "g",
+          "standardQuantity": null,
+          "standardUnit": null
+        },
+        "food": {
+          "id": "food-zero-servings",
+          "name": "food-zero-servings",
+          "pluralName": null,
+          "aliases": []
+        },
+        "note": null,
+        "display": "food-zero-servings",
+        "title": null,
+        "originalText": null
+      }
+    ],
+    "nutrition": null,
+    "tags": [],
+    "extras": {
+      "foreign": "preserve"
+    },
+    "householdId": null
+  },
+  "environment": {
+    "MEALIE_API_TOKEN_abc_def": "synthetic-lower",
+    "MEALIE_API_TOKEN_ABC_upper": "synthetic-upper",
+    "MEALIE_API_TOKEN": "test-token",
+    "MEALIE_URL": "http://127.0.0.1:18743",
+    "OFF_LANGUAGE": "de",
+    "OFF_SEARCH_RATE_LIMIT": "10000",
+    "OFF_PRODUCT_RATE_LIMIT": "10000",
+    "LLM_ENABLED": "false",
+    "LLM_API_KEY": "",
+    "LLM_BASE_URL": "https://api.mistral.ai/v1",
+    "LLM_ENDPOINT_URL": "/chat/completions",
+    "LLM_MODEL": "mistral-small-latest",
+    "LLM_RATE_LIMIT": "10000",
+    "EVENT_DEBOUNCE_MS": "0",
+    "ESTIMATE_STRATEGY": "all"
+  },
+  "external_responses": [
+    {
+      "status": 200,
+      "json": {
+        "hits": [
+          {
+            "product_name": "Synthetic product",
+            "nutriments": {
+              "energy-kcal_100g": 101,
+              "proteins_100g": 2,
+              "fat_100g": 0,
+              "carbohydrates_100g": 20
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "expected_requests": [
+    {
+      "method": "GET",
+      "url": "https://search.openfoodfacts.org/search?q=food-zero-servings&langs=de&page_size=1&fields=product_name%2Cnutriments"
+    }
+  ],
+  "expected_result": {
+    "result": {
+      "slug": "synthetic-recipe",
+      "servings": 0,
+      "totalNutrients": {
+        "kcalPer100g": 101,
+        "proteinPer100g": 2,
+        "carbsPer100g": 20,
+        "fatPer100g": 0,
+        "saturatedFatPer100g": null,
+        "transFatPer100g": null,
+        "unsaturatedFatPer100g": 0,
+        "fiberPer100g": null,
+        "sugarPer100g": null,
+        "sodiumPer100g": null,
+        "cholesterolPer100g": null
+      },
+      "perServingNutrients": {
+        "kcalPer100g": null,
+        "proteinPer100g": null,
+        "carbsPer100g": null,
+        "fatPer100g": null,
+        "saturatedFatPer100g": null,
+        "transFatPer100g": null,
+        "unsaturatedFatPer100g": null,
+        "fiberPer100g": null,
+        "sugarPer100g": null,
+        "sodiumPer100g": null,
+        "cholesterolPer100g": null
+      },
+      "matchedCount": 1,
+      "unmatchedCount": 0,
+      "unmatchedIngredients": [],
+      "matchedIngredients": [
+        {
+          "name": "food-zero-servings",
+          "grams": 100,
+          "matched": true,
+          "nutrients": {
+            "kcalPer100g": 101,
+            "proteinPer100g": 2,
+            "carbsPer100g": 20,
+            "fatPer100g": 0,
+            "saturatedFatPer100g": null,
+            "transFatPer100g": null,
+            "unsaturatedFatPer100g": 0,
+            "fiberPer100g": null,
+            "sugarPer100g": null,
+            "sodiumPer100g": null,
+            "cholesterolPer100g": null
+          },
+          "llmEstimated": false
+        }
+      ]
+    },
+    "patch": {
+      "nutrition": {},
+      "extras": {
+        "calorie_estimator_hash": "0104052de8c65aaa8c1870d8d6373e91e8052549ff1632b1222d07a065d6eda2",
+        "calorie_estimator_unmatched": "[]",
+        "calorie_estimator_total_kcal": "101",
+        "calorie_estimator_yield": "0"
+      }
+    }
+  }
+}

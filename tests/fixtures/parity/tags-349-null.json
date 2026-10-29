@@ -1,0 +1,44 @@
+{
+  "id": "tags-349-null",
+  "area": "tags",
+  "contracts": [
+    "C26",
+    "C15"
+  ],
+  "input": {
+    "kcalPer100g": 349,
+    "proteinPer100g": null,
+    "carbsPer100g": null,
+    "fatPer100g": null,
+    "saturatedFatPer100g": null,
+    "transFatPer100g": null,
+    "unsaturatedFatPer100g": null,
+    "fiberPer100g": null,
+    "sugarPer100g": null,
+    "sodiumPer100g": null,
+    "cholesterolPer100g": null
+  },
+  "environment": {
+    "MEALIE_API_TOKEN_abc_def": "synthetic-lower",
+    "MEALIE_API_TOKEN_ABC_upper": "synthetic-upper",
+    "MEALIE_API_TOKEN": "test-token",
+    "MEALIE_URL": "http://127.0.0.1:18743",
+    "OFF_LANGUAGE": "de",
+    "OFF_SEARCH_RATE_LIMIT": "10000",
+    "OFF_PRODUCT_RATE_LIMIT": "10000",
+    "LLM_ENABLED": "false",
+    "LLM_API_KEY": "",
+    "LLM_BASE_URL": "https://api.mistral.ai/v1",
+    "LLM_ENDPOINT_URL": "/chat/completions",
+    "LLM_MODEL": "mistral-small-latest",
+    "LLM_RATE_LIMIT": "10000",
+    "EVENT_DEBOUNCE_MS": "0",
+    "ESTIMATE_STRATEGY": "all"
+  },
+  "external_responses": [],
+  "expected_requests": [],
+  "expected_result": [
+    "Calories:Light",
+    "Digest:Unknown"
+  ]
+}

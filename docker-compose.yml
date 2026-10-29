@@ -1,0 +1,99 @@
+x-calorie-env: &calorie-env
+  MEALIE_URL: ${MEALIE_URL:-http://mealie:9000}
+  MEALIE_TIMEOUT_MS: ${MEALIE_TIMEOUT_MS:-30000}
+  OFF_LANGUAGE: ${OFF_LANGUAGE:-en}
+  OFF_BASE_URL: ${OFF_BASE_URL:-https://world.openfoodfacts.org}
+  OFF_SEARCH_BASE_URL: ${OFF_SEARCH_BASE_URL:-https://search.openfoodfacts.org}
+  OFF_USER_AGENT: ${OFF_USER_AGENT:-MealieCalorieEstimator/1.0 (calories@example.com)}
+  OFF_SEARCH_RATE_LIMIT: ${OFF_SEARCH_RATE_LIMIT:-10}
+  OFF_PRODUCT_RATE_LIMIT: ${OFF_PRODUCT_RATE_LIMIT:-15}
+  OFF_CACHE_TTL: ${OFF_CACHE_TTL:-86400}
+  OFF_MAX_RETRIES: ${OFF_MAX_RETRIES:-3}
+  OFF_RETRY_BACKOFF_MS: ${OFF_RETRY_BACKOFF_MS:-500}
+  LLM_ENABLED: ${LLM_ENABLED:-false}
+  LLM_API_KEY: ${LLM_API_KEY:-}
+  LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
+  LLM_ENDPOINT_URL: ${LLM_ENDPOINT_URL:-/chat/completions}
+  LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+  LLM_RATE_LIMIT: ${LLM_RATE_LIMIT:-30}
+  LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.1}
+  LLM_MAX_TOKENS_GRAMS: ${LLM_MAX_TOKENS_GRAMS:-10}
+  LLM_MAX_TOKENS_NUTRIENTS: ${LLM_MAX_TOKENS_NUTRIENTS:-200}
+  ESTIMATE_STRATEGY: ${ESTIMATE_STRATEGY:-all}
+  ESTIMATE_TAG: ${ESTIMATE_TAG:-estimate}
+  EVENT_DEBOUNCE_MS: ${EVENT_DEBOUNCE_MS:-2000}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  CACHE_DB_PATH: /app/data/cache.db
+  HISTORY_MAX_ENTRIES: ${HISTORY_MAX_ENTRIES:-200}
+  MEALIE_RECIPE_URL_TEMPLATE: ${MEALIE_RECIPE_URL_TEMPLATE:-}
+  DEV_SEED_HISTORY: ${DEV_SEED_HISTORY:-false}
+
+services:
+  calorie-estimator:
+    image: mealie-enricher:local
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      <<: *calorie-env
+      PORT: ${PORT:-8000}
+      MEALIE_API_TOKEN: ${MEALIE_API_TOKEN:-}
+    ports:
+      - "${PORT:-8000}:${PORT:-8000}"
+    volumes:
+      - estimator-cache:/app/data
+    restart: unless-stopped
+
+  calorie-estimator-test:
+    image: mealie-enricher:local
+    build: .
+    env_file:
+      - path: ${TEST_ENV_FILE:-.compose-test.env}
+        required: false
+    environment:
+      <<: *calorie-env
+      MEALIE_URL: http://mealie:9000
+      OFF_SEARCH_BASE_URL: http://mock-off:3000
+      PORT: "8000"
+      LOG_LEVEL: debug
+    ports:
+      - "127.0.0.1:${TEST_ESTIMATOR_PORT:-8002}:8000"
+    volumes:
+      - estimator-test-cache:/app/data
+    depends_on:
+      mealie:
+        condition: service_healthy
+      mock-off:
+        condition: service_started
+    profiles: [test]
+
+  mock-off:
+    image: python:3.14.6-slim
+    command: ["python", "/app/mock_off_server.py"]
+    volumes:
+      - ./tests/support/mock_off_server.py:/app/mock_off_server.py:ro
+    profiles: [test]
+
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:v3.19.2
+    ports:
+      - "127.0.0.1:${TEST_MEALIE_PORT:-9000}:9000"
+    volumes:
+      - mealie-test-data:/app/data
+    environment:
+      ALLOW_SIGNUP: "true"
+      DB_ENGINE: sqlite
+      LOG_LEVEL: info
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:9000/api/app/about"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    profiles: [test]
+
+volumes:
+  estimator-cache:
+  estimator-test-cache:
+  mealie-test-data:

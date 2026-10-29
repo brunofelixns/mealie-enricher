@@ -1,0 +1,28 @@
+name: mealie-enricher
+
+services:
+  calorie-estimator:
+    image: ${MEALIE_ENRICHER_IMAGE:?Configura MEALIE_ENRICHER_IMAGE en .env con la imagen publicada en GHCR}
+    pull_policy: always
+    env_file:
+      - .env
+    environment:
+      PORT: ${PORT:-8000}
+    ports:
+      - "${PUBLISHED_PORT:-8000}:${PORT:-8000}"
+    volumes:
+      - estimator-cache:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ.get('PORT', '8000') + '/health', timeout=3).close()"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  estimator-cache:

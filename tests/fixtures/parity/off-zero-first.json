@@ -1,0 +1,78 @@
+{
+  "id": "off-zero-first",
+  "area": "off",
+  "contracts": [
+    "C23"
+  ],
+  "input": {
+    "food_name": "cup off-zero",
+    "unit_name": "cup"
+  },
+  "environment": {
+    "MEALIE_API_TOKEN_abc_def": "synthetic-lower",
+    "MEALIE_API_TOKEN_ABC_upper": "synthetic-upper",
+    "MEALIE_API_TOKEN": "test-token",
+    "MEALIE_URL": "http://127.0.0.1:18743",
+    "OFF_LANGUAGE": "de",
+    "OFF_SEARCH_RATE_LIMIT": "10000",
+    "OFF_PRODUCT_RATE_LIMIT": "10000",
+    "LLM_ENABLED": "false",
+    "LLM_API_KEY": "synthetic-key",
+    "LLM_BASE_URL": "https://llm.test/v1",
+    "LLM_ENDPOINT_URL": "/custom-completions",
+    "LLM_MODEL": "mistral-small-latest",
+    "LLM_RATE_LIMIT": "10000",
+    "EVENT_DEBOUNCE_MS": "0",
+    "ESTIMATE_STRATEGY": "all"
+  },
+  "external_responses": [
+    {
+      "status": 200,
+      "json": {
+        "hits": [
+          {
+            "product_name": "Synthetic product",
+            "nutriments": {
+              "energy-kcal_100g": 0,
+              "proteins_100g": 2,
+              "fat_100g": 0,
+              "carbohydrates_100g": 20
+            }
+          },
+          {
+            "product_name": "Synthetic product",
+            "nutriments": {
+              "energy-kcal_100g": 999,
+              "proteins_100g": 2,
+              "fat_100g": 0,
+              "carbohydrates_100g": 20
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "expected_requests": [
+    {
+      "method": "GET",
+      "url": "https://search.openfoodfacts.org/search?q=off-zero&langs=de&page_size=1&fields=product_name%2Cnutriments"
+    }
+  ],
+  "expected_result": {
+    "nutrients": {
+      "kcalPer100g": 0,
+      "proteinPer100g": 2,
+      "carbsPer100g": 20,
+      "fatPer100g": 0,
+      "saturatedFatPer100g": null,
+      "transFatPer100g": null,
+      "unsaturatedFatPer100g": 0,
+      "fiberPer100g": null,
+      "sugarPer100g": null,
+      "sodiumPer100g": null,
+      "cholesterolPer100g": null
+    },
+    "matched": true,
+    "productName": "Synthetic product"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "id": "hash-yield",
+  "area": "hash",
+  "contracts": [
+    "C14",
+    "C15",
+    "C19"
+  ],
+  "input": {
+    "slug": "synthetic-recipe",
+    "name": "Synthetic recipe",
+    "recipeYield": "2 servings",
+    "recipeYieldQuantity": 3,
+    "recipeServings": null,
+    "recipeIngredient": [
+      {
+        "quantity": 100,
+        "unit": {
+          "id": "g",
+          "name": "g",
+          "pluralName": null,
+          "abbreviation": "g",
+          "standardQuantity": null,
+          "standardUnit": null
+        },
+        "food": {
+          "id": "rice",
+          "name": "rice",
+          "pluralName": null,
+          "aliases": []
+        },
+        "note": null,
+        "display": "rice",
+        "title": null,
+        "originalText": null
+      }
+    ],
+    "nutrition": null,
+    "tags": [],
+    "extras": {
+      "foreign": "preserve"
+    },
+    "householdId": null
+  },
+  "environment": {
+    "MEALIE_API_TOKEN_abc_def": "synthetic-lower",
+    "MEALIE_API_TOKEN_ABC_upper": "synthetic-upper",
+    "MEALIE_API_TOKEN": "test-token",
+    "MEALIE_URL": "http://127.0.0.1:18743",
+    "OFF_LANGUAGE": "de",
+    "OFF_SEARCH_RATE_LIMIT": "10000",
+    "OFF_PRODUCT_RATE_LIMIT": "10000",
+    "LLM_ENABLED": "false",
+    "LLM_API_KEY": "",
+    "LLM_BASE_URL": "https://api.mistral.ai/v1",
+    "LLM_ENDPOINT_URL": "/chat/completions",
+    "LLM_MODEL": "mistral-small-latest",
+    "LLM_RATE_LIMIT": "10000",
+    "EVENT_DEBOUNCE_MS": "0",
+    "ESTIMATE_STRATEGY": "all"
+  },
+  "external_responses": [],
+  "expected_requests": [],
+  "expected_result": "f55f3ffa52244305f3f203e55313ddba83edb4644fb5cbac8399d8efc86cab20"
+}

@@ -1,0 +1,324 @@
+{
+  "id": "route-webhook-tags-missing",
+  "area": "processing",
+  "contracts": [
+    "C05",
+    "C07",
+    "C13",
+    "C16",
+    "C17",
+    "C18",
+    "C25",
+    "C26",
+    "C29",
+    "C33",
+    "C36",
+    "C37"
+  ],
+  "input": {
+    "trigger": "webhook",
+    "recipe": {
+      "slug": "synthetic-recipe",
+      "name": "Synthetic recipe",
+      "recipeYield": "2 servings",
+      "recipeYieldQuantity": null,
+      "recipeServings": 2,
+      "recipeIngredient": [
+        {
+          "quantity": 100,
+          "unit": {
+            "id": "g",
+            "name": "g",
+            "pluralName": null,
+            "abbreviation": "g",
+            "standardQuantity": null,
+            "standardUnit": null
+          },
+          "food": {
+            "id": "route-webhook-tags-missing",
+            "name": "route-webhook-tags-missing",
+            "pluralName": null,
+            "aliases": []
+          },
+          "note": null,
+          "display": "route-webhook-tags-missing",
+          "title": null,
+          "originalText": null
+        }
+      ],
+      "nutrition": {
+        "calories": "500",
+        "carbohydrateContent": null,
+        "cholesterolContent": null,
+        "fatContent": "5",
+        "fiberContent": null,
+        "proteinContent": null,
+        "saturatedFatContent": null,
+        "sodiumContent": null,
+        "sugarContent": null,
+        "transFatContent": null,
+        "unsaturatedFatContent": null
+      },
+      "tags": [],
+      "extras": {
+        "foreign": "preserve",
+        "calorie_estimator_hash": "adaeb8d04997d44474f2759306ac30e42ba46a135bc769fddf6e00a4f87d99e0"
+      },
+      "householdId": null
+    },
+    "strategy": "all",
+    "backend_status": 200
+  },
+  "environment": {
+    "MEALIE_API_TOKEN_abc_def": "synthetic-lower",
+    "MEALIE_API_TOKEN_ABC_upper": "synthetic-upper",
+    "MEALIE_API_TOKEN": "test-token",
+    "MEALIE_URL": "http://127.0.0.1:18743",
+    "OFF_LANGUAGE": "de",
+    "OFF_SEARCH_RATE_LIMIT": "10000",
+    "OFF_PRODUCT_RATE_LIMIT": "10000",
+    "LLM_ENABLED": "false",
+    "LLM_API_KEY": "synthetic-key",
+    "LLM_BASE_URL": "https://llm.test/v1",
+    "LLM_ENDPOINT_URL": "/custom-completions",
+    "LLM_MODEL": "mistral-small-latest",
+    "LLM_RATE_LIMIT": "10000",
+    "EVENT_DEBOUNCE_MS": "0",
+    "ESTIMATE_STRATEGY": "all"
+  },
+  "external_responses": [
+    {
+      "status": 200,
+      "json": {
+        "slug": "synthetic-recipe",
+        "name": "Synthetic recipe",
+        "recipeYield": "2 servings",
+        "recipeYieldQuantity": null,
+        "recipeServings": 2,
+        "recipeIngredient": [
+          {
+            "quantity": 100,
+            "unit": {
+              "id": "g",
+              "name": "g",
+              "pluralName": null,
+              "abbreviation": "g",
+              "standardQuantity": null,
+              "standardUnit": null
+            },
+            "food": {
+              "id": "route-webhook-tags-missing",
+              "name": "route-webhook-tags-missing",
+              "pluralName": null,
+              "aliases": []
+            },
+            "note": null,
+            "display": "route-webhook-tags-missing",
+            "title": null,
+            "originalText": null
+          }
+        ],
+        "nutrition": {
+          "calories": "500",
+          "carbohydrateContent": null,
+          "cholesterolContent": null,
+          "fatContent": "5",
+          "fiberContent": null,
+          "proteinContent": null,
+          "saturatedFatContent": null,
+          "sodiumContent": null,
+          "sugarContent": null,
+          "transFatContent": null,
+          "unsaturatedFatContent": null
+        },
+        "tags": [],
+        "extras": {
+          "foreign": "preserve",
+          "calorie_estimator_hash": "adaeb8d04997d44474f2759306ac30e42ba46a135bc769fddf6e00a4f87d99e0"
+        },
+        "householdId": null
+      }
+    },
+    {
+      "status": 200,
+      "json": {
+        "id": "Calories:Moderate",
+        "name": "Calories:Moderate",
+        "slug": "calories-moderate",
+        "groupId": null
+      }
+    },
+    {
+      "status": 200,
+      "json": {
+        "id": "Digest:Easy",
+        "name": "Digest:Easy",
+        "slug": "digest-easy",
+        "groupId": null
+      }
+    },
+    {
+      "status": 200,
+      "json": {
+        "slug": "synthetic-recipe",
+        "name": "Synthetic recipe",
+        "recipeYield": "2 servings",
+        "recipeYieldQuantity": null,
+        "recipeServings": 2,
+        "recipeIngredient": [
+          {
+            "quantity": 100,
+            "unit": {
+              "id": "g",
+              "name": "g",
+              "pluralName": null,
+              "abbreviation": "g",
+              "standardQuantity": null,
+              "standardUnit": null
+            },
+            "food": {
+              "id": "route-webhook-tags-missing",
+              "name": "route-webhook-tags-missing",
+              "pluralName": null,
+              "aliases": []
+            },
+            "note": null,
+            "display": "route-webhook-tags-missing",
+            "title": null,
+            "originalText": null
+          }
+        ],
+        "nutrition": {
+          "calories": "500",
+          "carbohydrateContent": null,
+          "cholesterolContent": null,
+          "fatContent": "5",
+          "fiberContent": null,
+          "proteinContent": null,
+          "saturatedFatContent": null,
+          "sodiumContent": null,
+          "sugarContent": null,
+          "transFatContent": null,
+          "unsaturatedFatContent": null
+        },
+        "tags": [
+          {
+            "id": "Calories:Moderate",
+            "name": "Calories:Moderate",
+            "slug": "calories-moderate",
+            "groupId": null
+          },
+          {
+            "id": "Digest:Easy",
+            "name": "Digest:Easy",
+            "slug": "digest-easy",
+            "groupId": null
+          }
+        ],
+        "extras": {
+          "foreign": "preserve",
+          "calorie_estimator_hash": "adaeb8d04997d44474f2759306ac30e42ba46a135bc769fddf6e00a4f87d99e0",
+          "calorie_estimator_tags": "[\"calories-moderate\",\"digest-easy\"]"
+        },
+        "householdId": null
+      }
+    }
+  ],
+  "expected_requests": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:18743/api/recipes/synthetic-recipe",
+      "authorization": "Bearer test-token"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:18743/api/organizers/tags",
+      "json": {
+        "name": "Calories:Moderate"
+      },
+      "authorization": "Bearer test-token"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:18743/api/organizers/tags",
+      "json": {
+        "name": "Digest:Easy"
+      },
+      "authorization": "Bearer test-token"
+    },
+    {
+      "method": "PATCH",
+      "url": "http://127.0.0.1:18743/api/recipes/synthetic-recipe",
+      "json": {
+        "tags": [
+          {
+            "id": "Calories:Moderate",
+            "name": "Calories:Moderate",
+            "slug": "calories-moderate",
+            "groupId": null
+          },
+          {
+            "id": "Digest:Easy",
+            "name": "Digest:Easy",
+            "slug": "digest-easy",
+            "groupId": null
+          }
+        ],
+        "extras": {
+          "foreign": "preserve",
+          "calorie_estimator_hash": "adaeb8d04997d44474f2759306ac30e42ba46a135bc769fddf6e00a4f87d99e0",
+          "calorie_estimator_tags": "[\"calories-moderate\",\"digest-easy\"]"
+        }
+      },
+      "authorization": "Bearer test-token"
+    }
+  ],
+  "expected_result": {
+    "status": 202,
+    "body": {
+      "status": "accepted"
+    },
+    "history": [
+      {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "startedAt": 1700000003500,
+        "updatedAt": 1700000003500,
+        "finishedAt": 1700000003500,
+        "durationMs": 0,
+        "trigger": "webhook",
+        "slug": "synthetic-recipe",
+        "recipeName": "Synthetic recipe",
+        "householdId": null,
+        "status": "tags-added",
+        "changes": [
+          "Added auto-tags: calories-moderate, digest-easy"
+        ],
+        "estimate": null,
+        "error": null
+      }
+    ],
+    "patches": [
+      {
+        "tags": [
+          {
+            "id": "Calories:Moderate",
+            "name": "Calories:Moderate",
+            "slug": "calories-moderate",
+            "groupId": null
+          },
+          {
+            "id": "Digest:Easy",
+            "name": "Digest:Easy",
+            "slug": "digest-easy",
+            "groupId": null
+          }
+        ],
+        "extras": {
+          "foreign": "preserve",
+          "calorie_estimator_hash": "adaeb8d04997d44474f2759306ac30e42ba46a135bc769fddf6e00a4f87d99e0",
+          "calorie_estimator_tags": "[\"calories-moderate\",\"digest-easy\"]"
+        }
+      }
+    ]
+  }
+}

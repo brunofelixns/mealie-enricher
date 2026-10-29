@@ -1,0 +1,158 @@
+{
+  "id": "estimate-fallback-yield",
+  "area": "estimator",
+  "contracts": [
+    "C19",
+    "C21",
+    "C22",
+    "C25"
+  ],
+  "input": {
+    "slug": "synthetic-recipe",
+    "name": "Synthetic recipe",
+    "recipeYield": "2 servings",
+    "recipeYieldQuantity": 4,
+    "recipeServings": null,
+    "recipeIngredient": [
+      {
+        "quantity": 100,
+        "unit": {
+          "id": "g",
+          "name": "g",
+          "pluralName": null,
+          "abbreviation": "g",
+          "standardQuantity": null,
+          "standardUnit": null
+        },
+        "food": {
+          "id": "food-fallback-yield",
+          "name": "food-fallback-yield",
+          "pluralName": null,
+          "aliases": []
+        },
+        "note": null,
+        "display": "food-fallback-yield",
+        "title": null,
+        "originalText": null
+      }
+    ],
+    "nutrition": null,
+    "tags": [],
+    "extras": {
+      "foreign": "preserve"
+    },
+    "householdId": null
+  },
+  "environment": {
+    "MEALIE_API_TOKEN_abc_def": "synthetic-lower",
+    "MEALIE_API_TOKEN_ABC_upper": "synthetic-upper",
+    "MEALIE_API_TOKEN": "test-token",
+    "MEALIE_URL": "http://127.0.0.1:18743",
+    "OFF_LANGUAGE": "de",
+    "OFF_SEARCH_RATE_LIMIT": "10000",
+    "OFF_PRODUCT_RATE_LIMIT": "10000",
+    "LLM_ENABLED": "false",
+    "LLM_API_KEY": "",
+    "LLM_BASE_URL": "https://api.mistral.ai/v1",
+    "LLM_ENDPOINT_URL": "/chat/completions",
+    "LLM_MODEL": "mistral-small-latest",
+    "LLM_RATE_LIMIT": "10000",
+    "EVENT_DEBOUNCE_MS": "0",
+    "ESTIMATE_STRATEGY": "all"
+  },
+  "external_responses": [
+    {
+      "status": 200,
+      "json": {
+        "hits": [
+          {
+            "product_name": "Synthetic product",
+            "nutriments": {
+              "energy-kcal_100g": 101,
+              "proteins_100g": 2,
+              "fat_100g": 0,
+              "carbohydrates_100g": 20
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "expected_requests": [
+    {
+      "method": "GET",
+      "url": "https://search.openfoodfacts.org/search?q=food-fallback-yield&langs=de&page_size=1&fields=product_name%2Cnutriments"
+    }
+  ],
+  "expected_result": {
+    "result": {
+      "slug": "synthetic-recipe",
+      "servings": 4,
+      "totalNutrients": {
+        "kcalPer100g": 101,
+        "proteinPer100g": 2,
+        "carbsPer100g": 20,
+        "fatPer100g": 0,
+        "saturatedFatPer100g": null,
+        "transFatPer100g": null,
+        "unsaturatedFatPer100g": 0,
+        "fiberPer100g": null,
+        "sugarPer100g": null,
+        "sodiumPer100g": null,
+        "cholesterolPer100g": null
+      },
+      "perServingNutrients": {
+        "kcalPer100g": 25,
+        "proteinPer100g": 1,
+        "carbsPer100g": 5,
+        "fatPer100g": 0,
+        "saturatedFatPer100g": null,
+        "transFatPer100g": null,
+        "unsaturatedFatPer100g": 0,
+        "fiberPer100g": null,
+        "sugarPer100g": null,
+        "sodiumPer100g": null,
+        "cholesterolPer100g": null
+      },
+      "matchedCount": 1,
+      "unmatchedCount": 0,
+      "unmatchedIngredients": [],
+      "matchedIngredients": [
+        {
+          "name": "food-fallback-yield",
+          "grams": 100,
+          "matched": true,
+          "nutrients": {
+            "kcalPer100g": 101,
+            "proteinPer100g": 2,
+            "carbsPer100g": 20,
+            "fatPer100g": 0,
+            "saturatedFatPer100g": null,
+            "transFatPer100g": null,
+            "unsaturatedFatPer100g": 0,
+            "fiberPer100g": null,
+            "sugarPer100g": null,
+            "sodiumPer100g": null,
+            "cholesterolPer100g": null
+          },
+          "llmEstimated": false
+        }
+      ]
+    },
+    "patch": {
+      "nutrition": {
+        "calories": "25",
+        "proteinContent": "1",
+        "carbohydrateContent": "5",
+        "fatContent": "0",
+        "unsaturatedFatContent": "0"
+      },
+      "extras": {
+        "calorie_estimator_hash": "b7ad7f7d39f1caeaa36510270649d7c24923a8763655aa655108365f6ce5fb50",
+        "calorie_estimator_unmatched": "[]",
+        "calorie_estimator_total_kcal": "101",
+        "calorie_estimator_yield": "4"
+      }
+    }
+  }
+}

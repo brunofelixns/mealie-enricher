@@ -1,0 +1,809 @@
+{
+  "id": "dev-seed",
+  "area": "history",
+  "contracts": [
+    "C35",
+    "C36",
+    "C38"
+  ],
+  "input": {
+    "now_ms": 1700000063660
+  },
+  "environment": {
+    "MEALIE_API_TOKEN_abc_def": "synthetic-lower",
+    "MEALIE_API_TOKEN_ABC_upper": "synthetic-upper",
+    "MEALIE_API_TOKEN": "test-token",
+    "MEALIE_URL": "http://127.0.0.1:18743",
+    "OFF_LANGUAGE": "de",
+    "OFF_SEARCH_RATE_LIMIT": "2",
+    "OFF_PRODUCT_RATE_LIMIT": "10000",
+    "LLM_ENABLED": "false",
+    "LLM_API_KEY": "synthetic-key",
+    "LLM_BASE_URL": "https://llm.test/v1",
+    "LLM_ENDPOINT_URL": "/custom-completions",
+    "LLM_MODEL": "mistral-small-latest",
+    "LLM_RATE_LIMIT": "10000",
+    "EVENT_DEBOUNCE_MS": "0",
+    "ESTIMATE_STRATEGY": "all"
+  },
+  "external_responses": [],
+  "expected_requests": [],
+  "expected_result": [
+    {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "startedAt": 1700000057085,
+      "updatedAt": 1700000057085,
+      "finishedAt": null,
+      "durationMs": null,
+      "trigger": "webhook",
+      "slug": "haehnchen-curry",
+      "recipeName": "Hähnchen-Curry mit Reis",
+      "householdId": null,
+      "status": "running",
+      "changes": [],
+      "estimate": null,
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "startedAt": 1699999549374,
+      "updatedAt": 1699999549374,
+      "finishedAt": null,
+      "durationMs": null,
+      "trigger": "webhook",
+      "slug": "spaghetti-bolognese",
+      "recipeName": "Spaghetti Bolognese",
+      "householdId": null,
+      "status": "running",
+      "changes": [],
+      "estimate": null,
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "startedAt": 1699999292231,
+      "updatedAt": 1699999295974,
+      "finishedAt": 1699999295974,
+      "durationMs": 3743,
+      "trigger": "backfill",
+      "slug": "creamy-tomato-soup",
+      "recipeName": "Creamy Tomato Soup",
+      "householdId": null,
+      "status": "error",
+      "changes": [],
+      "estimate": null,
+      "error": "Mealie API request timed out: PATCH http://mealie:9000/api/recipes"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "startedAt": 1699999035088,
+      "updatedAt": 1699999035224,
+      "finishedAt": 1699999035224,
+      "durationMs": 136,
+      "trigger": "backfill",
+      "slug": "roasted-vegetables",
+      "recipeName": "Roasted Vegetables",
+      "householdId": null,
+      "status": "filtered",
+      "changes": [
+        "Recipe not tagged for estimation"
+      ],
+      "estimate": null,
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "startedAt": 1699998777945,
+      "updatedAt": 1699998778697,
+      "finishedAt": 1699998778697,
+      "durationMs": 752,
+      "trigger": "backfill",
+      "slug": "tiramisu",
+      "recipeName": "Tiramisu",
+      "householdId": null,
+      "status": "manual",
+      "changes": [
+        "Preserved manual calories: 232 kcal"
+      ],
+      "estimate": null,
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000006",
+      "startedAt": 1699998520802,
+      "updatedAt": 1699998521088,
+      "finishedAt": 1699998521088,
+      "durationMs": 286,
+      "trigger": "backfill",
+      "slug": "quinoa-bowl",
+      "recipeName": "Quinoa Power Bowl",
+      "householdId": null,
+      "status": "skipped",
+      "changes": [
+        "Ingredients unchanged, tags already applied"
+      ],
+      "estimate": null,
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000007",
+      "startedAt": 1699998263660,
+      "updatedAt": 1699998263814,
+      "finishedAt": 1699998263814,
+      "durationMs": 154,
+      "trigger": "backfill",
+      "slug": "schnitzel",
+      "recipeName": "Wiener Schnitzel",
+      "householdId": null,
+      "status": "skipped",
+      "changes": [
+        "Ingredients unchanged, tags already applied"
+      ],
+      "estimate": null,
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000008",
+      "startedAt": 1699998006517,
+      "updatedAt": 1699998006904,
+      "finishedAt": 1699998006904,
+      "durationMs": 387,
+      "trigger": "backfill",
+      "slug": "pad-thai",
+      "recipeName": "Pad Thai",
+      "householdId": null,
+      "status": "tags-added",
+      "changes": [
+        "Added auto-tags: calories-light, digest-moderate"
+      ],
+      "estimate": null,
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000009",
+      "startedAt": 1699997749374,
+      "updatedAt": 1699997749806,
+      "finishedAt": 1699997749806,
+      "durationMs": 432,
+      "trigger": "estimate",
+      "slug": "chicken-noodle-soup",
+      "recipeName": "Chicken Noodle Soup",
+      "householdId": null,
+      "status": "tags-added",
+      "changes": [
+        "Added auto-tags: calories-moderate, digest-moderate"
+      ],
+      "estimate": null,
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "startedAt": 1699997492231,
+      "updatedAt": 1699997492741,
+      "finishedAt": 1699997492741,
+      "durationMs": 510,
+      "trigger": "estimate",
+      "slug": "couscous-salad",
+      "recipeName": "Couscous Salad",
+      "householdId": null,
+      "status": "tags-added",
+      "changes": [
+        "Added auto-tags: calories-hearty, digest-moderate"
+      ],
+      "estimate": null,
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "startedAt": 1699997235088,
+      "updatedAt": 1699997237599,
+      "finishedAt": 1699997237599,
+      "durationMs": 2511,
+      "trigger": "estimate",
+      "slug": "ramen-broth",
+      "recipeName": "Homemade Ramen Broth",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 849 kcal/serving",
+        "Auto-tags: calories-moderate, digest-slow"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 849,
+          "proteinPer100g": 10,
+          "carbsPer100g": 13,
+          "fatPer100g": 14,
+          "saturatedFatPer100g": 5.6,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 8.4,
+          "fiberPer100g": 3,
+          "sugarPer100g": 12,
+          "sodiumPer100g": 555,
+          "cholesterolPer100g": 58
+        },
+        "matchedCount": 14,
+        "unmatchedCount": 3
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000012",
+      "startedAt": 1699996977945,
+      "updatedAt": 1699996985793,
+      "finishedAt": 1699996985793,
+      "durationMs": 7848,
+      "trigger": "estimate",
+      "slug": "shakshuka",
+      "recipeName": "Shakshuka",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 698 kcal/serving",
+        "Auto-tags: calories-moderate, digest-slow"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 698,
+          "proteinPer100g": 39,
+          "carbsPer100g": 22,
+          "fatPer100g": 17,
+          "saturatedFatPer100g": 6.8,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 10.2,
+          "fiberPer100g": 3,
+          "sugarPer100g": 2,
+          "sodiumPer100g": 168,
+          "cholesterolPer100g": 52
+        },
+        "matchedCount": 13,
+        "unmatchedCount": 3
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000013",
+      "startedAt": 1699996720802,
+      "updatedAt": 1699996730147,
+      "finishedAt": 1699996730147,
+      "durationMs": 9345,
+      "trigger": "estimate",
+      "slug": "apple-crumble",
+      "recipeName": "Apple Crumble",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 308 kcal/serving",
+        "Auto-tags: calories-hearty, digest-slow"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 308,
+          "proteinPer100g": 38,
+          "carbsPer100g": 61,
+          "fatPer100g": 45,
+          "saturatedFatPer100g": 18,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 27,
+          "fiberPer100g": 7,
+          "sugarPer100g": 22,
+          "sodiumPer100g": 580,
+          "cholesterolPer100g": 28
+        },
+        "matchedCount": 9,
+        "unmatchedCount": 3
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000014",
+      "startedAt": 1699996463660,
+      "updatedAt": 1699996466873,
+      "finishedAt": 1699996466873,
+      "durationMs": 3213,
+      "trigger": "webhook",
+      "slug": "fish-tacos",
+      "recipeName": "Fish Tacos",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 291 kcal/serving",
+        "Auto-tags: calories-hearty, digest-slow"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 291,
+          "proteinPer100g": 27,
+          "carbsPer100g": 89,
+          "fatPer100g": 19,
+          "saturatedFatPer100g": 7.6,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 11.4,
+          "fiberPer100g": 4,
+          "sugarPer100g": 22,
+          "sodiumPer100g": 775,
+          "cholesterolPer100g": 60
+        },
+        "matchedCount": 4,
+        "unmatchedCount": 0
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000015",
+      "startedAt": 1699996206517,
+      "updatedAt": 1699996215321,
+      "finishedAt": 1699996215321,
+      "durationMs": 8804,
+      "trigger": "webhook",
+      "slug": "mushroom-risotto",
+      "recipeName": "Mushroom Risotto",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 338 kcal/serving",
+        "Auto-tags: calories-moderate, digest-moderate"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 338,
+          "proteinPer100g": 38,
+          "carbsPer100g": 45,
+          "fatPer100g": 42,
+          "saturatedFatPer100g": 16.8,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 25.2,
+          "fiberPer100g": 2,
+          "sugarPer100g": 22,
+          "sodiumPer100g": 521,
+          "cholesterolPer100g": 68
+        },
+        "matchedCount": 15,
+        "unmatchedCount": 1
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000016",
+      "startedAt": 1699995949374,
+      "updatedAt": 1699995953832,
+      "finishedAt": 1699995953832,
+      "durationMs": 4458,
+      "trigger": "webhook",
+      "slug": "banana-bread",
+      "recipeName": "Banana Bread",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 359 kcal/serving",
+        "Auto-tags: calories-moderate, digest-easy"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 359,
+          "proteinPer100g": 14,
+          "carbsPer100g": 23,
+          "fatPer100g": 31,
+          "saturatedFatPer100g": 12.4,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 18.6,
+          "fiberPer100g": 6,
+          "sugarPer100g": 9,
+          "sodiumPer100g": 200,
+          "cholesterolPer100g": 25
+        },
+        "matchedCount": 4,
+        "unmatchedCount": 2
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000017",
+      "startedAt": 1699995692231,
+      "updatedAt": 1699995697775,
+      "finishedAt": 1699995697775,
+      "durationMs": 5544,
+      "trigger": "webhook",
+      "slug": "caesar-salad",
+      "recipeName": "Caesar Salad",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 402 kcal/serving",
+        "Auto-tags: calories-moderate, digest-moderate"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 402,
+          "proteinPer100g": 21,
+          "carbsPer100g": 37,
+          "fatPer100g": 32,
+          "saturatedFatPer100g": 12.8,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 19.2,
+          "fiberPer100g": 8,
+          "sugarPer100g": 9,
+          "sodiumPer100g": 496,
+          "cholesterolPer100g": 49
+        },
+        "matchedCount": 11,
+        "unmatchedCount": 2
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000018",
+      "startedAt": 1699995435088,
+      "updatedAt": 1699995439046,
+      "finishedAt": 1699995439046,
+      "durationMs": 3958,
+      "trigger": "webhook",
+      "slug": "vegetarian-chili",
+      "recipeName": "Vegetarian Chili",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 716 kcal/serving",
+        "Auto-tags: calories-hearty, digest-easy"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 716,
+          "proteinPer100g": 6,
+          "carbsPer100g": 27,
+          "fatPer100g": 17,
+          "saturatedFatPer100g": 6.8,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 10.2,
+          "fiberPer100g": 8,
+          "sugarPer100g": 15,
+          "sodiumPer100g": 891,
+          "cholesterolPer100g": 13
+        },
+        "matchedCount": 6,
+        "unmatchedCount": 2
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000019",
+      "startedAt": 1699995177945,
+      "updatedAt": 1699995178950,
+      "finishedAt": 1699995178950,
+      "durationMs": 1005,
+      "trigger": "webhook",
+      "slug": "pesto-pasta",
+      "recipeName": "Pesto Pasta",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 279 kcal/serving",
+        "Auto-tags: calories-heavy, digest-moderate"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 279,
+          "proteinPer100g": 31,
+          "carbsPer100g": 80,
+          "fatPer100g": 34,
+          "saturatedFatPer100g": 13.6,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 20.4,
+          "fiberPer100g": 8,
+          "sugarPer100g": 7,
+          "sodiumPer100g": 583,
+          "cholesterolPer100g": 39
+        },
+        "matchedCount": 6,
+        "unmatchedCount": 0
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000020",
+      "startedAt": 1699994920802,
+      "updatedAt": 1699994926285,
+      "finishedAt": 1699994926285,
+      "durationMs": 5483,
+      "trigger": "webhook",
+      "slug": "blueberry-pancakes",
+      "recipeName": "Blueberry Pancakes",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 719 kcal/serving",
+        "Auto-tags: calories-hearty, digest-easy"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 719,
+          "proteinPer100g": 31,
+          "carbsPer100g": 37,
+          "fatPer100g": 10,
+          "saturatedFatPer100g": 4,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 6,
+          "fiberPer100g": 2,
+          "sugarPer100g": 17,
+          "sodiumPer100g": 810,
+          "cholesterolPer100g": 26
+        },
+        "matchedCount": 14,
+        "unmatchedCount": 1
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000021",
+      "startedAt": 1699994663660,
+      "updatedAt": 1699994672294,
+      "finishedAt": 1699994672294,
+      "durationMs": 8634,
+      "trigger": "webhook",
+      "slug": "beef-stir-fry",
+      "recipeName": "Beef Stir Fry",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 594 kcal/serving",
+        "Auto-tags: calories-moderate, digest-easy"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 594,
+          "proteinPer100g": 37,
+          "carbsPer100g": 83,
+          "fatPer100g": 16,
+          "saturatedFatPer100g": 6.4,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 9.6,
+          "fiberPer100g": 1,
+          "sugarPer100g": 13,
+          "sodiumPer100g": 758,
+          "cholesterolPer100g": 10
+        },
+        "matchedCount": 16,
+        "unmatchedCount": 0
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000022",
+      "startedAt": 1699994406517,
+      "updatedAt": 1699994414035,
+      "finishedAt": 1699994414035,
+      "durationMs": 7518,
+      "trigger": "webhook",
+      "slug": "greek-salad",
+      "recipeName": "Greek Salad",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 510 kcal/serving",
+        "Auto-tags: calories-hearty, digest-moderate"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 510,
+          "proteinPer100g": 34,
+          "carbsPer100g": 33,
+          "fatPer100g": 16,
+          "saturatedFatPer100g": 6.4,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 9.6,
+          "fiberPer100g": 4,
+          "sugarPer100g": 22,
+          "sodiumPer100g": 656,
+          "cholesterolPer100g": 80
+        },
+        "matchedCount": 15,
+        "unmatchedCount": 1
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000023",
+      "startedAt": 1699994149374,
+      "updatedAt": 1699994160651,
+      "finishedAt": 1699994160651,
+      "durationMs": 11277,
+      "trigger": "webhook",
+      "slug": "lentil-stew",
+      "recipeName": "Lentil Stew",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 864 kcal/serving",
+        "Auto-tags: calories-light, digest-slow"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 864,
+          "proteinPer100g": 33,
+          "carbsPer100g": 24,
+          "fatPer100g": 14,
+          "saturatedFatPer100g": 5.6,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 8.4,
+          "fiberPer100g": 5,
+          "sugarPer100g": 21,
+          "sodiumPer100g": 196,
+          "cholesterolPer100g": 80
+        },
+        "matchedCount": 11,
+        "unmatchedCount": 3
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000024",
+      "startedAt": 1699993892231,
+      "updatedAt": 1699993894107,
+      "finishedAt": 1699993894107,
+      "durationMs": 1876,
+      "trigger": "webhook",
+      "slug": "chocolate-chip-cookies",
+      "recipeName": "Chocolate Chip Cookies",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 698 kcal/serving",
+        "Auto-tags: calories-hearty, digest-slow"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 698,
+          "proteinPer100g": 22,
+          "carbsPer100g": 86,
+          "fatPer100g": 43,
+          "saturatedFatPer100g": 17.2,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 25.8,
+          "fiberPer100g": 2,
+          "sugarPer100g": 4,
+          "sodiumPer100g": 112,
+          "cholesterolPer100g": 29
+        },
+        "matchedCount": 10,
+        "unmatchedCount": 2
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000025",
+      "startedAt": 1699993635088,
+      "updatedAt": 1699993638313,
+      "finishedAt": 1699993638313,
+      "durationMs": 3225,
+      "trigger": "webhook",
+      "slug": "grandmas-potato-salad",
+      "recipeName": "Grandma's Potato Salad",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 634 kcal/serving",
+        "Auto-tags: calories-light, digest-moderate"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 634,
+          "proteinPer100g": 35,
+          "carbsPer100g": 79,
+          "fatPer100g": 16,
+          "saturatedFatPer100g": 6.4,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 9.6,
+          "fiberPer100g": 5,
+          "sugarPer100g": 6,
+          "sodiumPer100g": 327,
+          "cholesterolPer100g": 23
+        },
+        "matchedCount": 4,
+        "unmatchedCount": 2
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000026",
+      "startedAt": 1699993377945,
+      "updatedAt": 1699993379146,
+      "finishedAt": 1699993379146,
+      "durationMs": 1201,
+      "trigger": "webhook",
+      "slug": "haehnchen-curry",
+      "recipeName": "Hähnchen-Curry mit Reis",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 321 kcal/serving",
+        "Auto-tags: calories-heavy, digest-moderate"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 321,
+          "proteinPer100g": 39,
+          "carbsPer100g": 49,
+          "fatPer100g": 10,
+          "saturatedFatPer100g": 4,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 6,
+          "fiberPer100g": 7,
+          "sugarPer100g": 9,
+          "sodiumPer100g": 460,
+          "cholesterolPer100g": 3
+        },
+        "matchedCount": 4,
+        "unmatchedCount": 2
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000027",
+      "startedAt": 1699993120802,
+      "updatedAt": 1699993129324,
+      "finishedAt": 1699993129324,
+      "durationMs": 8522,
+      "trigger": "webhook",
+      "slug": "spaghetti-bolognese",
+      "recipeName": "Spaghetti Bolognese",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 413 kcal/serving",
+        "Auto-tags: calories-light, digest-moderate"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 413,
+          "proteinPer100g": 5,
+          "carbsPer100g": 48,
+          "fatPer100g": 29,
+          "saturatedFatPer100g": 11.6,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 17.4,
+          "fiberPer100g": 7,
+          "sugarPer100g": 3,
+          "sodiumPer100g": 574,
+          "cholesterolPer100g": 2
+        },
+        "matchedCount": 7,
+        "unmatchedCount": 0
+      },
+      "error": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000028",
+      "startedAt": 1699992863660,
+      "updatedAt": 1699992871994,
+      "finishedAt": 1699992871994,
+      "durationMs": 8334,
+      "trigger": "webhook",
+      "slug": "creamy-tomato-soup",
+      "recipeName": "Creamy Tomato Soup",
+      "householdId": null,
+      "status": "processed",
+      "changes": [
+        "Set calories: 637 kcal/serving",
+        "Auto-tags: calories-moderate, digest-slow"
+      ],
+      "estimate": {
+        "nutrients": {
+          "kcalPer100g": 637,
+          "proteinPer100g": 26,
+          "carbsPer100g": 32,
+          "fatPer100g": 10,
+          "saturatedFatPer100g": 4,
+          "transFatPer100g": 0,
+          "unsaturatedFatPer100g": 6,
+          "fiberPer100g": 5,
+          "sugarPer100g": 22,
+          "sodiumPer100g": 478,
+          "cholesterolPer100g": 20
+        },
+        "matchedCount": 15,
+        "unmatchedCount": 2
+      },
+      "error": null
+    }
+  ]
+}

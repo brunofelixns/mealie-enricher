@@ -1,0 +1,151 @@
+{
+  "id": "history-states",
+  "area": "history",
+  "contracts": [
+    "C09",
+    "C10",
+    "C35",
+    "C36",
+    "C37"
+  ],
+  "input": {},
+  "environment": {
+    "MEALIE_API_TOKEN_abc_def": "synthetic-lower",
+    "MEALIE_API_TOKEN_ABC_upper": "synthetic-upper",
+    "MEALIE_API_TOKEN": "test-token",
+    "MEALIE_URL": "http://127.0.0.1:18743",
+    "OFF_LANGUAGE": "de",
+    "OFF_SEARCH_RATE_LIMIT": "10000",
+    "OFF_PRODUCT_RATE_LIMIT": "10000",
+    "LLM_ENABLED": "false",
+    "LLM_API_KEY": "synthetic-key",
+    "LLM_BASE_URL": "https://llm.test/v1",
+    "LLM_ENDPOINT_URL": "/custom-completions",
+    "LLM_MODEL": "mistral-small-latest",
+    "LLM_RATE_LIMIT": "10000",
+    "EVENT_DEBOUNCE_MS": "0",
+    "ESTIMATE_STRATEGY": "all"
+  },
+  "external_responses": [],
+  "expected_requests": [],
+  "expected_result": {
+    "all": [
+      {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "startedAt": 1700000003500,
+        "updatedAt": 1700000003500,
+        "finishedAt": 1700000003500,
+        "durationMs": 0,
+        "trigger": "estimate",
+        "slug": "error",
+        "recipeName": "Synthetic error",
+        "householdId": null,
+        "status": "error",
+        "changes": [],
+        "estimate": null,
+        "error": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000002",
+        "startedAt": 1700000003500,
+        "updatedAt": 1700000003500,
+        "finishedAt": null,
+        "durationMs": null,
+        "trigger": "estimate",
+        "slug": "running",
+        "recipeName": "Synthetic running",
+        "householdId": null,
+        "status": "running",
+        "changes": [],
+        "estimate": null,
+        "error": null
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000003",
+        "startedAt": 1700000003500,
+        "updatedAt": 1700000003500,
+        "finishedAt": 1700000003500,
+        "durationMs": 0,
+        "trigger": "estimate",
+        "slug": "filtered",
+        "recipeName": "Synthetic filtered",
+        "householdId": null,
+        "status": "filtered",
+        "changes": [
+          "filtered"
+        ],
+        "estimate": null,
+        "error": null
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000004",
+        "startedAt": 1700000003500,
+        "updatedAt": 1700000003500,
+        "finishedAt": 1700000003500,
+        "durationMs": 0,
+        "trigger": "estimate",
+        "slug": "skipped",
+        "recipeName": "Synthetic skipped",
+        "householdId": null,
+        "status": "skipped",
+        "changes": [
+          "skipped"
+        ],
+        "estimate": null,
+        "error": null
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000005",
+        "startedAt": 1700000003500,
+        "updatedAt": 1700000003500,
+        "finishedAt": 1700000003500,
+        "durationMs": 0,
+        "trigger": "estimate",
+        "slug": "manual",
+        "recipeName": "Synthetic manual",
+        "householdId": null,
+        "status": "manual",
+        "changes": [
+          "manual"
+        ],
+        "estimate": null,
+        "error": null
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000006",
+        "startedAt": 1700000003500,
+        "updatedAt": 1700000003500,
+        "finishedAt": 1700000003500,
+        "durationMs": 0,
+        "trigger": "estimate",
+        "slug": "tags-added",
+        "recipeName": "Synthetic tags-added",
+        "householdId": null,
+        "status": "tags-added",
+        "changes": [
+          "tags-added"
+        ],
+        "estimate": null,
+        "error": null
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000007",
+        "startedAt": 1700000003500,
+        "updatedAt": 1700000003500,
+        "finishedAt": 1700000003500,
+        "durationMs": 0,
+        "trigger": "estimate",
+        "slug": "processed",
+        "recipeName": "Synthetic processed",
+        "householdId": null,
+        "status": "processed",
+        "changes": [
+          "processed"
+        ],
+        "estimate": null,
+        "error": null
+      }
+    ],
+    "since": []
+  }
+}

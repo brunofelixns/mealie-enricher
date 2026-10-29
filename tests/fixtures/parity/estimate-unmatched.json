@@ -1,0 +1,118 @@
+{
+  "id": "estimate-unmatched",
+  "area": "estimator",
+  "contracts": [
+    "C19",
+    "C21",
+    "C22",
+    "C25"
+  ],
+  "input": {
+    "slug": "synthetic-recipe",
+    "name": "Synthetic recipe",
+    "recipeYield": "2 servings",
+    "recipeYieldQuantity": null,
+    "recipeServings": 2,
+    "recipeIngredient": [
+      {
+        "quantity": 1,
+        "unit": {
+          "id": "piece",
+          "name": "piece",
+          "pluralName": null,
+          "abbreviation": "piece",
+          "standardQuantity": null,
+          "standardUnit": null
+        },
+        "food": {
+          "id": "unknown",
+          "name": "unknown",
+          "pluralName": null,
+          "aliases": []
+        },
+        "note": null,
+        "display": "unknown",
+        "title": null,
+        "originalText": null
+      }
+    ],
+    "nutrition": null,
+    "tags": [],
+    "extras": {
+      "foreign": "preserve"
+    },
+    "householdId": null
+  },
+  "environment": {
+    "MEALIE_API_TOKEN_abc_def": "synthetic-lower",
+    "MEALIE_API_TOKEN_ABC_upper": "synthetic-upper",
+    "MEALIE_API_TOKEN": "test-token",
+    "MEALIE_URL": "http://127.0.0.1:18743",
+    "OFF_LANGUAGE": "de",
+    "OFF_SEARCH_RATE_LIMIT": "10000",
+    "OFF_PRODUCT_RATE_LIMIT": "10000",
+    "LLM_ENABLED": "false",
+    "LLM_API_KEY": "",
+    "LLM_BASE_URL": "https://api.mistral.ai/v1",
+    "LLM_ENDPOINT_URL": "/chat/completions",
+    "LLM_MODEL": "mistral-small-latest",
+    "LLM_RATE_LIMIT": "10000",
+    "EVENT_DEBOUNCE_MS": "0",
+    "ESTIMATE_STRATEGY": "all"
+  },
+  "external_responses": [],
+  "expected_requests": [],
+  "expected_result": {
+    "result": {
+      "slug": "synthetic-recipe",
+      "servings": 2,
+      "totalNutrients": {
+        "kcalPer100g": null,
+        "proteinPer100g": null,
+        "carbsPer100g": null,
+        "fatPer100g": null,
+        "saturatedFatPer100g": null,
+        "transFatPer100g": null,
+        "unsaturatedFatPer100g": null,
+        "fiberPer100g": null,
+        "sugarPer100g": null,
+        "sodiumPer100g": null,
+        "cholesterolPer100g": null
+      },
+      "perServingNutrients": {
+        "kcalPer100g": null,
+        "proteinPer100g": null,
+        "carbsPer100g": null,
+        "fatPer100g": null,
+        "saturatedFatPer100g": null,
+        "transFatPer100g": null,
+        "unsaturatedFatPer100g": null,
+        "fiberPer100g": null,
+        "sugarPer100g": null,
+        "sodiumPer100g": null,
+        "cholesterolPer100g": null
+      },
+      "matchedCount": 0,
+      "unmatchedCount": 1,
+      "unmatchedIngredients": [
+        "unknown"
+      ],
+      "matchedIngredients": [
+        {
+          "name": "unknown",
+          "grams": null,
+          "matched": false,
+          "nutrients": null
+        }
+      ]
+    },
+    "patch": {
+      "nutrition": {},
+      "extras": {
+        "calorie_estimator_hash": "7d77503c96af5115c55cf131fed0be4d6be3f5cfd9e4b691d956a70ca03416ae",
+        "calorie_estimator_unmatched": "[\"unknown\"]",
+        "calorie_estimator_yield": "2"
+      }
+    }
+  }
+}

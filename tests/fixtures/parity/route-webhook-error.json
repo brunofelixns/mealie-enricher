@@ -1,0 +1,148 @@
+{
+  "id": "route-webhook-error",
+  "area": "processing",
+  "contracts": [
+    "C05",
+    "C07",
+    "C13",
+    "C16",
+    "C17",
+    "C18",
+    "C25",
+    "C26",
+    "C29",
+    "C33",
+    "C36",
+    "C37"
+  ],
+  "input": {
+    "trigger": "webhook",
+    "recipe": {
+      "slug": "synthetic-recipe",
+      "name": "Synthetic recipe",
+      "recipeYield": "2 servings",
+      "recipeYieldQuantity": null,
+      "recipeServings": 2,
+      "recipeIngredient": [
+        {
+          "quantity": 100,
+          "unit": {
+            "id": "g",
+            "name": "g",
+            "pluralName": null,
+            "abbreviation": "g",
+            "standardQuantity": null,
+            "standardUnit": null
+          },
+          "food": {
+            "id": "route-webhook-error",
+            "name": "route-webhook-error",
+            "pluralName": null,
+            "aliases": []
+          },
+          "note": null,
+          "display": "route-webhook-error",
+          "title": null,
+          "originalText": null
+        }
+      ],
+      "nutrition": null,
+      "tags": [],
+      "extras": {
+        "foreign": "preserve"
+      },
+      "householdId": null
+    },
+    "strategy": "all",
+    "backend_status": 503
+  },
+  "environment": {
+    "MEALIE_API_TOKEN_abc_def": "synthetic-lower",
+    "MEALIE_API_TOKEN_ABC_upper": "synthetic-upper",
+    "MEALIE_API_TOKEN": "test-token",
+    "MEALIE_URL": "http://127.0.0.1:18743",
+    "OFF_LANGUAGE": "de",
+    "OFF_SEARCH_RATE_LIMIT": "10000",
+    "OFF_PRODUCT_RATE_LIMIT": "10000",
+    "LLM_ENABLED": "false",
+    "LLM_API_KEY": "synthetic-key",
+    "LLM_BASE_URL": "https://llm.test/v1",
+    "LLM_ENDPOINT_URL": "/custom-completions",
+    "LLM_MODEL": "mistral-small-latest",
+    "LLM_RATE_LIMIT": "10000",
+    "EVENT_DEBOUNCE_MS": "0",
+    "ESTIMATE_STRATEGY": "all"
+  },
+  "external_responses": [
+    {
+      "status": 503,
+      "json": {
+        "slug": "synthetic-recipe",
+        "name": "Synthetic recipe",
+        "recipeYield": "2 servings",
+        "recipeYieldQuantity": null,
+        "recipeServings": 2,
+        "recipeIngredient": [
+          {
+            "quantity": 100,
+            "unit": {
+              "id": "g",
+              "name": "g",
+              "pluralName": null,
+              "abbreviation": "g",
+              "standardQuantity": null,
+              "standardUnit": null
+            },
+            "food": {
+              "id": "route-webhook-error",
+              "name": "route-webhook-error",
+              "pluralName": null,
+              "aliases": []
+            },
+            "note": null,
+            "display": "route-webhook-error",
+            "title": null,
+            "originalText": null
+          }
+        ],
+        "nutrition": null,
+        "tags": [],
+        "extras": {
+          "foreign": "preserve"
+        },
+        "householdId": null
+      }
+    }
+  ],
+  "expected_requests": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:18743/api/recipes/synthetic-recipe",
+      "authorization": "Bearer test-token"
+    }
+  ],
+  "expected_result": {
+    "status": 202,
+    "body": {
+      "status": "accepted"
+    },
+    "history": [
+      {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "startedAt": 1700000003500,
+        "updatedAt": 1700000003500,
+        "finishedAt": 1700000003500,
+        "durationMs": 0,
+        "trigger": "webhook",
+        "slug": "synthetic-recipe",
+        "recipeName": null,
+        "householdId": null,
+        "status": "error",
+        "changes": [],
+        "estimate": null,
+        "error": "Mealie API 503 Service Unavailable: http://127.0.0.1:18743/api/recipes/synthetic-recipe — {\"slug\":\"synthetic-recipe\",\"name\":\"Synthetic recipe\",\"recipeYield\":\"2 servings\",\"recipeYieldQuantity\":null,\"recipeServings\":2,\"recipeIngredient\":[{\"quantity\":100,\"unit\":{\"id\":\"g\",\"name\":\"g\",\"pluralNam"
+      }
+    ],
+    "patches": []
+  }
+}

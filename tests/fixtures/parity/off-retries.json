@@ -1,0 +1,77 @@
+{
+  "id": "off-retries",
+  "area": "off",
+  "contracts": [
+    "C31",
+    "C32"
+  ],
+  "input": {
+    "food_name": "off-retry"
+  },
+  "environment": {
+    "MEALIE_API_TOKEN_abc_def": "synthetic-lower",
+    "MEALIE_API_TOKEN_ABC_upper": "synthetic-upper",
+    "MEALIE_API_TOKEN": "test-token",
+    "MEALIE_URL": "http://127.0.0.1:18743",
+    "OFF_LANGUAGE": "de",
+    "OFF_SEARCH_RATE_LIMIT": "10000",
+    "OFF_PRODUCT_RATE_LIMIT": "10000",
+    "LLM_ENABLED": "false",
+    "LLM_API_KEY": "synthetic-key",
+    "LLM_BASE_URL": "https://llm.test/v1",
+    "LLM_ENDPOINT_URL": "/custom-completions",
+    "LLM_MODEL": "mistral-small-latest",
+    "LLM_RATE_LIMIT": "10000",
+    "EVENT_DEBOUNCE_MS": "0",
+    "ESTIMATE_STRATEGY": "all"
+  },
+  "external_responses": [
+    {
+      "status": 503,
+      "json": {
+        "hits": []
+      }
+    },
+    {
+      "status": 503,
+      "json": {
+        "hits": []
+      }
+    },
+    {
+      "status": 503,
+      "json": {
+        "hits": []
+      }
+    },
+    {
+      "status": 503,
+      "json": {
+        "hits": []
+      }
+    }
+  ],
+  "expected_requests": [
+    {
+      "method": "GET",
+      "url": "https://search.openfoodfacts.org/search?q=off-retry&langs=de&page_size=1&fields=product_name%2Cnutriments"
+    },
+    {
+      "method": "GET",
+      "url": "https://search.openfoodfacts.org/search?q=off-retry&langs=de&page_size=1&fields=product_name%2Cnutriments"
+    },
+    {
+      "method": "GET",
+      "url": "https://search.openfoodfacts.org/search?q=off-retry&langs=de&page_size=1&fields=product_name%2Cnutriments"
+    },
+    {
+      "method": "GET",
+      "url": "https://search.openfoodfacts.org/search?q=off-retry&langs=de&page_size=1&fields=product_name%2Cnutriments"
+    }
+  ],
+  "expected_result": {
+    "nutrients": null,
+    "matched": false,
+    "productName": null
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "id": "route-backfill-error",
+  "area": "processing",
+  "contracts": [
+    "C05",
+    "C07",
+    "C13",
+    "C16",
+    "C17",
+    "C18",
+    "C25",
+    "C26",
+    "C29",
+    "C33",
+    "C36",
+    "C37"
+  ],
+  "input": {
+    "trigger": "backfill",
+    "recipe": {
+      "slug": "synthetic-recipe",
+      "name": "Synthetic recipe",
+      "recipeYield": "2 servings",
+      "recipeYieldQuantity": null,
+      "recipeServings": 2,
+      "recipeIngredient": [
+        {
+          "quantity": 100,
+          "unit": {
+            "id": "g",
+            "name": "g",
+            "pluralName": null,
+            "abbreviation": "g",
+            "standardQuantity": null,
+            "standardUnit": null
+          },
+          "food": {
+            "id": "route-backfill-error",
+            "name": "route-backfill-error",
+            "pluralName": null,
+            "aliases": []
+          },
+          "note": null,
+          "display": "route-backfill-error",
+          "title": null,
+          "originalText": null
+        }
+      ],
+      "nutrition": null,
+      "tags": [],
+      "extras": {
+        "foreign": "preserve"
+      },
+      "householdId": null
+    },
+    "strategy": "all",
+    "backend_status": 503
+  },
+  "environment": {
+    "MEALIE_API_TOKEN_abc_def": "synthetic-lower",
+    "MEALIE_API_TOKEN_ABC_upper": "synthetic-upper",
+    "MEALIE_API_TOKEN": "test-token",
+    "MEALIE_URL": "http://127.0.0.1:18743",
+    "OFF_LANGUAGE": "de",
+    "OFF_SEARCH_RATE_LIMIT": "10000",
+    "OFF_PRODUCT_RATE_LIMIT": "10000",
+    "LLM_ENABLED": "false",
+    "LLM_API_KEY": "synthetic-key",
+    "LLM_BASE_URL": "https://llm.test/v1",
+    "LLM_ENDPOINT_URL": "/custom-completions",
+    "LLM_MODEL": "mistral-small-latest",
+    "LLM_RATE_LIMIT": "10000",
+    "EVENT_DEBOUNCE_MS": "0",
+    "ESTIMATE_STRATEGY": "all"
+  },
+  "external_responses": [
+    {
+      "status": 503,
+      "json": {
+        "items": [
+          {
+            "slug": "synthetic-recipe"
+          }
+        ],
+        "total": 1,
+        "page": 1,
+        "total_pages": 1
+      }
+    }
+  ],
+  "expected_requests": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:18743/api/recipes?page=1&per_page=100&order_direction=asc",
+      "authorization": "Bearer test-token"
+    }
+  ],
+  "expected_result": {
+    "status": 202,
+    "body": {
+      "status": "accepted"
+    },
+    "history": [],
+    "patches": []
+  }
+}

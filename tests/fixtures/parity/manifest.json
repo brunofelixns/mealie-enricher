@@ -1,0 +1,1419 @@
+{
+  "upstream_commit": "c2dc71a1d8effe29375391f2fe50da94d27cfd7d",
+  "upstream_version": "1.12.3",
+  "normalization": [
+    "execution UUIDs",
+    "clock timestamps and durations"
+  ],
+  "clock_epoch_ms": 1700000000000,
+  "cases": [
+    {
+      "id": "config-defaults",
+      "area": "config",
+      "contracts": [
+        "C39"
+      ],
+      "file": "config-defaults.json"
+    },
+    {
+      "id": "token-overrides",
+      "area": "config",
+      "contracts": [
+        "C39"
+      ],
+      "file": "token-overrides.json"
+    },
+    {
+      "id": "hash-basic",
+      "area": "hash",
+      "contracts": [
+        "C14",
+        "C15",
+        "C19"
+      ],
+      "file": "hash-basic.json"
+    },
+    {
+      "id": "hash-servings-zero",
+      "area": "hash",
+      "contracts": [
+        "C14",
+        "C15",
+        "C19"
+      ],
+      "file": "hash-servings-zero.json"
+    },
+    {
+      "id": "hash-yield",
+      "area": "hash",
+      "contracts": [
+        "C14",
+        "C15",
+        "C19"
+      ],
+      "file": "hash-yield.json"
+    },
+    {
+      "id": "hash-empty",
+      "area": "hash",
+      "contracts": [
+        "C14",
+        "C15",
+        "C19"
+      ],
+      "file": "hash-empty.json"
+    },
+    {
+      "id": "hash-null-quantity",
+      "area": "hash",
+      "contracts": [
+        "C14",
+        "C15",
+        "C19"
+      ],
+      "file": "hash-null-quantity.json"
+    },
+    {
+      "id": "hash-unicode",
+      "area": "hash",
+      "contracts": [
+        "C14",
+        "C15",
+        "C19"
+      ],
+      "file": "hash-unicode.json"
+    },
+    {
+      "id": "unit-g",
+      "area": "conversion",
+      "contracts": [
+        "C20"
+      ],
+      "file": "unit-g.json"
+    },
+    {
+      "id": "unit-kg",
+      "area": "conversion",
+      "contracts": [
+        "C20"
+      ],
+      "file": "unit-kg.json"
+    },
+    {
+      "id": "unit-ml",
+      "area": "conversion",
+      "contracts": [
+        "C20"
+      ],
+      "file": "unit-ml.json"
+    },
+    {
+      "id": "unit-l",
+      "area": "conversion",
+      "contracts": [
+        "C20"
+      ],
+      "file": "unit-l.json"
+    },
+    {
+      "id": "unit-cup",
+      "area": "conversion",
+      "contracts": [
+        "C20"
+      ],
+      "file": "unit-cup.json"
+    },
+    {
+      "id": "unit-tbsp",
+      "area": "conversion",
+      "contracts": [
+        "C20"
+      ],
+      "file": "unit-tbsp.json"
+    },
+    {
+      "id": "unit-tsp",
+      "area": "conversion",
+      "contracts": [
+        "C20"
+      ],
+      "file": "unit-tsp.json"
+    },
+    {
+      "id": "unit-oz",
+      "area": "conversion",
+      "contracts": [
+        "C20"
+      ],
+      "file": "unit-oz.json"
+    },
+    {
+      "id": "unit-lb",
+      "area": "conversion",
+      "contracts": [
+        "C20"
+      ],
+      "file": "unit-lb.json"
+    },
+    {
+      "id": "unit-pinch",
+      "area": "conversion",
+      "contracts": [
+        "C20"
+      ],
+      "file": "unit-pinch.json"
+    },
+    {
+      "id": "unit-dash",
+      "area": "conversion",
+      "contracts": [
+        "C20"
+      ],
+      "file": "unit-dash.json"
+    },
+    {
+      "id": "unit-clove",
+      "area": "conversion",
+      "contracts": [
+        "C20"
+      ],
+      "file": "unit-clove.json"
+    },
+    {
+      "id": "unit-piece",
+      "area": "conversion",
+      "contracts": [
+        "C20"
+      ],
+      "file": "unit-piece.json"
+    },
+    {
+      "id": "unit-slice",
+      "area": "conversion",
+      "contracts": [
+        "C20"
+      ],
+      "file": "unit-slice.json"
+    },
+    {
+      "id": "unit-unknown",
+      "area": "conversion",
+      "contracts": [
+        "C20"
+      ],
+      "file": "unit-unknown.json"
+    },
+    {
+      "id": "unit-standard",
+      "area": "conversion",
+      "contracts": [
+        "C20"
+      ],
+      "file": "unit-standard.json"
+    },
+    {
+      "id": "tags-0-null",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-0-null.json"
+    },
+    {
+      "id": "tags-0-0",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-0-0.json"
+    },
+    {
+      "id": "tags-0-30",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-0-30.json"
+    },
+    {
+      "id": "tags-349-null",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-349-null.json"
+    },
+    {
+      "id": "tags-349-0",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-349-0.json"
+    },
+    {
+      "id": "tags-349-30",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-349-30.json"
+    },
+    {
+      "id": "tags-350-null",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-350-null.json"
+    },
+    {
+      "id": "tags-350-0",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-350-0.json"
+    },
+    {
+      "id": "tags-350-30",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-350-30.json"
+    },
+    {
+      "id": "tags-600-null",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-600-null.json"
+    },
+    {
+      "id": "tags-600-0",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-600-0.json"
+    },
+    {
+      "id": "tags-600-30",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-600-30.json"
+    },
+    {
+      "id": "tags-601-null",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-601-null.json"
+    },
+    {
+      "id": "tags-601-0",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-601-0.json"
+    },
+    {
+      "id": "tags-601-30",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-601-30.json"
+    },
+    {
+      "id": "tags-850-null",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-850-null.json"
+    },
+    {
+      "id": "tags-850-0",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-850-0.json"
+    },
+    {
+      "id": "tags-850-30",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-850-30.json"
+    },
+    {
+      "id": "tags-851-null",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-851-null.json"
+    },
+    {
+      "id": "tags-851-0",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-851-0.json"
+    },
+    {
+      "id": "tags-851-30",
+      "area": "tags",
+      "contracts": [
+        "C26",
+        "C15"
+      ],
+      "file": "tags-851-30.json"
+    },
+    {
+      "id": "manual-null",
+      "area": "estimator",
+      "contracts": [
+        "C16",
+        "C17"
+      ],
+      "file": "manual-null.json"
+    },
+    {
+      "id": "manual-",
+      "area": "estimator",
+      "contracts": [
+        "C16",
+        "C17"
+      ],
+      "file": "manual-.json"
+    },
+    {
+      "id": "manual-__",
+      "area": "estimator",
+      "contracts": [
+        "C16",
+        "C17"
+      ],
+      "file": "manual-__.json"
+    },
+    {
+      "id": "manual-0",
+      "area": "estimator",
+      "contracts": [
+        "C16",
+        "C17"
+      ],
+      "file": "manual-0.json"
+    },
+    {
+      "id": "manual-500",
+      "area": "estimator",
+      "contracts": [
+        "C16",
+        "C17"
+      ],
+      "file": "manual-500.json"
+    },
+    {
+      "id": "strategy-50",
+      "area": "estimator",
+      "contracts": [
+        "C13"
+      ],
+      "file": "strategy-50.json"
+    },
+    {
+      "id": "strategy-51",
+      "area": "estimator",
+      "contracts": [
+        "C13"
+      ],
+      "file": "strategy-51.json"
+    },
+    {
+      "id": "strategy-52",
+      "area": "estimator",
+      "contracts": [
+        "C13"
+      ],
+      "file": "strategy-52.json"
+    },
+    {
+      "id": "cache-normalization",
+      "area": "cache",
+      "contracts": [
+        "C34"
+      ],
+      "file": "cache-normalization.json"
+    },
+    {
+      "id": "estimate-normal",
+      "area": "estimator",
+      "contracts": [
+        "C19",
+        "C21",
+        "C22",
+        "C25"
+      ],
+      "file": "estimate-normal.json"
+    },
+    {
+      "id": "estimate-zero-servings",
+      "area": "estimator",
+      "contracts": [
+        "C19",
+        "C21",
+        "C22",
+        "C25"
+      ],
+      "file": "estimate-zero-servings.json"
+    },
+    {
+      "id": "estimate-fallback-yield",
+      "area": "estimator",
+      "contracts": [
+        "C19",
+        "C21",
+        "C22",
+        "C25"
+      ],
+      "file": "estimate-fallback-yield.json"
+    },
+    {
+      "id": "estimate-ignored",
+      "area": "estimator",
+      "contracts": [
+        "C19",
+        "C21",
+        "C22",
+        "C25"
+      ],
+      "file": "estimate-ignored.json"
+    },
+    {
+      "id": "estimate-unmatched",
+      "area": "estimator",
+      "contracts": [
+        "C19",
+        "C21",
+        "C22",
+        "C25"
+      ],
+      "file": "estimate-unmatched.json"
+    },
+    {
+      "id": "llm-grams-80",
+      "area": "llm",
+      "contracts": [
+        "C24",
+        "C33",
+        "C40"
+      ],
+      "file": "llm-grams-80.json"
+    },
+    {
+      "id": "llm-grams-80.9",
+      "area": "llm",
+      "contracts": [
+        "C24",
+        "C33",
+        "C40"
+      ],
+      "file": "llm-grams-80.9.json"
+    },
+    {
+      "id": "llm-grams-80_grams",
+      "area": "llm",
+      "contracts": [
+        "C24",
+        "C33",
+        "C40"
+      ],
+      "file": "llm-grams-80_grams.json"
+    },
+    {
+      "id": "llm-grams-0",
+      "area": "llm",
+      "contracts": [
+        "C24",
+        "C33",
+        "C40"
+      ],
+      "file": "llm-grams-0.json"
+    },
+    {
+      "id": "llm-grams--5",
+      "area": "llm",
+      "contracts": [
+        "C24",
+        "C33",
+        "C40"
+      ],
+      "file": "llm-grams--5.json"
+    },
+    {
+      "id": "llm-grams-abc",
+      "area": "llm",
+      "contracts": [
+        "C24",
+        "C33",
+        "C40"
+      ],
+      "file": "llm-grams-abc.json"
+    },
+    {
+      "id": "llm-grams-null",
+      "area": "llm",
+      "contracts": [
+        "C24",
+        "C33",
+        "C40"
+      ],
+      "file": "llm-grams-null.json"
+    },
+    {
+      "id": "llm-http-429",
+      "area": "llm",
+      "contracts": [
+        "C33",
+        "C40"
+      ],
+      "file": "llm-http-429.json"
+    },
+    {
+      "id": "llm-http-500",
+      "area": "llm",
+      "contracts": [
+        "C33",
+        "C40"
+      ],
+      "file": "llm-http-500.json"
+    },
+    {
+      "id": "llm-nutrients-zeros",
+      "area": "llm",
+      "contracts": [
+        "C24",
+        "C40"
+      ],
+      "file": "llm-nutrients-zeros.json"
+    },
+    {
+      "id": "llm-nutrients-fenced",
+      "area": "llm",
+      "contracts": [
+        "C24",
+        "C40"
+      ],
+      "file": "llm-nutrients-fenced.json"
+    },
+    {
+      "id": "llm-nutrients-invalid",
+      "area": "llm",
+      "contracts": [
+        "C24",
+        "C40"
+      ],
+      "file": "llm-nutrients-invalid.json"
+    },
+    {
+      "id": "llm-nutrients-zero-kcal",
+      "area": "llm",
+      "contracts": [
+        "C24",
+        "C40"
+      ],
+      "file": "llm-nutrients-zero-kcal.json"
+    },
+    {
+      "id": "off-no-match",
+      "area": "off",
+      "contracts": [
+        "C23"
+      ],
+      "file": "off-no-match.json"
+    },
+    {
+      "id": "off-zero-first",
+      "area": "off",
+      "contracts": [
+        "C23"
+      ],
+      "file": "off-zero-first.json"
+    },
+    {
+      "id": "off-no-kcal",
+      "area": "off",
+      "contracts": [
+        "C23"
+      ],
+      "file": "off-no-kcal.json"
+    },
+    {
+      "id": "off-retries",
+      "area": "off",
+      "contracts": [
+        "C31",
+        "C32"
+      ],
+      "file": "off-retries.json"
+    },
+    {
+      "id": "http-76",
+      "area": "http",
+      "contracts": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C06",
+        "C09",
+        "C10",
+        "C11",
+        "C12"
+      ],
+      "file": "http-76.json"
+    },
+    {
+      "id": "http-77",
+      "area": "http",
+      "contracts": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C06",
+        "C09",
+        "C10",
+        "C11",
+        "C12"
+      ],
+      "file": "http-77.json"
+    },
+    {
+      "id": "http-78",
+      "area": "http",
+      "contracts": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C06",
+        "C09",
+        "C10",
+        "C11",
+        "C12"
+      ],
+      "file": "http-78.json"
+    },
+    {
+      "id": "http-79",
+      "area": "http",
+      "contracts": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C06",
+        "C09",
+        "C10",
+        "C11",
+        "C12"
+      ],
+      "file": "http-79.json"
+    },
+    {
+      "id": "http-80",
+      "area": "http",
+      "contracts": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C06",
+        "C09",
+        "C10",
+        "C11",
+        "C12"
+      ],
+      "file": "http-80.json"
+    },
+    {
+      "id": "http-81",
+      "area": "http",
+      "contracts": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C06",
+        "C09",
+        "C10",
+        "C11",
+        "C12"
+      ],
+      "file": "http-81.json"
+    },
+    {
+      "id": "http-82",
+      "area": "http",
+      "contracts": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C06",
+        "C09",
+        "C10",
+        "C11",
+        "C12"
+      ],
+      "file": "http-82.json"
+    },
+    {
+      "id": "http-83",
+      "area": "http",
+      "contracts": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C06",
+        "C09",
+        "C10",
+        "C11",
+        "C12"
+      ],
+      "file": "http-83.json"
+    },
+    {
+      "id": "http-84",
+      "area": "http",
+      "contracts": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C06",
+        "C09",
+        "C10",
+        "C11",
+        "C12"
+      ],
+      "file": "http-84.json"
+    },
+    {
+      "id": "http-85",
+      "area": "http",
+      "contracts": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C06",
+        "C09",
+        "C10",
+        "C11",
+        "C12"
+      ],
+      "file": "http-85.json"
+    },
+    {
+      "id": "route-webhook-normal",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-webhook-normal.json"
+    },
+    {
+      "id": "route-webhook-manual",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-webhook-manual.json"
+    },
+    {
+      "id": "route-webhook-unchanged",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-webhook-unchanged.json"
+    },
+    {
+      "id": "route-webhook-tags-missing",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-webhook-tags-missing.json"
+    },
+    {
+      "id": "route-webhook-filtered",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-webhook-filtered.json"
+    },
+    {
+      "id": "route-webhook-error",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-webhook-error.json"
+    },
+    {
+      "id": "route-estimate-normal",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-estimate-normal.json"
+    },
+    {
+      "id": "route-estimate-manual",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-estimate-manual.json"
+    },
+    {
+      "id": "route-estimate-unchanged",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-estimate-unchanged.json"
+    },
+    {
+      "id": "route-estimate-tags-missing",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-estimate-tags-missing.json"
+    },
+    {
+      "id": "route-estimate-filtered",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-estimate-filtered.json"
+    },
+    {
+      "id": "route-estimate-error",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-estimate-error.json"
+    },
+    {
+      "id": "route-backfill-normal",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-backfill-normal.json"
+    },
+    {
+      "id": "route-backfill-manual",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-backfill-manual.json"
+    },
+    {
+      "id": "route-backfill-unchanged",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-backfill-unchanged.json"
+    },
+    {
+      "id": "route-backfill-tags-missing",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-backfill-tags-missing.json"
+    },
+    {
+      "id": "route-backfill-filtered",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-backfill-filtered.json"
+    },
+    {
+      "id": "route-backfill-error",
+      "area": "processing",
+      "contracts": [
+        "C05",
+        "C07",
+        "C13",
+        "C16",
+        "C17",
+        "C18",
+        "C25",
+        "C26",
+        "C29",
+        "C33",
+        "C36",
+        "C37"
+      ],
+      "file": "route-backfill-error.json"
+    },
+    {
+      "id": "history-states",
+      "area": "history",
+      "contracts": [
+        "C09",
+        "C10",
+        "C35",
+        "C36",
+        "C37"
+      ],
+      "file": "history-states.json"
+    },
+    {
+      "id": "history-max",
+      "area": "history",
+      "contracts": [
+        "C35"
+      ],
+      "file": "history-max.json"
+    },
+    {
+      "id": "history-html",
+      "area": "http",
+      "contracts": [
+        "C08",
+        "C38"
+      ],
+      "file": "history-html.json"
+    },
+    {
+      "id": "queue-burst",
+      "area": "queue",
+      "contracts": [
+        "C27",
+        "C28"
+      ],
+      "file": "queue-burst.json"
+    },
+    {
+      "id": "queue-failure",
+      "area": "queue",
+      "contracts": [
+        "C27",
+        "C28"
+      ],
+      "file": "queue-failure.json"
+    },
+    {
+      "id": "limiter-window",
+      "area": "limiter",
+      "contracts": [
+        "C30"
+      ],
+      "file": "limiter-window.json"
+    },
+    {
+      "id": "dev-seed",
+      "area": "history",
+      "contracts": [
+        "C35",
+        "C36",
+        "C38"
+      ],
+      "file": "dev-seed.json"
+    },
+    {
+      "id": "http-edge-malformed-json",
+      "area": "http",
+      "contracts": [
+        "C12"
+      ],
+      "file": "http-edge-malformed-json.json"
+    },
+    {
+      "id": "http-edge-empty-json",
+      "area": "http",
+      "contracts": [
+        "C12"
+      ],
+      "file": "http-edge-empty-json.json"
+    },
+    {
+      "id": "http-edge-unsupported-media",
+      "area": "http",
+      "contracts": [
+        "C12"
+      ],
+      "file": "http-edge-unsupported-media.json"
+    },
+    {
+      "id": "http-edge-plain-text",
+      "area": "http",
+      "contracts": [
+        "C12"
+      ],
+      "file": "http-edge-plain-text.json"
+    },
+    {
+      "id": "http-edge-null-webhook",
+      "area": "http",
+      "contracts": [
+        "C12"
+      ],
+      "file": "http-edge-null-webhook.json"
+    },
+    {
+      "id": "http-edge-null-estimate",
+      "area": "http",
+      "contracts": [
+        "C12"
+      ],
+      "file": "http-edge-null-estimate.json"
+    },
+    {
+      "id": "http-edge-absent-webhook",
+      "area": "http",
+      "contracts": [
+        "C12"
+      ],
+      "file": "http-edge-absent-webhook.json"
+    },
+    {
+      "id": "http-edge-absent-estimate",
+      "area": "http",
+      "contracts": [
+        "C12"
+      ],
+      "file": "http-edge-absent-estimate.json"
+    },
+    {
+      "id": "http-edge-invalid-preflight",
+      "area": "http",
+      "contracts": [
+        "C12"
+      ],
+      "file": "http-edge-invalid-preflight.json"
+    },
+    {
+      "id": "http-edge-not-found",
+      "area": "http",
+      "contracts": [
+        "C12"
+      ],
+      "file": "http-edge-not-found.json"
+    },
+    {
+      "id": "http-edge-head-health",
+      "area": "http",
+      "contracts": [
+        "C12"
+      ],
+      "file": "http-edge-head-health.json"
+    },
+    {
+      "id": "hash-numeric-string-quantity",
+      "area": "hash",
+      "contracts": [
+        "C14",
+        "C15"
+      ],
+      "file": "hash-numeric-string-quantity.json"
+    },
+    {
+      "id": "hash-numeric-string-servings",
+      "area": "hash",
+      "contracts": [
+        "C14",
+        "C15"
+      ],
+      "file": "hash-numeric-string-servings.json"
+    },
+    {
+      "id": "estimate-numeric-string",
+      "area": "estimator",
+      "contracts": [
+        "C15",
+        "C19",
+        "C22",
+        "C25"
+      ],
+      "file": "estimate-numeric-string.json"
+    }
+  ],
+  "covered_contracts": [
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "C06",
+    "C07",
+    "C08",
+    "C09",
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "C14",
+    "C15",
+    "C16",
+    "C17",
+    "C18",
+    "C19",
+    "C20",
+    "C21",
+    "C22",
+    "C23",
+    "C24",
+    "C25",
+    "C26",
+    "C27",
+    "C28",
+    "C29",
+    "C30",
+    "C31",
+    "C32",
+    "C33",
+    "C34",
+    "C35",
+    "C36",
+    "C37",
+    "C38",
+    "C39",
+    "C40"
+  ]
+}

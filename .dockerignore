@@ -1,0 +1,13 @@
+*
+!pyproject.toml
+!uv.lock
+!.python-version
+!src/
+!src/**
+!alembic.ini
+!alembic/
+!alembic/**
+!LICENSE
+!NOTICE
+**/__pycache__
+**/*.pyc

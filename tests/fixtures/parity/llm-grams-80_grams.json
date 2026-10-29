@@ -1,0 +1,63 @@
+{
+  "id": "llm-grams-80_grams",
+  "area": "llm",
+  "contracts": [
+    "C24",
+    "C33",
+    "C40"
+  ],
+  "input": {
+    "quantity": 2,
+    "unit_name": "bunch",
+    "food_name": "synthetic greens"
+  },
+  "environment": {
+    "MEALIE_API_TOKEN_abc_def": "synthetic-lower",
+    "MEALIE_API_TOKEN_ABC_upper": "synthetic-upper",
+    "MEALIE_API_TOKEN": "test-token",
+    "MEALIE_URL": "http://127.0.0.1:18743",
+    "OFF_LANGUAGE": "de",
+    "OFF_SEARCH_RATE_LIMIT": "10000",
+    "OFF_PRODUCT_RATE_LIMIT": "10000",
+    "LLM_ENABLED": "true",
+    "LLM_API_KEY": "synthetic-key",
+    "LLM_BASE_URL": "https://llm.test/v1",
+    "LLM_ENDPOINT_URL": "/custom-completions",
+    "LLM_MODEL": "mistral-small-latest",
+    "LLM_RATE_LIMIT": "10000",
+    "EVENT_DEBOUNCE_MS": "0",
+    "ESTIMATE_STRATEGY": "all"
+  },
+  "external_responses": [
+    {
+      "status": 200,
+      "json": {
+        "choices": [
+          {
+            "message": {
+              "content": "80 grams"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "expected_requests": [
+    {
+      "method": "POST",
+      "url": "https://llm.test/v1/custom-completions",
+      "json": {
+        "model": "mistral-small-latest",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Estimate the weight in grams for 1 bunch of synthetic greens. Consider typical packaging sizes and food densities. Return ONLY a single number (the weight in grams). No explanation, no unit, no punctuation. If you cannot estimate, return 0."
+          }
+        ],
+        "temperature": 0.1,
+        "max_tokens": 10
+      }
+    }
+  ],
+  "expected_result": 160
+}

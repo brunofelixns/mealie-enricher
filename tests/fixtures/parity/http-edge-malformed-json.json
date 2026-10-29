@@ -1,0 +1,46 @@
+{
+  "id": "http-edge-malformed-json",
+  "area": "http",
+  "contracts": [
+    "C12"
+  ],
+  "input": {
+    "method": "POST",
+    "url": "/webhook",
+    "headers": {
+      "content-type": "application/json"
+    },
+    "payload": "{",
+    "raw": true
+  },
+  "environment": {
+    "MEALIE_API_TOKEN_abc_def": "synthetic-lower",
+    "MEALIE_API_TOKEN_ABC_upper": "synthetic-upper",
+    "MEALIE_API_TOKEN": "test-token",
+    "MEALIE_URL": "http://127.0.0.1:18743",
+    "OFF_LANGUAGE": "de",
+    "OFF_SEARCH_RATE_LIMIT": "2",
+    "OFF_PRODUCT_RATE_LIMIT": "10000",
+    "LLM_ENABLED": "false",
+    "LLM_API_KEY": "synthetic-key",
+    "LLM_BASE_URL": "https://llm.test/v1",
+    "LLM_ENDPOINT_URL": "/custom-completions",
+    "LLM_MODEL": "mistral-small-latest",
+    "LLM_RATE_LIMIT": "10000",
+    "EVENT_DEBOUNCE_MS": "0",
+    "ESTIMATE_STRATEGY": "all"
+  },
+  "external_responses": [],
+  "expected_requests": [],
+  "expected_result": {
+    "status": 400,
+    "body": {
+      "statusCode": 400,
+      "code": "FST_ERR_CTP_INVALID_JSON_BODY",
+      "error": "Bad Request",
+      "message": "Body is not valid JSON but content-type is set to 'application/json'"
+    },
+    "content_type": "application/json; charset=utf-8",
+    "allow_origin": "*"
+  }
+}

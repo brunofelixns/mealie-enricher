@@ -1,0 +1,59 @@
+{
+  "id": "config-defaults",
+  "area": "config",
+  "contracts": [
+    "C39"
+  ],
+  "input": {},
+  "environment": {
+    "MEALIE_API_TOKEN": "test-token"
+  },
+  "external_responses": [],
+  "expected_requests": [],
+  "expected_result": {
+    "port": 8000,
+    "mealie": {
+      "url": "http://mealie:9000",
+      "apiToken": "test-token",
+      "timeoutMs": 30000
+    },
+    "openFoodFacts": {
+      "baseUrl": "https://world.openfoodfacts.org",
+      "searchBaseUrl": "https://search.openfoodfacts.org",
+      "language": "de",
+      "searchRateLimit": 10,
+      "productRateLimit": 15,
+      "cacheTtlMs": 86400000,
+      "maxRetries": 3,
+      "retryBackoffMs": 500,
+      "userAgent": "mealie-calorie-estimator/1.12.3 (mail@timo-reymann.de)"
+    },
+    "llm": {
+      "enabled": false,
+      "baseUrl": "https://api.mistral.ai/v1",
+      "endpointUrl": "/chat/completions",
+      "apiKey": "",
+      "model": "mistral-small-latest",
+      "rateLimit": 30,
+      "temperature": 0.1,
+      "maxTokensGrams": 10,
+      "maxTokensNutrients": 200
+    },
+    "estimate": {
+      "strategy": "all",
+      "tag": "estimate"
+    },
+    "events": {
+      "debounceMs": 2000
+    },
+    "cache": {
+      "dbPath": "data/cache.db"
+    },
+    "history": {
+      "recipeUrlTemplate": "http://mealie:9000/recipe/{slug}",
+      "seedDevData": false,
+      "maxEntries": 200
+    },
+    "logLevel": "info"
+  }
+}

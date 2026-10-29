@@ -1,0 +1,167 @@
+{
+  "id": "estimate-ignored",
+  "area": "estimator",
+  "contracts": [
+    "C19",
+    "C21",
+    "C22",
+    "C25"
+  ],
+  "input": {
+    "slug": "synthetic-recipe",
+    "name": "Synthetic recipe",
+    "recipeYield": "2 servings",
+    "recipeYieldQuantity": null,
+    "recipeServings": 2,
+    "recipeIngredient": [
+      {
+        "quantity": 0,
+        "unit": {
+          "id": "g",
+          "name": "g",
+          "pluralName": null,
+          "abbreviation": "g",
+          "standardQuantity": null,
+          "standardUnit": null
+        },
+        "food": {
+          "id": "ignored",
+          "name": "ignored",
+          "pluralName": null,
+          "aliases": []
+        },
+        "note": null,
+        "display": "ignored",
+        "title": null,
+        "originalText": null
+      },
+      {
+        "quantity": -2,
+        "unit": {
+          "id": "g",
+          "name": "g",
+          "pluralName": null,
+          "abbreviation": "g",
+          "standardQuantity": null,
+          "standardUnit": null
+        },
+        "food": {
+          "id": "ignored",
+          "name": "ignored",
+          "pluralName": null,
+          "aliases": []
+        },
+        "note": null,
+        "display": "ignored",
+        "title": null,
+        "originalText": null
+      },
+      {
+        "quantity": null,
+        "unit": {
+          "id": "g",
+          "name": "g",
+          "pluralName": null,
+          "abbreviation": "g",
+          "standardQuantity": null,
+          "standardUnit": null
+        },
+        "food": {
+          "id": "ignored",
+          "name": "ignored",
+          "pluralName": null,
+          "aliases": []
+        },
+        "note": null,
+        "display": "ignored",
+        "title": null,
+        "originalText": null
+      },
+      {
+        "quantity": 100,
+        "unit": {
+          "id": "g",
+          "name": "g",
+          "pluralName": null,
+          "abbreviation": "g",
+          "standardQuantity": null,
+          "standardUnit": null
+        },
+        "food": null,
+        "note": null,
+        "display": "rice",
+        "title": null,
+        "originalText": null
+      }
+    ],
+    "nutrition": null,
+    "tags": [],
+    "extras": {
+      "foreign": "preserve"
+    },
+    "householdId": null
+  },
+  "environment": {
+    "MEALIE_API_TOKEN_abc_def": "synthetic-lower",
+    "MEALIE_API_TOKEN_ABC_upper": "synthetic-upper",
+    "MEALIE_API_TOKEN": "test-token",
+    "MEALIE_URL": "http://127.0.0.1:18743",
+    "OFF_LANGUAGE": "de",
+    "OFF_SEARCH_RATE_LIMIT": "10000",
+    "OFF_PRODUCT_RATE_LIMIT": "10000",
+    "LLM_ENABLED": "false",
+    "LLM_API_KEY": "",
+    "LLM_BASE_URL": "https://api.mistral.ai/v1",
+    "LLM_ENDPOINT_URL": "/chat/completions",
+    "LLM_MODEL": "mistral-small-latest",
+    "LLM_RATE_LIMIT": "10000",
+    "EVENT_DEBOUNCE_MS": "0",
+    "ESTIMATE_STRATEGY": "all"
+  },
+  "external_responses": [],
+  "expected_requests": [],
+  "expected_result": {
+    "result": {
+      "slug": "synthetic-recipe",
+      "servings": 2,
+      "totalNutrients": {
+        "kcalPer100g": null,
+        "proteinPer100g": null,
+        "carbsPer100g": null,
+        "fatPer100g": null,
+        "saturatedFatPer100g": null,
+        "transFatPer100g": null,
+        "unsaturatedFatPer100g": null,
+        "fiberPer100g": null,
+        "sugarPer100g": null,
+        "sodiumPer100g": null,
+        "cholesterolPer100g": null
+      },
+      "perServingNutrients": {
+        "kcalPer100g": null,
+        "proteinPer100g": null,
+        "carbsPer100g": null,
+        "fatPer100g": null,
+        "saturatedFatPer100g": null,
+        "transFatPer100g": null,
+        "unsaturatedFatPer100g": null,
+        "fiberPer100g": null,
+        "sugarPer100g": null,
+        "sodiumPer100g": null,
+        "cholesterolPer100g": null
+      },
+      "matchedCount": 0,
+      "unmatchedCount": 0,
+      "unmatchedIngredients": [],
+      "matchedIngredients": []
+    },
+    "patch": {
+      "nutrition": {},
+      "extras": {
+        "calorie_estimator_hash": "b1491130925ce15d35965680df387116a2748ed4d14450ce87f0a0689437140f",
+        "calorie_estimator_unmatched": "[]",
+        "calorie_estimator_yield": "2"
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+version: 2.1
+jobs:
+  python-checks:
+    docker:
+      - image: python:3.14.6-slim
+    steps:
+      - checkout
+      - run:
+          name: Install uv and locked dependencies
+          command: |
+            pip install uv==0.11.28
+            uv sync --locked
+      - run: uv run ruff check src tests alembic
+      - run: uv run ruff format --check src tests alembic
+      - run: uv run mypy src
+      - run:
+          name: Tests and coverage
+          command: uv run pytest --cov=mealie_enricher --cov-report=xml --junitxml=test-results/pytest.xml
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: coverage.xml
+  docker-build:
+    machine:
+      image: ubuntu-2404:current
+    steps:
+      - checkout
+      - run: docker compose config --quiet
+      - run: docker compose build calorie-estimator
+workflows:
+  checks:
+    jobs:
+      - python-checks
+      - docker-build:
+          requires:
+            - python-checks

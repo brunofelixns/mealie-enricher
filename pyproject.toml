@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mealie-enricher"
+version = "1.12.3"
+description = "Python migration of mealie-calorie-estimator"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn>=0.30,<1",
+  "pydantic>=2,<3",
+  "pydantic-settings>=2,<3",
+  "httpx>=0.28,<1",
+  "openai-agents",
+  "sqlalchemy[asyncio]>=2,<3",
+  "aiosqlite",
+  "alembic",
+  "tenacity",
+  "jinja2",
+]
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "pytest-asyncio", "pytest-cov", "respx", "ruff", "mypy"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mealie_enricher"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+extend-exclude = [".reference", ".superpowers", ".cache", ".venv"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.mypy]
+python_version = "3.14"
+check_untyped_defs = true
+disallow_untyped_defs = true
+warn_unused_ignores = true
+exclude = ["^\\.reference/", "^tests/reference/"]
