@@ -36,6 +36,11 @@ Mealie Enricher acompaña a tu instalación de [Mealie](https://github.com/meali
 
 Es la migración a Python de [mealie-calorie-estimator 1.12.3](https://github.com/timo-reymann/mealie-calorie-estimator/tree/c2dc71a1d8effe29375391f2fe50da94d27cfd7d), con **uv, FastAPI y OpenAI Agents SDK**. Conserva sus reglas y limitaciones, con la adaptación solicitada de etiquetas automáticas al español.
 
+La versión **1.13.0** añade un modo opcional de **catálogos DuckDB + BEDCA** y
+**OpenAI Decisions** para resolver coincidencias ambiguas. SQLite se mantiene
+exclusivamente para caché. El modo anterior sigue disponible con
+`CATALOG_ENABLED=false`.
+
 | | Qué aporta |
 |---|---|
 | **Estimación por ración** | Calorías, macronutrientes y otros nutrientes disponibles a partir de los ingredientes. |
@@ -90,6 +95,25 @@ docker compose up -d --no-build --wait
 ~~~
 
 **Estado del paquete:** la configuración de descarga está preparada; la publicación de una imagen en GHCR sigue pendiente. Este repositorio contiene el código fuente y el Dockerfile para construirla.
+
+## Catálogo BEDCA local
+
+Prepara los tres CSV externos de BEDCA y conviértelos con:
+
+~~~sh
+uv run mealie-catalog import-bedca --input-dir data/bedca --output data/catalogs/catalogos.duckdb --dataset-version 2026-08-19
+~~~
+
+Después activa `CATALOG_ENABLED=true`. En Docker, el perfil `catalog-import`
+prepara un volumen independiente que la aplicación consulta en solo lectura.
+Los datos BEDCA no se redistribuyen en el repositorio ni en la imagen.
+
+El selector respeta estados como crudo/cocido y puede dejar un ingrediente
+pendiente cuando falte información. **Decisions selecciona alimentos; Python
+calcula los nutrientes.** Las tablas para futuros productos y precios de
+supermercados están preparadas, sin datos ni recopiladores todavía.
+
+[Preparación, configuración y actualización del catálogo](docs/11-catalogos-duckdb.md).
 
 ## Ver lo que está pasando
 

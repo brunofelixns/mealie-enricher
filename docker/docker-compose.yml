@@ -8,10 +8,12 @@ services:
       - .env
     environment:
       PORT: ${PORT:-8000}
+      CATALOG_DB_PATH: /app/catalogs/catalogos.duckdb
     ports:
       - "${PUBLISHED_PORT:-8000}:${PORT:-8000}"
     volumes:
       - estimator-cache:/app/data
+      - estimator-catalogs:/app/catalogs:ro
     restart: unless-stopped
     healthcheck:
       test:
@@ -24,5 +26,22 @@ services:
       retries: 3
       start_period: 10s
 
+  catalog-import:
+    image: ${MEALIE_ENRICHER_IMAGE:?Configura MEALIE_ENRICHER_IMAGE en .env}
+    profiles: [catalog]
+    entrypoint: ["python", "-m", "mealie_enricher.catalog.cli"]
+    command:
+      - import-bedca
+      - --input-dir
+      - /input
+      - --output
+      - /app/catalogs/catalogos.duckdb
+      - --dataset-version
+      - ${BEDCA_DATASET_VERSION:-2026-08-19}
+    volumes:
+      - estimator-catalogs:/app/catalogs
+      - ${BEDCA_INPUT_DIR:-./bedca}:/input:ro
+
 volumes:
   estimator-cache:
+  estimator-catalogs:

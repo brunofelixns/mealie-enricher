@@ -103,7 +103,15 @@ class TaggingService:
         self, recipe: MealieRecipe, ingredient_hash: str, household_id: str | None
     ) -> EstimateAndTagResult:
         result = await self.estimator.estimate_recipe(recipe)
-        patch = build_nutrition_patch(result, ingredient_hash)
+        patch = build_nutrition_patch(
+            result,
+            ingredient_hash,
+            catalog_mode=self.estimator.catalog is not None,
+        )
+        if "calorie_estimator_catalog" in (recipe.extras or {}) and (
+            "calorie_estimator_catalog" not in patch.extras
+        ):
+            patch.extras["calorie_estimator_catalog"] = "[]"
         tags, slugs = await self.resolve_and_merge_tags(
             recipe, result.per_serving_nutrients, household_id
         )

@@ -1,3 +1,6 @@
+import math
+
+from ..catalog.text import normalize_name
 from ..compat import js_number
 from ..models import MealieUnit
 
@@ -44,4 +47,42 @@ def convert_to_grams(quantity: float, unit: MealieUnit | None) -> float | None:
                 return None
             if name in FALLBACK_UNITS:
                 return quantity * FALLBACK_UNITS[name]
+    return None
+
+
+def convert_catalog_mass(quantity: float, unit: MealieUnit | None) -> float | None:
+    """Catalog values per 100 g require mass; volume needs a separate estimate."""
+    if unit is None or not math.isfinite(quantity) or quantity <= 0:
+        return None
+    factors = {
+        "g": 1,
+        "gram": 1,
+        "grams": 1,
+        "gramo": 1,
+        "gramos": 1,
+        "kg": 1000,
+        "kilogram": 1000,
+        "kilograms": 1000,
+        "kilogramo": 1000,
+        "kilogramos": 1000,
+        "oz": 28.35,
+        "ounce": 28.35,
+        "ounces": 28.35,
+        "lb": 453.592,
+        "lbs": 453.592,
+        "pound": 453.592,
+        "pounds": 453.592,
+    }
+    if unit.standard_quantity is not None and unit.standard_unit is not None:
+        factor = factors.get(normalize_name(unit.standard_unit))
+        standard = js_number(unit.standard_quantity)
+        return (
+            quantity * standard * factor
+            if (factor is not None and math.isfinite(standard) and standard > 0)
+            else None
+        )
+    for candidate in (unit.name, unit.abbreviation):
+        factor = factors.get(normalize_name(candidate or ""))
+        if factor is not None:
+            return quantity * factor
     return None

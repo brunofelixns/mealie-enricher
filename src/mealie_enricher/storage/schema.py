@@ -28,3 +28,10 @@ llm_nutrient_cache = Table(
     Column("nutrients", Text, nullable=False),
     Column("updated_at", BigInteger, nullable=False),
 )
+catalog_resolution_cache = Table(
+    "catalog_resolution_cache",
+    metadata,
+    Column("lookup_key", Text, primary_key=True),
+    Column("resolution", Text, nullable=False),
+    Column("updated_at", BigInteger, nullable=False),
+)

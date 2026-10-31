@@ -8,7 +8,6 @@ from ..runtime.slug_queue import SlugQueue
 from ..storage.history import ExecutionHistory
 from .estimator import (
     build_manual_ack_patch,
-    compute_ingredient_hash,
     has_manual_calories,
     should_estimate,
 )
@@ -40,7 +39,7 @@ class ProcessingService:
             if not should_estimate(recipe, self.settings.estimate):
                 handle.complete("filtered", ["Recipe not tagged for estimation"])
                 return
-            ingredient_hash = compute_ingredient_hash(recipe)
+            ingredient_hash = self.tagging.estimator.ingredient_hash(recipe)
             if trigger != "estimate":
                 if (recipe.extras or {}).get("calorie_estimator_hash") == ingredient_hash:
                     if tags_are_complete(recipe):

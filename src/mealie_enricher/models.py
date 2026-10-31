@@ -107,6 +107,7 @@ class IngredientOutcome(WireModel):
     grams: float | None
     nutrients: NutrientSet | None
     llm_estimated: bool = False
+    catalog: dict[str, Any] | None = Field(default=None, exclude=True)
 
 
 class EstimateResult(WireModel):
@@ -121,7 +122,7 @@ class EstimateResult(WireModel):
 
 
 class NutritionPatch(WireModel):
-    nutrition: dict[str, str] | None = None
+    nutrition: dict[str, str | None] | None = None
     extras: dict[str, Any]
 
 

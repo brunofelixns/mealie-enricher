@@ -27,6 +27,15 @@ x-calorie-env: &calorie-env
   HISTORY_MAX_ENTRIES: ${HISTORY_MAX_ENTRIES:-200}
   MEALIE_RECIPE_URL_TEMPLATE: ${MEALIE_RECIPE_URL_TEMPLATE:-}
   DEV_SEED_HISTORY: ${DEV_SEED_HISTORY:-false}
+  CATALOG_ENABLED: ${CATALOG_ENABLED:-false}
+  CATALOG_DB_PATH: /app/catalogs/catalogos.duckdb
+  DECISIONS_ENABLED: ${DECISIONS_ENABLED:-false}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  DECISIONS_API_KEY: ${DECISIONS_API_KEY:-}
+  DECISIONS_MODEL: ${DECISIONS_MODEL:-gpt-6-luna}
+  DECISIONS_MIN_CONFIDENCE: ${DECISIONS_MIN_CONFIDENCE:-0.9}
+  DECISIONS_TIMEOUT_SECONDS: ${DECISIONS_TIMEOUT_SECONDS:-20}
+  DECISIONS_MAX_CONCURRENCY: ${DECISIONS_MAX_CONCURRENCY:-2}
 
 services:
   calorie-estimator:
@@ -43,7 +52,25 @@ services:
       - "${PORT:-8000}:${PORT:-8000}"
     volumes:
       - estimator-cache:/app/data
+      - estimator-catalogs:/app/catalogs:ro
     restart: unless-stopped
+
+  catalog-import:
+    image: mealie-enricher:local
+    build: .
+    profiles: [catalog]
+    entrypoint: ["python", "-m", "mealie_enricher.catalog.cli"]
+    command:
+      - import-bedca
+      - --input-dir
+      - /input
+      - --output
+      - /app/catalogs/catalogos.duckdb
+      - --dataset-version
+      - ${BEDCA_DATASET_VERSION:-2026-08-19}
+    volumes:
+      - estimator-catalogs:/app/catalogs
+      - ${BEDCA_INPUT_DIR:-./data/bedca}:/input:ro
 
   calorie-estimator-test:
     image: mealie-enricher:local
@@ -61,6 +88,7 @@ services:
       - "127.0.0.1:${TEST_ESTIMATOR_PORT:-8002}:8000"
     volumes:
       - estimator-test-cache:/app/data
+      - estimator-catalogs:/app/catalogs:ro
     depends_on:
       mealie:
         condition: service_healthy
@@ -94,6 +122,7 @@ services:
     profiles: [test]
 
 volumes:
+  estimator-catalogs:
   estimator-cache:
   estimator-test-cache:
   mealie-test-data:

@@ -61,7 +61,20 @@ def test_container_with_real_mealie_and_synthetic_off(tmp_path):
         key: value
         for key, value in os.environ.items()
         if not key.startswith(
-            ("MEALIE_", "OFF_", "LLM_", "EVENT_", "HISTORY_", "DEV_SEED_", "ESTIMATE_", "TEST_")
+            (
+                "MEALIE_",
+                "OFF_",
+                "LLM_",
+                "EVENT_",
+                "HISTORY_",
+                "DEV_SEED_",
+                "ESTIMATE_",
+                "TEST_",
+                "OPENAI_",
+                "DECISIONS_",
+                "CATALOG_",
+                "BEDCA_",
+            )
         )
     }
     compose = [
@@ -184,6 +197,63 @@ def test_container_with_real_mealie_and_synthetic_off(tmp_path):
                 assert _wait_until(lambda: finished("webhook"))["status"] == "skipped"
                 assert app.get("/estimator/history").status_code == 200
 
+            # Switch this isolated project to catalog mode and validate actual Mealie NULLs.
+            from tests.integration.test_bedca_import import make_export
+
+            source = make_export(tmp_path / "bedca")
+            values.update(
+                {
+                    "CATALOG_ENABLED": "true",
+                    "DECISIONS_ENABLED": "false",
+                    "BEDCA_INPUT_DIR": source.as_posix(),
+                    "BEDCA_DATASET_VERSION": "synthetic-mealie-v1",
+                }
+            )
+            save_env()
+            run("run", "--rm", "catalog-import")
+            run("up", "-d", "--no-build", "--no-deps", "--force-recreate", "calorie-estimator-test")
+            rice = mealie.post("/api/foods", json={"name": "Arroz"})
+            rice.raise_for_status()
+            ingredient = {
+                "quantity": 200,
+                "unit": unit_response.json(),
+                "food": rice.json(),
+                "note": "en crudo",
+                "isFood": True,
+                "disableAmount": False,
+            }
+            changed = mealie.patch(
+                "/api/recipes/" + slug,
+                json={"recipeIngredient": [ingredient]},
+            )
+            changed.raise_for_status()
+            with httpx.Client(base_url=f"http://127.0.0.1:{estimator_port}", timeout=10) as app:
+                _wait_until(lambda: app.get("/health").is_success)
+                response = app.post("/estimate", json={"content": {"slug": slug}})
+                assert response.status_code == 202
+                assert _wait_until(lambda: finished("estimate"))["status"] == "processed"
+                recipe = mealie.get("/api/recipes/" + slug).json()
+                assert recipe["nutrition"]["calories"] == "100"
+                assert (
+                    json.loads(recipe["extras"]["calorie_estimator_catalog"])[0]["id"] == "bedca:1"
+                )
+                ingredient["note"] = ""
+                mealie.patch(
+                    "/api/recipes/" + slug, json={"recipeIngredient": [ingredient]}
+                ).raise_for_status()
+                response = app.post(
+                    "/webhook",
+                    json={
+                        "document_data": {"documentType": "recipe", "recipeSlug": slug},
+                    },
+                )
+                assert response.status_code == 202
+                record = _wait_until(lambda: finished("webhook"))
+                assert record["status"] == "processed", record
+                assert record["estimate"]["unmatchedCount"] == 1
+                recipe = mealie.get("/api/recipes/" + slug).json()
+                assert recipe["nutrition"]["calories"] is None
+
             container = run("ps", "-q", "calorie-estimator-test").stdout.strip()
             inspection = subprocess.run(
                 ["docker", "inspect", container],
@@ -206,7 +276,11 @@ def test_compose_test_env_file_keeps_mealie_token(tmp_path):
         "TEST_ENV_FILE=" + str(token_file).replace("\\", "/") + "\n",
         encoding="utf-8",
     )
-    environment = {k: v for k, v in os.environ.items() if not k.startswith(("MEALIE_", "TEST_"))}
+    environment = {
+        k: v
+        for k, v in os.environ.items()
+        if not k.startswith(("MEALIE_", "TEST_", "OPENAI_", "DECISIONS_", "CATALOG_", "BEDCA_"))
+    }
     result = subprocess.run(
         [
             "docker",

@@ -102,6 +102,23 @@ Este comando conserva el volumen. La opción --volumes eliminaría la caché y n
 
 El historial y las tareas continúan en memoria y se pierden al reiniciar, igual que en la aplicación original. Ejecuta una sola instancia.
 
+## Catálogo BEDCA opcional
+
+Coloca `bedca_foods.csv`, `bedca_foodvalues.csv` y `bedca_units.csv` en `bedca/`
+o configura `BEDCA_INPUT_DIR`. Con una imagen que incluya la versión 1.13.0:
+
+~~~sh
+docker compose --profile catalog run --rm catalog-import
+~~~
+
+Después activa `CATALOG_ENABLED=true` en `.env` y arranca el servicio. El catálogo
+se guarda en `estimator-catalogs`; la aplicación lo monta en solo lectura y la
+caché continúa en `estimator-cache`. Para Decisions configura también
+`DECISIONS_ENABLED=true` y `OPENAI_API_KEY`. El fallback LLM conserva su
+configuración independiente.
+
+[Instrucciones completas y actualización segura](../docs/11-catalogos-duckdb.md).
+
 ## Variables y ejemplo
 
 .env.example incluye todas las variables de configuración del servicio y los dos puertos del despliegue. .env se ignora en el repositorio y contiene tu configuración real.

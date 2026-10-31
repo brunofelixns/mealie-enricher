@@ -55,7 +55,7 @@ async def test_alembic_preserves_rows_in_database_exported_by_original(tmp_path)
         assert (
             database.execute("SELECT * FROM nutrient_cache ORDER BY food_name").fetchall() == before
         )
-        assert database.execute("SELECT version_num FROM alembic_version").fetchone() == ("0001",)
+        assert database.execute("SELECT version_num FROM alembic_version").fetchone() == ("0002",)
     cache = await SqliteCache.open(str(path), 86400000, clock_ms=lambda: 1700000003500)
     assert (await cache.get_nutrients("rice")).kcal_per100g == 100
     await cache.close()

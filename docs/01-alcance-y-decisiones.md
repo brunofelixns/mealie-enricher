@@ -94,6 +94,24 @@ Tampoco se corregirán silenciosamente aproximaciones nutricionales, ceros trata
 
 Con una misma receta, configuración y respuestas externas controladas, las dos implementaciones deben producir los mismos resultados contractuales. Solo podrán normalizarse valores variables enumerados en la matriz: identificadores de ejecución, reloj y duración. No se normalizarán diferencias nutricionales ni cambios en las escrituras.
 
+## Evolución aprobada el 2026-10-31: catálogos
+
+La primera entrega compatible queda como referencia histórica. El usuario
+autoriza ahora una ampliación opcional, detallada en
+[11-catalogos-duckdb.md](11-catalogos-duckdb.md):
+
+- D08: SQLite permanece exclusivamente como caché; DuckDB guarda catálogos
+  persistentes, consultados en solo lectura por el servicio.
+- D09: importación explícita y versionada de BEDCA con originales, procedencia,
+  validación y nutrientes derivados separados. No redistribuir el dataset.
+- D10: OpenAI Decisions elige entre candidatos o se abstiene; Agents SDK conserva
+  su integración existente y Python mantiene los cálculos y etiquetas.
+- D11: preparar tablas de productos, nutrientes propios, presentaciones,
+  supermercados y precios fechados; recopiladores reales quedan para otra fase.
+- D12: con catálogo activo, contexto/versión invalidan hash y caché; se respetan
+  estados y notas, no se supone ml=g y se limpian valores automáticos obsoletos.
+  Con catálogo desactivado se mantienen los contratos de la migración original.
+
 ## Referencias
 
 - [uv](https://docs.astral.sh/uv/guides/projects/).

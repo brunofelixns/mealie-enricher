@@ -16,5 +16,7 @@ build/
 .env.test
 .compose-test.env
 data/
+*.duckdb
+*.duckdb.wal
 node_modules/
 .cache/

@@ -111,7 +111,19 @@ def create_app(
                 limits=httpx.Limits(max_connections=None, max_keepalive_connections=None),
             )
         )
+        catalog = None
+        selector = None
         try:
+            resolver = None
+            if settings.catalog.enabled:
+                from .agents.catalog_decisions import OpenAIDecisionSelector
+                from .catalog.resolver import CatalogResolver
+                from .catalog.store import DuckDbCatalog
+
+                catalog = await asyncio.to_thread(DuckDbCatalog, settings.catalog.db_path)
+                if settings.decisions.enabled:
+                    selector = OpenAIDecisionSelector(settings.decisions)
+                resolver = CatalogResolver(catalog, selector, cache)
             limiter = RateLimiter(settings.off, settings.llm)
             queue = SlugQueue(settings.events.debounce_ms)
             events = ExecutionHistory(int(settings.history.max_entries), clock_ms=now)
@@ -120,8 +132,9 @@ def create_app(
             off = OffClient(settings.off, client, cache, limiter)
             llm = LlmEstimator(settings.llm, AgentLlmRunner(settings.llm, client), cache, limiter)
             mealie = MealieClient(settings, client)
-            tagging = TaggingService(mealie, Estimator(off, llm))
+            tagging = TaggingService(mealie, Estimator(off, llm, catalog=resolver))
             app.state.settings, app.state.http, app.state.cache = settings, client, cache
+            app.state.catalog = catalog
             app.state.history, app.state.tasks, app.state.queue = events, tasks, queue
             app.state.theme = MealieThemeClient(settings.mealie, client, clock_ms=now)
             app.state.processing = ProcessingService(settings, mealie, tagging, queue, events)
@@ -130,6 +143,10 @@ def create_app(
             if hasattr(app.state, "tasks"):
                 await app.state.tasks.close()
                 await app.state.queue.close()
+            if selector is not None:
+                await selector.close()
+            if catalog is not None:
+                await asyncio.to_thread(catalog.close)
             await cache.close()
             if http is None:
                 await client.aclose()

@@ -32,3 +32,11 @@ El historial se pierde al detener cada proceso y las tareas en memoria no se rec
 Las pruebas ejecutan Agents SDK real con HTTP simulado. Una comprobación con proveedor real requiere la configuración elegida por el usuario: LLM_BASE_URL, LLM_ENDPOINT_URL, LLM_MODEL y LLM_API_KEY. No se ha leído ni utilizado una credencial real.
 
 Cuando se autorice esa comprobación, hacer una única estimación sintética acotada, registrar proveedor/modelo y resultado sin claves, y distinguirla de las pruebas ordinarias. Los fallos siguen devolviendo ausencia de estimación, sin reintentos LLM.
+
+## Catálogos desde 1.13.0
+
+SQLite sigue dedicado a caché y ejecuta Alembic al inicio (revisión 0002). El catálogo DuckDB es un archivo persistente separado, preparado mediante `mealie-catalog import-bedca` o el perfil Docker `catalog-import`. La aplicación lo abre en solo lectura. Véanse la primera preparación, actualización con parada controlada y volúmenes separados en [11-catalogos-duckdb.md](11-catalogos-duckdb.md).
+
+Para volver al flujo anterior, configura `CATALOG_ENABLED=false` y recrea el servicio. La caché heredada se conserva. No elimines volúmenes para cambiar de modo. Las recetas previamente procesadas con catálogo llevan un hash contextual distinto: al volver al modo anterior se volverán a evaluar cuando corresponda; no se revierten automáticamente las escrituras previas de Mealie.
+
+La comprobación real de Decisions se autorizó el 2026-10-31 y devolvió AuthenticationError con la clave disponible. Es independiente del proveedor LLM anterior, cuya prueba real sigue pendiente. Corregir la clave y solicitar una estimación explícita permite reintentar sin esperar el TTL; no se añade reintento automático ni se registra el secreto.

@@ -13,7 +13,7 @@ FROM python:3.14.6-slim AS runner
 WORKDIR /app
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 RUN groupadd --gid 1000 appuser && useradd --uid 1000 --gid 1000 --create-home appuser \
-    && mkdir /app/data && chown appuser:appuser /app/data
+    && mkdir /app/data /app/catalogs && chown appuser:appuser /app/data /app/catalogs
 COPY --from=builder /app/.venv ./.venv
 COPY alembic.ini ./
 COPY alembic ./alembic

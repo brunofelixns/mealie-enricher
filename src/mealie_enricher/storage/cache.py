@@ -4,14 +4,22 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Self
 
+from pydantic import ValidationError
 from sqlalchemy import Table, delete, select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
+from ..catalog.models import CatalogResolution
 from ..compat import json_stringify
 from ..models import NutrientSet
-from .schema import llm_estimate_cache, llm_nutrient_cache, metadata, nutrient_cache
+from .schema import (
+    catalog_resolution_cache,
+    llm_estimate_cache,
+    llm_nutrient_cache,
+    metadata,
+    nutrient_cache,
+)
 
 
 class SqliteCache:
@@ -27,7 +35,12 @@ class SqliteCache:
         cache = cls(engine, ttl_ms, clock_ms or (lambda: time.time() * 1000))
         async with engine.begin() as conn:
             await conn.run_sync(metadata.create_all)
-            for table in (nutrient_cache, llm_estimate_cache, llm_nutrient_cache):
+            for table in (
+                nutrient_cache,
+                llm_estimate_cache,
+                llm_nutrient_cache,
+                catalog_resolution_cache,
+            ):
                 await conn.execute(
                     delete(table).where(table.c.updated_at < cache.clock_ms() - ttl_ms)
                 )
@@ -103,4 +116,22 @@ class SqliteCache:
             food_name.lower().strip(),
             "nutrients",
             json_stringify(nutrients.model_dump(by_alias=True)),
+        )
+
+    async def get_catalog_resolution(self, key: str) -> CatalogResolution | None:
+        value = await self._get(catalog_resolution_cache, "lookup_key", key, "resolution")
+        if value is None:
+            return None
+        try:
+            return CatalogResolution.model_validate_json(value)
+        except ValidationError, ValueError, TypeError:
+            return None
+
+    async def set_catalog_resolution(self, key: str, result: CatalogResolution) -> None:
+        await self._set(
+            catalog_resolution_cache,
+            "lookup_key",
+            key,
+            "resolution",
+            result.model_dump_json(),
         )

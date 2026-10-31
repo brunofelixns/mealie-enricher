@@ -212,3 +212,14 @@ README, código de aplicación, Compose de despliegue, logo y portada comprobado
 Comprobación previa a la publicación: 189 pruebas Python aprobadas en 11.22 s y 2 Docker opt-in omitidas; Ruff y mypy correctos. La ejecución Docker anterior permanece documentada en su apartado y no se repitió para este cambio de presentación.
 
 Se conserva la visibilidad privada. Publicar el código no ha publicado una imagen en GHCR ni acredita una ejecución remota de CI. [Detalles y atribución](10-publicacion-github.md).
+
+## 2026-10-31 — Versión 1.13.0: catálogos DuckDB
+
+- `pytest -q --tb=short`: 318 correctas y 3 Docker omitidas, 69,95 s. Incluye la compatibilidad heredada y las regresiones de contexto, estado, unidades, caché, lectura, importación y limpieza de valores anteriores.
+- Ruff correcto; 94 archivos con formato comprobado. Mypy correcto en los 45 archivos de fuente.
+- `uv sync --locked --offline`: correcto; DuckDB 2.0.0 y OpenAI 3.41.0, Agents SDK 0.24.0. Versión de aplicación 1.13.0.
+- Construida imagen local `mealie-enricher:catalog-1.13.0` y `mealie-enricher:local`. No se publica en GHCR ni se verifica ARM o CI remoto.
+- BEDCA real importado localmente: 957 alimentos, 31.166 componentes originales, 69 combinaciones de unidad/base y 8.294 valores derivados. 21 componentes por volumen/materia seca quedan sin convertir. Los archivos reales están ignorados por Git.
+- Resolución con DuckDB real, sin proveedor: Arroz permanece ambiguo; Arroz cocido encuentra bedca:2661 mediante alias hervido; Arroz integral crudo encuentra bedca:904. Esta comprobación verifica identidad/flujo, no certifica la exactitud nutricional de la fuente (véase la observación de 2661 en el documento 11).
+- Una llamada sintética real de Decisions, autorizada por el usuario: AuthenticationError. El proveedor no se considera validado positivamente. El SDK/contrato HTTP y la abstención se prueban con transporte simulado; los fallos no se fijan en caché y no hay reintentos automáticos.
+- Docker final: 3 pruebas correctas en 112,58 s. Incluyen Mealie v3.19.2 real aislado, flujo heredado, cambio a BEDCA, limpieza real de calorías al pasar a ambigüedad, importador del Compose de despliegue, permisos de appuser, lectura de catálogo y volúmenes separados. Se eliminaron únicamente los proyectos y volúmenes temporales propios.

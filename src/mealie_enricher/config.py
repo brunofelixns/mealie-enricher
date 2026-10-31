@@ -58,6 +58,20 @@ class HistorySettings(WireModel):
     max_entries: float = 200
 
 
+class CatalogSettings(WireModel):
+    enabled: bool = False
+    db_path: str = "data/catalogs/catalogos.duckdb"
+
+
+class DecisionSettings(WireModel):
+    enabled: bool = False
+    api_key: str = Field(default="", repr=False, exclude=True)
+    model: str = "gpt-6-luna"
+    timeout_seconds: float = Field(default=20, gt=0, le=120)
+    min_confidence: float = Field(default=0.9, ge=0.5, le=1, allow_inf_nan=False)
+    max_concurrency: int = Field(default=2, ge=1, le=16)
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         alias_generator=camel_case,
@@ -73,6 +87,8 @@ class Settings(BaseSettings):
     events: EventSettings = Field(default_factory=EventSettings)
     cache: CacheSettings = Field(default_factory=CacheSettings)
     history: HistorySettings = Field(default_factory=HistorySettings)
+    catalog: CatalogSettings = Field(default_factory=CatalogSettings, exclude=True)
+    decisions: DecisionSettings = Field(default_factory=DecisionSettings, exclude=True)
     log_level: str = "info"
     token_overrides: dict[str, str] = Field(default_factory=dict, exclude=True)
 
@@ -143,6 +159,18 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
             recipe_url_template=value("MEALIE_RECIPE_URL_TEMPLATE", mealie.url + "/recipe/{slug}"),
             seed_dev_data=value("DEV_SEED_HISTORY", "false").lower() == "true",
             max_entries=integer("HISTORY_MAX_ENTRIES", 200),
+        ),
+        catalog=CatalogSettings(
+            enabled=value("CATALOG_ENABLED", "false").lower() == "true",
+            db_path=value("CATALOG_DB_PATH", "data/catalogs/catalogos.duckdb"),
+        ),
+        decisions=DecisionSettings(
+            enabled=value("DECISIONS_ENABLED", "false").lower() == "true",
+            api_key=value("DECISIONS_API_KEY", value("OPENAI_API_KEY")),
+            model=value("DECISIONS_MODEL", "gpt-6-luna"),
+            timeout_seconds=_parse_float(value("DECISIONS_TIMEOUT_SECONDS", "20")),
+            min_confidence=_parse_float(value("DECISIONS_MIN_CONFIDENCE", "0.9")),
+            max_concurrency=int(integer("DECISIONS_MAX_CONCURRENCY", 2)),
         ),
         log_level=value("LOG_LEVEL", "info"),
         token_overrides=tokens,
