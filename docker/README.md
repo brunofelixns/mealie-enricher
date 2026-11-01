@@ -79,9 +79,7 @@ Stop with `docker compose down`. This preserves volumes. History and pending tas
 
 ## Optional BEDCA catalog
 
-A **bundled BEDCA variant** includes DuckDB and the original CSV files for non-commercial use under BEDCA's terms. Use [.env.bedca.example](.env.bedca.example) with this Compose; no import is needed. It is prepared locally; this change does not publish it to GHCR. [Build, deploy and update guide, in Spanish](../docs/14-imagen-con-bedca.md).
-
-For the base image, place your separately obtained `bedca_foods.csv`, `bedca_foodvalues.csv` and `bedca_units.csv` in `bedca/`, or set `BEDCA_INPUT_DIR`. Set `BEDCA_DATASET_VERSION` to identify the export.
+BEDCA data is not redistributed with the source or image. Place your separately obtained `bedca_foods.csv`, `bedca_foodvalues.csv` and `bedca_units.csv` in `bedca/`, or set `BEDCA_INPUT_DIR`. Set `BEDCA_DATASET_VERSION` to identify the export.
 
 ~~~sh
 docker compose --profile catalog run --rm catalog-import
