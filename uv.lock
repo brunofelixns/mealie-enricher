@@ -728,7 +728,7 @@ wheels = [
 
 [[package]]
 name = "mealie-enricher"
-version = "1.13.0"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },

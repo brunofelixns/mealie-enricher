@@ -125,7 +125,15 @@ autoriza ahora una ampliación opcional, detallada en
 - [Diseño y operación](15-imagen-con-bedca.md). Este cambio prepara y prueba
   la imagen local; no publica un paquete ni modifica su visibilidad.
 
-## Referencias vigentes
+## D14: versión propia del proyecto
+
+El usuario establece **1.0** como versión correcta de Mealie Enricher. Se utiliza
+**1.0.0** en los metadatos Python y Docker. La versión del proyecto tiene
+numeración propia; no continúa la del repositorio original. Los números antiguos
+se conservan únicamente en evidencias históricas y referencias al upstream.
+Cambiar el código local no renombra ni publica imágenes de GHCR.
+
+## Referencias técnicas
 
 - [uv](https://docs.astral.sh/uv/guides/projects/).
 - [FastAPI](https://fastapi.tiangolo.com/).

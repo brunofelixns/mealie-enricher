@@ -179,3 +179,10 @@ Solo se marcarán tareas completadas después de registrar su evidencia. Un bloq
 - Pruebas previas al cambio muestran las dos rutas Compose forzadas al volumen; tras corregirlas pasan. La primera ejecución de empaquetado valida CSV/permisos/datos inválidos y arranque; la comprobación de actualización detecta que el helper de pruebas aún consultaba la ruta antigua. Se corrige únicamente ese helper.
 - Construcción local con BEDCA real correcta: 957 alimentos, 31.166 componentes, 8.294 valores derivados, CSV originales y 21 componentes sin conversión a masa. Se prepara la suite completa con Mealie real y actualización entre imágenes. [Operación y resultados](15-imagen-con-bedca.md).
 - Cierre: 358 pruebas correctas sin omisiones en 402,68 s, incluidas 24 Docker y 7 escenarios nuevos de la variante. Arranque sin importación, cambio de imagen 360→400 kcal conservando SQLite y Mealie con BEDCA real 384 kcal/8 g de proteína/bedca:904 verificados. Ruff/formato/mypy correctos y revisión independiente sin hallazgos. Se retiran los proyectos temporales y se conserva la imagen local real; no se publica la nueva variante en GHCR.
+
+## Versión propia 1.0.0 — corrección de numeración
+
+- El usuario establece 1.0 como versión correcta del proyecto. Se normaliza como 1.0.0 en pyproject, uv.lock, imagen base y variante BEDCA; no cambia el comportamiento ni las dependencias.
+- Se actualizan presentación, guías y nombres de imágenes de prueba. Se conserva la numeración antigua en las evidencias históricas y la versión 1.12.3 del proyecto original.
+- El ejemplo de despliegue público sigue utilizando un artefacto existente mediante latest. Se distingue expresamente la versión del código local de la imagen publicada anteriormente; no se declara publicado un tag 1.0.0 por cambiar los metadatos.
+- Verificación final: 334 pruebas ordinarias correctas (24 Docker omitidas) en 47,27 s; 3 comprobaciones Docker dirigidas correctas en 45,20 s, incluido Mealie real con la variante 1.0.0 y BEDCA. Paquete y etiqueta OCI coinciden en ambas imágenes; Ruff/formato y enlaces locales correctos. Se conservan las imágenes locales y se guarda el ajuste sin publicación.

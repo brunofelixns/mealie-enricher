@@ -4,7 +4,7 @@
 
 Esta carpeta permite descargar y ejecutar Mealie Enricher desde **GitHub Container Registry (GHCR)**. Solo necesitas Docker con Compose y estos tres archivos; la instalación no requiere Python, uv ni el código fuente del proyecto.
 
-La imagen pública `ghcr.io/brunofelixns/mealie-enricher:1.13.0` está disponible para linux/amd64 y linux/arm64. Se puede descargar sin iniciar sesión en GHCR; `latest` sigue las publicaciones.
+La versión propia del proyecto es **1.0.0**; su tag GHCR aún no está publicado. Los ejemplos utilizan `latest`, que todavía apunta a la imagen anterior con la numeración antigua, disponible para linux/amd64 y linux/arm64. [Publicación histórica y digest verificado](../docs/14-publicacion-open-source.md).
 
 ## 1. Preparar la configuración
 
@@ -25,7 +25,7 @@ Copy-Item .env.example .env
 Edita al menos:
 
 ~~~dotenv
-MEALIE_ENRICHER_IMAGE=ghcr.io/brunofelixns/mealie-enricher:1.13.0
+MEALIE_ENRICHER_IMAGE=ghcr.io/brunofelixns/mealie-enricher:latest
 MEALIE_URL=https://tu-mealie.example.com
 MEALIE_API_TOKEN=tu-token-de-mealie
 ~~~
@@ -114,7 +114,7 @@ Está preparada localmente; esta entrega no publica un nuevo tag en GHCR.
 Para la imagen base, sigue la preparación manual:
 
 Coloca `bedca_foods.csv`, `bedca_foodvalues.csv` y `bedca_units.csv` en `bedca/`
-o configura `BEDCA_INPUT_DIR`. Con una imagen que incluya la versión 1.13.0:
+o configura `BEDCA_INPUT_DIR`. Con una imagen que incluya la funcionalidad de catálogos:
 
 ~~~sh
 docker compose --profile catalog run --rm catalog-import

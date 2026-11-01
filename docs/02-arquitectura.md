@@ -6,7 +6,7 @@ Estado: arquitectura implementada en Python; empaquetado y validación final en 
 
 Monolito modular asíncrono. Un servicio Python atiende las rutas HTTP y ejecuta tareas en el mismo proceso. Se mantienen SQLite para la caché y estructuras en memoria para cola, limitadores e historial.
 
-Desde 1.13.0, el modo opcional de catálogos añade DuckDB de solo lectura y un
+La versión propia 1.0.0 incluye un modo opcional de catálogos con DuckDB de solo lectura y un
 resolutor de identidad con reglas y Decisions. El importador se ejecuta aparte;
 no escribe el catálogo durante peticiones HTTP. Véase el diseño vigente de
 [catálogos](11-catalogos-duckdb.md). El diagrama siguiente documenta el flujo

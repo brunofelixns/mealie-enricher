@@ -28,14 +28,14 @@ incluido. La variante activa el catálogo y configura su ruta por defecto.
 ## Despliegue
 
 Estado de esta entrega: variante construida **localmente** con el tag
-`mealie-enricher:bedca`. Esta tarea no publica un nuevo tag en GHCR. Cuando se
+`mealie-enricher:1.0.0-bedca`. Esta tarea no publica un nuevo tag en GHCR. Cuando se
 publique, configura `MEALIE_ENRICHER_IMAGE` con ese tag o digest verificado.
 
 Usa el [Compose de despliegue](../docker/docker-compose.yml) y copia
 [.env.bedca.example](../docker/.env.bedca.example) como `.env`. Configura:
 
 ```dotenv
-MEALIE_ENRICHER_IMAGE=mealie-enricher:bedca
+MEALIE_ENRICHER_IMAGE=mealie-enricher:1.0.0-bedca
 MEALIE_URL=https://tu-mealie.example.com
 MEALIE_API_TOKEN=tu-token
 CATALOG_ENABLED=true
@@ -58,8 +58,8 @@ La configuración de IA sigue siendo opcional e independiente.
 Se requieren los tres CSV externos. Desde la raíz, con la imagen base local:
 
 ```sh
-docker build -t mealie-enricher:catalog-1.13.0 .
-docker buildx build --load --network none --build-context bedca_source=./data/bedca --build-arg BASE_IMAGE=mealie-enricher:catalog-1.13.0 --build-arg BEDCA_DATASET_VERSION=bedca-export-2026-08-19 -f docker/Dockerfile.bedca -t mealie-enricher:bedca .
+docker build -t mealie-enricher:1.0.0 .
+docker buildx build --load --network none --build-context bedca_source=./data/bedca --build-arg BASE_IMAGE=mealie-enricher:1.0.0 --build-arg BEDCA_DATASET_VERSION=bedca-export-2026-08-19 -f docker/Dockerfile.bedca -t mealie-enricher:1.0.0-bedca .
 ```
 
 El contexto `bedca_source` es explícito: los datos siguen excluidos de Git y del
@@ -106,7 +106,7 @@ no se certifica la exactitud nutricional científica de toda la fuente.
 
 ## Verificación
 
-Verificado el 2026-11-01:
+Verificación anterior al ajuste de numeración a 1.0.0 (2026-11-01):
 
 - **358 pruebas correctas en 402,68 s**, sin omisiones: 334 ordinarias y
   24 Docker. La variante añade 7 escenarios al conjunto Docker anterior.
@@ -124,7 +124,7 @@ Verificado el 2026-11-01:
 - Revisión independiente sin hallazgos accionables. No se modifica el código de
   estimación y las pruebas no llaman a OpenAI ni utilizan el Mealie del usuario.
 - Los proyectos, volúmenes e imágenes sintéticas temporales se retiran al terminar.
-  Se conserva la imagen local real `mealie-enricher:bedca`.
+  Se conserva la imagen local real `mealie-enricher:1.0.0-bedca`.
 
 ```powershell
 $env:RUN_DOCKER_SMOKE = '1'
@@ -139,5 +139,18 @@ uv run pytest -q --junitxml=.cache/bedca-bundle-full-results.xml
 ignorado por Git. La comprobación local corresponde a **linux/amd64**; no se
 acredita aquí publicación de la variante ni ejecución en ARM.
 
-Identificador local de imagen:
+Identificador de la imagen usada en aquella ejecución:
 `sha256:68926932a1cd81d32358b99fa74ccb9b3a1e02811f52cab7679a434c02dff7f7`.
+
+## Numeración propia 1.0.0
+
+Por indicación del usuario, Mealie Enricher utiliza **1.0.0**. Se reconstruyen
+las imágenes locales `mealie-enricher:1.0.0` y `mealie-enricher:1.0.0-bedca`;
+en ambas, el paquete instalado y la etiqueta OCI indican 1.0.0. Los comandos
+anteriores utilizan estos nombres vigentes. La versión del dataset permanece
+independiente y los CSV no cambian.
+
+La ejecución completa de 358 pruebas anterior conserva su numeración y digest
+históricos. Tras ajustar la versión se ejecuta una nueva validación, registrada
+en [resultados](06-resultados-ejecucion.md). El tag GHCR 1.0.0 no se publica desde
+este cambio; los ejemplos públicos mantienen un artefacto existente vía latest.

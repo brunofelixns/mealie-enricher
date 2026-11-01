@@ -25,7 +25,7 @@ def test_deployment_imports_catalog_then_opens_it_read_only(tmp_path):
     shutil.copyfile(ROOT / "docker/docker-compose.yml", tmp_path / "docker-compose.yml")
     port = _free_port()
     values = {
-        "MEALIE_ENRICHER_IMAGE": os.getenv("CATALOG_TEST_IMAGE", "mealie-enricher:catalog-1.13.0"),
+        "MEALIE_ENRICHER_IMAGE": os.getenv("CATALOG_TEST_IMAGE", "mealie-enricher:1.0.0"),
         "MEALIE_API_TOKEN": "synthetic-not-used",
         "MEALIE_URL": "http://unused.invalid",
         "PUBLISHED_PORT": str(port),

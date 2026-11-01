@@ -4,7 +4,7 @@
 
 Run Mealie Enricher from **GitHub Container Registry (GHCR)** using Docker with Compose. You do not need Python, uv or a source checkout on the server.
 
-Image: `ghcr.io/brunofelixns/mealie-enricher:1.13.0` (linux/amd64 and linux/arm64). The package is public and does not require registry authentication.
+Project version: **1.0.0**, with its versioned GHCR tag not yet published. The examples use public `latest`, which still points to the earlier image under the old numbering (linux/amd64 and linux/arm64). [Historical image and verified digest](../docs/14-publicacion-open-source.md).
 
 ## 1. Configure
 
@@ -17,7 +17,7 @@ cp .env.example .env
 In PowerShell, use `Copy-Item .env.example .env` instead. Edit at least:
 
 ~~~dotenv
-MEALIE_ENRICHER_IMAGE=ghcr.io/brunofelixns/mealie-enricher:1.13.0
+MEALIE_ENRICHER_IMAGE=ghcr.io/brunofelixns/mealie-enricher:latest
 MEALIE_URL=https://your-mealie.example.com
 MEALIE_API_TOKEN=your-mealie-api-token
 LLM_ENABLED=false
@@ -68,7 +68,7 @@ docker compose up -d --no-build --wait --wait-timeout 90
 `latest` follows releases. For reproducible deployments, use a version tag or pin the manifest digest returned by:
 
 ~~~sh
-docker buildx imagetools inspect ghcr.io/brunofelixns/mealie-enricher:1.13.0
+docker buildx imagetools inspect ghcr.io/brunofelixns/mealie-enricher:latest
 ~~~
 
 The reference format is `ghcr.io/brunofelixns/mealie-enricher@sha256:YOUR_VERIFIED_DIGEST`.
@@ -101,8 +101,8 @@ Build, test and publish the source revision being released. For example, on Powe
 
 ~~~powershell
 $releaseRevision = git rev-parse HEAD
-docker buildx build --platform linux/amd64,linux/arm64 --provenance=false --sbom=false --build-arg VERSION=1.13.0 --build-arg VCS_REF=$releaseRevision --tag ghcr.io/brunofelixns/mealie-enricher:1.13.0 --tag ghcr.io/brunofelixns/mealie-enricher:latest --push .
-docker buildx imagetools inspect ghcr.io/brunofelixns/mealie-enricher:1.13.0
+docker buildx build --platform linux/amd64,linux/arm64 --provenance=false --sbom=false --build-arg VERSION=1.0.0 --build-arg VCS_REF=$releaseRevision --tag ghcr.io/brunofelixns/mealie-enricher:1.0.0 --tag ghcr.io/brunofelixns/mealie-enricher:latest --push .
+docker buildx imagetools inspect ghcr.io/brunofelixns/mealie-enricher:latest
 ~~~
 
 Use a new version for future releases and verify a clean deployment before announcing them. Optional provenance and SBOM attestations are disabled in this command because GHCR rejected the initial publication containing them; source, version and license remain in the image's OCI labels. Package visibility is managed separately from repository visibility; verify that an unauthenticated client can pull the image.

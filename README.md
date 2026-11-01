@@ -12,7 +12,7 @@
 <p align="center">
   <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.14-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.14"></a>
   <a href="src/mealie_enricher/app.py"><img src="https://img.shields.io/badge/FastAPI-API-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI"></a>
-  <a href="https://github.com/brunofelixns/mealie-enricher/pkgs/container/mealie-enricher"><img src="https://img.shields.io/badge/GHCR-1.13.0-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker image on GHCR"></a>
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/version-1.0.0-2496ED?style=flat-square" alt="Mealie Enricher 1.0.0"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-D65108?style=flat-square" alt="GPL 3.0 license"></a>
 </p>
 
@@ -32,7 +32,7 @@
 
 Mealie Enricher runs alongside [Mealie](https://github.com/mealie-recipes/mealie). It receives recipe events, resolves ingredients, and writes estimated nutrition and automatic tags back to the recipe. A small web interface shows each run and its outcome.
 
-It started as a Python migration of [mealie-calorie-estimator 1.12.3](https://github.com/timo-reymann/mealie-calorie-estimator/tree/c2dc71a1d8effe29375391f2fe50da94d27cfd7d), preserving its HTTP contracts and processing rules. Version **1.13.0** adds optional local **DuckDB/BEDCA catalogs** and **OpenAI Decisions** for ambiguous ingredient matches. The original Open Food Facts path remains available with `CATALOG_ENABLED=false`.
+It started as a Python migration of [mealie-calorie-estimator 1.12.3](https://github.com/timo-reymann/mealie-calorie-estimator/tree/c2dc71a1d8effe29375391f2fe50da94d27cfd7d), preserving its HTTP contracts and processing rules. Version **1.0.0** includes optional local **DuckDB/BEDCA catalogs** and **OpenAI Decisions** for ambiguous ingredient matches. The original Open Food Facts path remains available with `CATALOG_ENABLED=false`.
 
 | Feature | What you get |
 |---|---|
@@ -48,11 +48,10 @@ It started as a Python migration of [mealie-calorie-estimator 1.12.3](https://gi
 You need a running Mealie instance, an API token and Docker with Compose. Images are published for **linux/amd64** and **linux/arm64**:
 
 ~~~text
-ghcr.io/brunofelixns/mealie-enricher:1.13.0
 ghcr.io/brunofelixns/mealie-enricher:latest
 ~~~
 
-The version tag gives you a predictable deployment; `latest` follows future releases. Public images can be pulled without a GitHub account.
+The project now uses its own version **1.0.0**. Its versioned GHCR tag has not been published yet; `latest` still points to the previously published image under the old numbering. Public images can be pulled without a GitHub account. [Previous publication record](docs/14-publicacion-open-source.md).
 
 Download the deployment files:
 
@@ -68,7 +67,7 @@ In PowerShell, use `curl.exe` for the downloads. You can also download [docker-c
 Edit these values in `.env`:
 
 ~~~dotenv
-MEALIE_ENRICHER_IMAGE=ghcr.io/brunofelixns/mealie-enricher:1.13.0
+MEALIE_ENRICHER_IMAGE=ghcr.io/brunofelixns/mealie-enricher:latest
 MEALIE_URL=https://your-mealie.example.com
 MEALIE_API_TOKEN=your-mealie-api-token
 LLM_ENABLED=false

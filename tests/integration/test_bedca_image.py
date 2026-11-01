@@ -89,7 +89,7 @@ def bundles(tmp_path_factory):
             "--build-context",
             "bedca_source=" + source.as_posix(),
             "--build-arg",
-            "BASE_IMAGE=" + os.getenv("CATALOG_TEST_IMAGE", "mealie-enricher:catalog-1.13.0"),
+            "BASE_IMAGE=" + os.getenv("CATALOG_TEST_IMAGE", "mealie-enricher:1.0.0"),
             "--build-arg",
             "BEDCA_DATASET_VERSION=" + version,
             "-f",
@@ -248,7 +248,7 @@ def test_bundled_catalog_reaches_real_mealie_and_updates_with_image(bundles, tmp
     reason="Set RUN_BEDCA_IMAGE_REAL=1 after building a local image with real BEDCA",
 )
 def test_real_bedca_image_works_in_mealie_without_source_mount(tmp_path):
-    image = os.getenv("BEDCA_BUNDLED_TEST_IMAGE", "mealie-enricher:bedca")
+    image = os.getenv("BEDCA_BUNDLED_TEST_IMAGE", "mealie-enricher:1.0.0-bedca")
     stack = MealieStack(tmp_path, bundled_image=image)
     try:
         stack.start()

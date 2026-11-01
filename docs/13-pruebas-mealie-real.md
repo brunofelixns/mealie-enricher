@@ -63,7 +63,7 @@ uv run pytest tests/integration/test_mealie_real.py -q --junitxml=.cache/mealie-
 ```
 
 `CATALOG_TEST_IMAGE` permite cambiar la imagen local de la aplicación; por defecto
-se usa `mealie-enricher:catalog-1.13.0`. Los CSV del usuario se montan en solo
+se usa `mealie-enricher:1.0.0` (versión propia vigente). Los CSV del usuario se montan en solo
 lectura; únicamente se sustituye el catálogo del volumen temporal. Al terminar,
 se eliminan los contenedores, red y volúmenes del proyecto aleatorio propio.
 No se ejecuta ninguna limpieza global de Docker.

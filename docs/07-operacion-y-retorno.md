@@ -33,7 +33,7 @@ Las pruebas ejecutan Agents SDK real con HTTP simulado. Una comprobación con pr
 
 Cuando se autorice esa comprobación, hacer una única estimación sintética acotada, registrar proveedor/modelo y resultado sin claves, y distinguirla de las pruebas ordinarias. Los fallos siguen devolviendo ausencia de estimación, sin reintentos LLM.
 
-## Catálogos desde 1.13.0
+## Catálogos en Mealie Enricher 1.0.0
 
 SQLite sigue dedicado a caché y ejecuta Alembic al inicio (revisión 0002). El catálogo DuckDB es un archivo persistente separado, preparado mediante `mealie-catalog import-bedca` o el perfil Docker `catalog-import`. La aplicación lo abre en solo lectura. Véanse la primera preparación, actualización con parada controlada y volúmenes separados en [11-catalogos-duckdb.md](11-catalogos-duckdb.md).
 

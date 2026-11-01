@@ -8,6 +8,7 @@ Esta carpeta conserva el alcance, las decisiones, el diseño y el avance de la m
 
 ## Estado actual
 
+- Versión propia vigente: **Mealie Enricher 1.0.0**, por indicación del usuario. Las versiones anteriores se conservan en el historial; el nuevo tag 1.0.0 todavía no está publicado en GHCR.
 - Plan aprobado para ejecución el 2026-10-29.
 - Fase 0 completada: referencia fijada, typecheck correcto y 140 pruebas upstream aprobadas.
 - 125 capturas reproducibles, 40 contratos identificados y una base de caché heredada generados.

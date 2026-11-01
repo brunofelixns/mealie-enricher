@@ -252,3 +252,12 @@ Se conserva la visibilidad privada. Publicar el código no ha publicado una imag
 - Ruff/formato y mypy (45 archivos fuente) correctos; revisión independiente sin hallazgos accionables. No cambia el código de estimación ni se llama a OpenAI.
 - Proyectos y volúmenes temporales retirados. La imagen real queda local; no se publica un tag BEDCA ni se acredita ARM para esta variante. La imagen base publicada se conserva.
 - [Construcción, despliegue, condiciones y evidencia](15-imagen-con-bedca.md).
+
+## Corrección a la versión propia 1.0.0
+
+- Por indicación del usuario, la versión propia es 1.0.0. Se corrigen pyproject, uv.lock, etiquetas Docker y documentación; la dependencia del proyecto es la única versión que cambia en el lock.
+- `uv lock --offline` y `uv sync --locked --offline` correctos: el paquete instalado pasa de 1.13.0 a 1.0.0 sin actualizar dependencias.
+- Suite ordinaria posterior: **334 correctas y 24 Docker omitidas en 47,27 s**. Ruff y formato correctos. No se añaden pruebas redundantes para una sustitución de metadatos.
+- Reconstruidas imágenes locales base y BEDCA. Ejecución dentro de ambas verifica **paquete Python = 1.0.0 y etiqueta OCI = 1.0.0**. Los CSV y el catálogo conservan su versión de datos independiente.
+- Registro consultado en solo lectura: latest conserva el digest anterior `sha256:296af6395411957581f8157b3dfd7844cffd62a62313c504e61e3e82b371f158` y el tag 1.0.0 devuelve not found. Los ejemplos no declaran publicada la nueva versión.
+- Comprobaciones Docker dirigidas con 1.0.0: **3 correctas en 45,20 s**, 4 escenarios no seleccionados. Ambos Compose aceptan la ruta de la variante y Mealie real aislado guarda los nutrientes de BEDCA desde la imagen sin importar ni montar CSV. Se comprueba el paquete Python y la etiqueta OCI en las dos imágenes; no se repite la suite Docker completa por un cambio exclusivo de numeración.

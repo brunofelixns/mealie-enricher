@@ -2,6 +2,10 @@
 
 Fecha: 2026-11-01.
 
+Registro histórico de la publicación con la numeración anterior 1.13.0. El
+usuario establece después **1.0.0** como versión propia de Mealie Enricher.
+Esta corrección no renombra el artefacto ni altera los digests que constan aquí.
+
 ## Resultado
 
 - [Repositorio público](https://github.com/brunofelixns/mealie-enricher), con `main` como rama predeterminada y licencia GPLv3 conservada.

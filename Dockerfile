@@ -10,7 +10,7 @@ COPY LICENSE NOTICE ./
 RUN uv sync --locked --no-dev --no-editable --no-cache
 
 FROM python:3.14.6-slim AS runner
-ARG VERSION=1.13.0
+ARG VERSION=1.0.0
 ARG VCS_REF=unknown
 LABEL org.opencontainers.image.title="Mealie Enricher" \
     org.opencontainers.image.description="Self-hosted nutrition estimates and automatic tags for Mealie recipes" \
