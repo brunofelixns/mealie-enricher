@@ -10,6 +10,15 @@ COPY LICENSE NOTICE ./
 RUN uv sync --locked --no-dev --no-editable --no-cache
 
 FROM python:3.14.6-slim AS runner
+ARG VERSION=1.13.0
+ARG VCS_REF=unknown
+LABEL org.opencontainers.image.title="Mealie Enricher" \
+    org.opencontainers.image.description="Self-hosted nutrition estimates and automatic tags for Mealie recipes" \
+    org.opencontainers.image.source="https://github.com/brunofelixns/mealie-enricher" \
+    org.opencontainers.image.url="https://github.com/brunofelixns/mealie-enricher" \
+    org.opencontainers.image.licenses="GPL-3.0" \
+    org.opencontainers.image.version="$VERSION" \
+    org.opencontainers.image.revision="$VCS_REF"
 WORKDIR /app
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 RUN groupadd --gid 1000 appuser && useradd --uid 1000 --gid 1000 --create-home appuser \

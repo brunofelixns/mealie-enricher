@@ -1,5 +1,7 @@
 # Migración de Mealie Calorie Estimator a Python
 
+[English README](../README.md) · [Presentación en español](README.es.md) · [Despliegue en español](../docker/README.es.md)
+
 Fecha de apertura: 2026-10-29.
 
 Esta carpeta conserva el alcance, las decisiones, el diseño y el avance de la migración. El objetivo es reproducir el comportamiento y las limitaciones del servicio original en Python.

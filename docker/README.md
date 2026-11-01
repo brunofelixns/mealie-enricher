@@ -1,42 +1,37 @@
-# Ejecutar la imagen publicada en GitHub
+# Run the published Docker image
 
-Esta carpeta permite descargar y ejecutar Mealie Enricher desde **GitHub Container Registry (GHCR)**. Solo necesitas Docker con Compose y estos tres archivos; la instalación no requiere Python, uv ni el código fuente del proyecto.
+**English** | [Español](README.es.md) | [Project overview](../README.md)
 
-La publicación de la imagen es un paso previo. El nombre del paquete del ejemplo es un marcador: sustitúyelo por la imagen y el tag que realmente hayas publicado.
+Run Mealie Enricher from **GitHub Container Registry (GHCR)** using Docker with Compose. You do not need Python, uv or a source checkout on the server.
 
-## 1. Preparar la configuración
+Image: `ghcr.io/brunofelixns/mealie-enricher:1.13.0` (linux/amd64 and linux/arm64). The package is public and does not require registry authentication.
 
-Copia docker-compose.yml y .env.example a una carpeta del servidor. Este README puede acompañarlos. Ejecuta los comandos desde esa carpeta.
+## 1. Configure
 
-En Linux/macOS:
+Copy [docker-compose.yml](docker-compose.yml) and [.env.example](.env.example) into a server directory. Run the following commands from that directory:
 
 ~~~sh
 cp .env.example .env
 ~~~
 
-En PowerShell:
-
-~~~powershell
-Copy-Item .env.example .env
-~~~
-
-Edita al menos:
+In PowerShell, use `Copy-Item .env.example .env` instead. Edit at least:
 
 ~~~dotenv
-MEALIE_ENRICHER_IMAGE=ghcr.io/tu-usuario-o-organizacion/mealie-enricher:latest
-MEALIE_URL=https://tu-mealie.example.com
-MEALIE_API_TOKEN=tu-token-de-mealie
+MEALIE_ENRICHER_IMAGE=ghcr.io/brunofelixns/mealie-enricher:1.13.0
+MEALIE_URL=https://your-mealie.example.com
+MEALIE_API_TOKEN=your-mealie-api-token
+LLM_ENABLED=false
 ~~~
 
-Puedes utilizar exclusivamente tokens por hogar, siguiendo los comentarios de .env.example. Compose carga todas esas variables mediante env_file, sin necesidad de enumerar cada hogar en el YAML.
+Household-specific tokens can be configured using the comments in `.env.example`. Compose loads them through `env_file`; no household IDs need to be added to the YAML.
 
-PUBLISHED_PORT es el puerto del servidor; PORT es el puerto dentro del contenedor. Por ejemplo, PUBLISHED_PORT=8002 y PORT=8000 publican el servicio en el puerto 8002.
+`PUBLISHED_PORT` is the host port and `PORT` is the container port. For example, `PUBLISHED_PORT=8002` and `PORT=8000` expose the service on host port 8002.
 
-MEALIE_URL debe ser accesible desde el contenedor: localhost apuntaría al propio contenedor. Usa la URL de tu servidor Mealie. Si ambos servicios se conectan por nombre de contenedor, deben compartir una red Docker.
+Mealie must be reachable from the container. `localhost` inside the container refers to the container itself. Use your Mealie server URL, or a shared Docker network when connecting services by container name.
 
-El fallback LLM queda deshabilitado inicialmente. Para activarlo, configura LLM_ENABLED=true, LLM_API_KEY y la URL/modelo de tu proveedor. Se conservan las mismas variables de la aplicación.
+The fallback LLM is disabled initially. To enable it, set `LLM_ENABLED=true` and configure the provider URL, model and `LLM_API_KEY`. Decisions has separate settings and is also disabled initially.
 
-## 2. Descargar y arrancar
+## 2. Pull and start
 
 ~~~sh
 docker compose config --quiet
@@ -45,82 +40,69 @@ docker compose up -d --no-build --wait --wait-timeout 90
 docker compose ps
 ~~~
 
-El Compose usa únicamente image y descarga el paquete indicado en MEALIE_ENRICHER_IMAGE. No contiene build ni necesita un Dockerfile en el servidor.
+This Compose uses `image` only; it does not build from source. With `PUBLISHED_PORT=8000`:
 
-Con PUBLISHED_PORT=8000:
+- Health: `http://localhost:8000/health`
+- Activity: `http://localhost:8000/estimator/history`
+- Mealie webhook destination: `http://YOUR-ENRICHER-HOST:8000/webhook`
 
-- Estado: http://localhost:8000/health
-- Historial: http://localhost:8000/estimator/history
-- Webhook para configurar en Mealie: http://DIRECCION-DEL-SERVICIO:8000/webhook
+The webhook must be reachable from Mealie. Adjust external URLs when changing `PUBLISHED_PORT`. The activity page shows processing states, changes, duration, nutrition and errors, and refreshes every two seconds. Automatic recipe tags are currently in Spanish.
 
-El historial muestra recetas, estados, cambios, duración, nutrientes y errores, con actualización cada dos segundos y filtros por origen/estado. Las etiquetas automáticas que se guardan en Mealie están en español.
+Deploy on a trusted network or behind an authenticated reverse proxy: the application preserves upstream HTTP access behavior and has no built-in authentication.
 
-La dirección del webhook debe ser alcanzable desde Mealie. Si cambias PUBLISHED_PORT, utiliza ese puerto en las direcciones externas.
-
-Para consultar registros:
+View logs:
 
 ~~~sh
 docker compose logs -f --tail 100 calorie-estimator
 ~~~
 
-## Si la imagen es privada
+## Updates and persistence
 
-Las imágenes públicas de GHCR pueden descargarse sin iniciar sesión. Para una imagen privada, inicia sesión antes de docker compose pull:
-
-~~~sh
-docker login ghcr.io -u TU_USUARIO_GITHUB
-~~~
-
-Cuando Docker solicite la contraseña, introduce un token personal clásico de GitHub con read:packages y acceso al paquete. Ese token sirve para el registro; MEALIE_API_TOKEN sirve para Mealie. [Documentación de GHCR](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
-
-## Actualizar la versión
-
-Cambia MEALIE_ENRICHER_IMAGE al nuevo tag publicado, o conserva latest si esa es tu política de publicación:
+Set `MEALIE_ENRICHER_IMAGE` to a newly published version, then:
 
 ~~~sh
 docker compose pull
 docker compose up -d --no-build --wait --wait-timeout 90
 ~~~
 
-Para fijar exactamente una publicación, utiliza un tag de versión existente o su digest:
-
-~~~dotenv
-MEALIE_ENRICHER_IMAGE=ghcr.io/tu-usuario-o-organizacion/mealie-enricher@sha256:DIGEST_PUBLICADO
-~~~
-
-El tag o digest debe existir y corresponder a una imagen compatible con la arquitectura del servidor.
-
-## Datos y parada
-
-El volumen estimator-cache conserva /app/data/cache.db entre actualizaciones. Mantén CACHE_DB_PATH=/app/data/cache.db y el mismo nombre de proyecto Compose para reutilizarlo.
+`latest` follows releases. For reproducible deployments, use a version tag or pin the manifest digest returned by:
 
 ~~~sh
-docker compose down
+docker buildx imagetools inspect ghcr.io/brunofelixns/mealie-enricher:1.13.0
 ~~~
 
-Este comando conserva el volumen. La opción --volumes eliminaría la caché y no forma parte de la parada habitual.
+The reference format is `ghcr.io/brunofelixns/mealie-enricher@sha256:YOUR_VERIFIED_DIGEST`.
 
-El historial y las tareas continúan en memoria y se pierden al reiniciar, igual que en la aplicación original. Ejecuta una sola instancia.
+The `estimator-cache` volume preserves `/app/data/cache.db`. Keep `CACHE_DB_PATH=/app/data/cache.db` and the same Compose project name to reuse it.
 
-## Catálogo BEDCA opcional
+Stop with `docker compose down`. This preserves volumes. History and pending tasks are in memory and are lost on restart; run a single application instance.
 
-Coloca `bedca_foods.csv`, `bedca_foodvalues.csv` y `bedca_units.csv` en `bedca/`
-o configura `BEDCA_INPUT_DIR`. Con una imagen que incluya la versión 1.13.0:
+## Optional BEDCA catalog
+
+BEDCA data is not redistributed with the source or image. Place your separately obtained `bedca_foods.csv`, `bedca_foodvalues.csv` and `bedca_units.csv` in `bedca/`, or set `BEDCA_INPUT_DIR`. Set `BEDCA_DATASET_VERSION` to identify the export.
 
 ~~~sh
 docker compose --profile catalog run --rm catalog-import
 ~~~
 
-Después activa `CATALOG_ENABLED=true` en `.env` y arranca el servicio. El catálogo
-se guarda en `estimator-catalogs`; la aplicación lo monta en solo lectura y la
-caché continúa en `estimator-cache`. Para Decisions configura también
-`DECISIONS_ENABLED=true` y `OPENAI_API_KEY`. El fallback LLM conserva su
-configuración independiente.
+After import, set `CATALOG_ENABLED=true` in `.env` and recreate the service. The catalog lives in `estimator-catalogs`; the application mounts it read-only. The cache remains in its own writable volume.
 
-[Instrucciones completas y actualización segura](../docs/11-catalogos-duckdb.md).
+Optional Decisions match selection requires `DECISIONS_ENABLED=true` and `OPENAI_API_KEY` or `DECISIONS_API_KEY`. The fallback LLM remains independent.
 
-## Variables y ejemplo
+[Catalog preparation and safe updates, in Spanish](../docs/11-catalogos-duckdb.md).
 
-.env.example incluye todas las variables de configuración del servicio y los dos puertos del despliegue. .env se ignora en el repositorio y contiene tu configuración real.
+## Build and publish a release locally
 
-Los valores iniciales de OFF y del proveedor/modelo LLM siguen el Compose principal del proyecto. El LLM permanece deshabilitado hasta configurarlo. [Cómo carga Compose las variables desde env_file](https://docs.docker.com/compose/how-tos/environment-variables/set-environment-variables/).
+Maintainers can publish without GitHub Actions credits. From the repository root, sign in using `docker login ghcr.io -u YOUR_GITHUB_USERNAME` with a GitHub classic personal access token that has `write:packages`. Enter the token at the password prompt; do not put it in a command, file or issue.
+
+Build, test and publish the source revision being released. For example, on PowerShell, after the ordinary suite passes:
+
+~~~powershell
+$releaseRevision = git rev-parse HEAD
+docker buildx build --platform linux/amd64,linux/arm64 --build-arg VERSION=1.13.0 --build-arg VCS_REF=$releaseRevision --tag ghcr.io/brunofelixns/mealie-enricher:1.13.0 --tag ghcr.io/brunofelixns/mealie-enricher:latest --push .
+docker buildx imagetools inspect ghcr.io/brunofelixns/mealie-enricher:1.13.0
+~~~
+
+Use a new version for future releases and verify a clean deployment before announcing them. OCI labels connect the image to this repository. Package visibility is managed separately from repository visibility; verify that an unauthenticated client can pull the image.
+
+[GHCR documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).

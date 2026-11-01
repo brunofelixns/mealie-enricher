@@ -2,7 +2,7 @@ name: mealie-enricher
 
 services:
   calorie-estimator:
-    image: ${MEALIE_ENRICHER_IMAGE:?Configura MEALIE_ENRICHER_IMAGE en .env con la imagen publicada en GHCR}
+    image: ${MEALIE_ENRICHER_IMAGE:?Set MEALIE_ENRICHER_IMAGE in .env to the published GHCR image}
     pull_policy: always
     env_file:
       - .env
@@ -27,7 +27,7 @@ services:
       start_period: 10s
 
   catalog-import:
-    image: ${MEALIE_ENRICHER_IMAGE:?Configura MEALIE_ENRICHER_IMAGE en .env}
+    image: ${MEALIE_ENRICHER_IMAGE:?Set MEALIE_ENRICHER_IMAGE in .env}
     profiles: [catalog]
     entrypoint: ["python", "-m", "mealie_enricher.catalog.cli"]
     command:

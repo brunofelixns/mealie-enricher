@@ -1,261 +1,254 @@
 <p align="center">
-  <a href="https://docs.mealie.io/">
-    <img src="docs/assets/mealie-logo.png" width="64" height="64" alt="Logo de Mealie">
-  </a>
+  <a href="https://docs.mealie.io/"><img src="docs/assets/mealie-logo.png" width="64" height="64" alt="Mealie logo"></a>
 </p>
 
 <h1 align="center">Mealie Enricher</h1>
 
 <p align="center">
-  <strong>Tus recetas, con más información.</strong><br>
-  Calorías, nutrientes y etiquetas en español para tu recetario Mealie.
+  <strong>Your recipes, with more information.</strong><br>
+  Self-hosted nutrition estimates and automatic tags for your Mealie recipe collection.
 </p>
 
 <p align="center">
   <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.14-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.14"></a>
   <a href="src/mealie_enricher/app.py"><img src="https://img.shields.io/badge/FastAPI-API-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI"></a>
-  <a href="src/mealie_enricher/agents/estimator_agent.py"><img src="https://img.shields.io/badge/IA-OpenAI%20Agents%20SDK-295340?style=flat-square" alt="OpenAI Agents SDK"></a>
-  <a href="docker/README.md"><img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker Compose"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/licencia-GPL--3.0-D65108?style=flat-square" alt="Licencia GPL 3.0"></a>
+  <a href="https://github.com/brunofelixns/mealie-enricher/pkgs/container/mealie-enricher"><img src="https://img.shields.io/badge/GHCR-1.13.0-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker image on GHCR"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-D65108?style=flat-square" alt="GPL 3.0 license"></a>
 </p>
 
 <p align="center">
-  <a href="#empezar-con-docker">Empezar</a> ·
-  <a href="#ver-lo-que-está-pasando">Vista web</a> ·
-  <a href="docker/README.md">Despliegue</a> ·
-  <a href="docs/README.md">Documentación</a>
+  <strong>English</strong> · <a href="docs/README.es.md">Español</a> · <a href="docs/README.md">Documentación en español</a>
 </p>
 
 <p align="center">
-  <img src="docs/assets/mealie-enricher-banner.png" width="100%" alt="Mealie Enricher: un plato de ingredientes conectado con tarjetas de receta, nutrientes y etiquetas">
+  <a href="#quick-start">Quick start</a> · <a href="#activity-history">Activity history</a> · <a href="docker/README.md">Deployment</a> · <a href="#documentation">Documentation</a> · <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
-## Dale contexto nutricional a tus recetas
+<p align="center">
+  <img src="docs/assets/mealie-enricher-banner.png" width="100%" alt="Mealie Enricher illustration connecting ingredients, recipes, nutrients and tags">
+</p>
 
-Mealie Enricher acompaña a tu instalación de [Mealie](https://github.com/mealie-recipes/mealie): recibe sus eventos, consulta los ingredientes y guarda las estimaciones nutricionales y etiquetas en la propia receta. Puedes seguir cada ejecución desde su pequeño historial web.
+## Give your recipes nutritional context
 
-Es la migración a Python de [mealie-calorie-estimator 1.12.3](https://github.com/timo-reymann/mealie-calorie-estimator/tree/c2dc71a1d8effe29375391f2fe50da94d27cfd7d), con **uv, FastAPI y OpenAI Agents SDK**. Conserva sus reglas y limitaciones, con la adaptación solicitada de etiquetas automáticas al español.
+Mealie Enricher runs alongside [Mealie](https://github.com/mealie-recipes/mealie). It receives recipe events, resolves ingredients, and writes estimated nutrition and automatic tags back to the recipe. A small web interface shows each run and its outcome.
 
-La versión **1.13.0** añade un modo opcional de **catálogos DuckDB + BEDCA** y
-**OpenAI Decisions** para resolver coincidencias ambiguas. SQLite se mantiene
-exclusivamente para caché. El modo anterior sigue disponible con
-`CATALOG_ENABLED=false`.
+It started as a Python migration of [mealie-calorie-estimator 1.12.3](https://github.com/timo-reymann/mealie-calorie-estimator/tree/c2dc71a1d8effe29375391f2fe50da94d27cfd7d), preserving its HTTP contracts and processing rules. Version **1.13.0** adds optional local **DuckDB/BEDCA catalogs** and **OpenAI Decisions** for ambiguous ingredient matches. The original Open Food Facts path remains available with `CATALOG_ENABLED=false`.
 
-| | Qué aporta |
+| Feature | What you get |
 |---|---|
-| **Estimación por ración** | Calorías, macronutrientes y otros nutrientes disponibles a partir de los ingredientes. |
-| **Etiquetas en español** | Clasificación por calorías y digestibilidad, visible en Mealie. |
-| **IA opcional** | Fallback para unidades o alimentos que no se resuelven directamente. |
-| **Actividad a la vista** | Receta, estado, cambios, duración y errores, con actualización cada dos segundos. |
-| **Menos trabajo repetido** | Caché SQLite, hash de ingredientes y agrupación de eventos por receta. |
-| **Tu instalación Mealie** | Conexión por API y tokens específicos por hogar cuando los necesites. |
+| **Nutrition per serving** | Estimated calories, macronutrients and other available nutrients. |
+| **Automatic Spanish tags** | Calorie and digestibility categories visible in Mealie. |
+| **Optional AI** | Fallback for unresolved unit weights or nutrients; optional catalog match selection. |
+| **Local food catalogs** | Import your own BEDCA export into DuckDB; SQLite stays dedicated to caching. |
+| **Visible activity** | Recipe links, status, changes, duration, nutrients and errors. |
+| **Less repeated work** | Ingredient hashes, a SQLite cache and event grouping per recipe. |
 
-## Empezar con Docker
+## Quick start
 
-### Construir y ejecutar desde este repositorio
+You need a running Mealie instance, an API token and Docker with Compose. Images are published for **linux/amd64** and **linux/arm64**:
 
-Necesitas Docker con Compose. Clona el proyecto y prepara la configuración:
+~~~text
+ghcr.io/brunofelixns/mealie-enricher:1.13.0
+ghcr.io/brunofelixns/mealie-enricher:latest
+~~~
+
+The version tag gives you a predictable deployment; `latest` follows future releases. Public images can be pulled without a GitHub account.
+
+Download the deployment files:
+
+~~~sh
+mkdir mealie-enricher
+cd mealie-enricher
+curl -fsSL https://raw.githubusercontent.com/brunofelixns/mealie-enricher/main/docker/docker-compose.yml -o docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/brunofelixns/mealie-enricher/main/docker/.env.example -o .env
+~~~
+
+In PowerShell, use `curl.exe` for the downloads. You can also download [docker-compose.yml](docker/docker-compose.yml) and [.env.example](docker/.env.example) manually, saving the latter as `.env`.
+
+Edit these values in `.env`:
+
+~~~dotenv
+MEALIE_ENRICHER_IMAGE=ghcr.io/brunofelixns/mealie-enricher:1.13.0
+MEALIE_URL=https://your-mealie.example.com
+MEALIE_API_TOKEN=your-mealie-api-token
+LLM_ENABLED=false
+~~~
+
+Start the service:
+
+~~~sh
+docker compose config --quiet
+docker compose pull
+docker compose up -d --no-build --wait --wait-timeout 90
+~~~
+
+Open [localhost:8000/estimator/history](http://localhost:8000/estimator/history) to view activity. Configure your Mealie recipe webhook to send events to `http://YOUR-ENRICHER-HOST:8000/webhook`; the event body must include `document_data` as described in the [API contract](docs/03-compatibilidad-y-validacion.md).
+
+`MEALIE_URL` must be reachable from the container, and the webhook must be reachable from Mealie. Inside a container, `localhost` refers to that container. Use a shared Docker network when connecting services by container name.
+
+[Full deployment guide](docker/README.md) · [Guía de despliegue en español](docker/README.es.md)
+
+## Activity history
+
+The web interface at `/estimator/history` lets you:
+
+- Follow recipe processing and open each recipe in Mealie.
+- Inspect status, changes, duration, nutrients per serving and errors.
+- Filter by event source and state.
+- Receive updates every **two seconds**, with light and dark themes.
+
+History defaults to **200 entries**, expires after **24 hours** and is lost when the process restarts. Use `DEV_SEED_HISTORY=true` only for synthetic development activity. The banner above is an illustration, not a screenshot.
+
+## Automatic tags
+
+The application currently writes automatic tags in **Spanish**, regardless of the README language. Personal tags are preserved.
+
+| Calories per serving | Tag |
+|---|---|
+| Below 350 kcal | **Calorías:Bajas** |
+| 350–600 kcal | **Calorías:Moderadas** |
+| Above 600, up to 850 kcal | **Calorías:Altas** |
+| Above 850 kcal | **Calorías:Muy altas** |
+
+Digestibility tags are `Digestión:Fácil`, `Digestión:Moderada`, `Digestión:Lenta` and `Digestión:Desconocida`, following the original rules. Legacy English tags are replaced when a recipe is processed again. If its ingredient hash has not changed, existing nutrition is reused and only tags and related extras are updated.
+
+[Tags and history, in Spanish](docs/09-etiquetas-y-vista-web.md).
+
+## How it works
+
+~~~mermaid
+flowchart LR
+    A["Mealie recipe event"] --> B["Per-recipe queue"]
+    B --> C["Unit conversion and ingredient resolution"]
+    C --> D["Open Food Facts or local DuckDB/BEDCA"]
+    C --> E["Optional AI fallback or match selection"]
+    D --> F["Python nutrient calculations and tags"]
+    E --> F
+    F --> G["Update Mealie"]
+    G --> H["Activity history"]
+~~~
+
+Python performs the nutrient calculations. In catalog mode, Decisions selects food matches and can leave ingredients unresolved when evidence is insufficient. It does not calculate nutrition. The LLM fallback and Decisions are separate, optional settings.
+
+### Optional BEDCA catalog
+
+BEDCA data is **not included** in the repository or image. Obtain the three required CSV exports separately and place them in `bedca/` next to your deployment `.env`:
+
+~~~text
+bedca_foods.csv
+bedca_foodvalues.csv
+bedca_units.csv
+~~~
+
+Import them into the catalog volume:
+
+~~~sh
+docker compose --profile catalog run --rm catalog-import
+~~~
+
+Then set `CATALOG_ENABLED=true` in `.env` and recreate the service. The app mounts the catalog read-only, while its SQLite cache uses a separate writable volume. Set `BEDCA_DATASET_VERSION` to identify your export.
+
+[Catalog preparation and updates, in Spanish](docs/11-catalogos-duckdb.md). Tables for future supermarket products and prices are present; no product datasets or collectors are included.
+
+## Configuration
+
+The deployment [.env.example](docker/.env.example) lists available settings. The [root example](.env.example) supports development and building from source.
+
+| Variable | Purpose |
+|---|---|
+| `MEALIE_URL` / `MEALIE_API_TOKEN` | Mealie instance and API token. |
+| `MEALIE_API_TOKEN_<HOUSEHOLD_ID>` | Optional household-specific token; replace punctuation in the ID with underscores. |
+| `LLM_ENABLED` | Enable the optional fallback LLM. |
+| `LLM_BASE_URL` / `LLM_ENDPOINT_URL` | Compatible provider URL and endpoint. |
+| `LLM_API_KEY` / `LLM_MODEL` | Fallback provider credentials and model. |
+| `CATALOG_ENABLED` / `CATALOG_DB_PATH` | Enable a prepared local DuckDB catalog. |
+| `DECISIONS_ENABLED` | Enable optional selection of ambiguous catalog matches. |
+| `DECISIONS_API_KEY` / `OPENAI_API_KEY` | Decisions credentials; the former takes precedence. |
+| `ESTIMATE_STRATEGY` / `ESTIMATE_TAG` | Process all recipes or only those carrying a selected tag. |
+| `OFF_LANGUAGE` | Open Food Facts search language. |
+| `CACHE_DB_PATH` | SQLite cache; keep `/app/data/cache.db` in Docker. |
+| `PORT` / `PUBLISHED_PORT` | Container and host port in the deployment Compose. |
+
+Code defaults retain Mistral and German OFF search from the original application. The Compose examples use an OpenAI-compatible endpoint and English OFF search. Configure your provider and language explicitly. The Agents SDK adapter does not require changing providers.
+
+## HTTP API
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/health` | Service status and UTC timestamp. |
+| POST | `/webhook` | Accept a Mealie event containing `document_data`. |
+| POST | `/estimate` | Force estimation for `content.slug`. |
+| POST | `/backfill` | Process existing recipes in the background. |
+| GET | `/estimator/history` | Open the activity interface. |
+| GET | `/estimator/history.json` | Read history; accepts `since` in milliseconds. |
+
+Example body for `POST /estimate`:
+
+~~~json
+{"content": {"slug": "my-recipe"}}
+~~~
+
+Accepted processing requests return **202**. Check the history for the final result.
+
+## Development
+
+Install **Python 3.14** and **uv**, then:
 
 ~~~sh
 git clone https://github.com/brunofelixns/mealie-enricher.git
 cd mealie-enricher
+uv sync --locked
 cp .env.example .env
 ~~~
 
-En PowerShell, sustituye el último comando por:
-
-~~~powershell
-Copy-Item .env.example .env
-~~~
-
-Edita .env antes de arrancar:
-
-~~~dotenv
-MEALIE_URL=https://tu-mealie.example.com
-MEALIE_API_TOKEN=tu-token-de-mealie
-LLM_ENABLED=false
-~~~
-
-MEALIE_URL debe ser accesible desde el contenedor. Si Mealie está en otro contenedor y lo conectas por nombre, ambos servicios deben compartir una red Docker.
-
-~~~sh
-docker compose config --quiet
-docker compose up -d --build calorie-estimator
-~~~
-
-Con el puerto por defecto, el historial estará en [localhost:8000/estimator/history](http://localhost:8000/estimator/history).
-
-### Descargar una imagen publicada en GHCR
-
-La carpeta [docker/](docker/README.md) incluye un Compose **sin build** y un [.env.example](docker/.env.example) independiente. Puedes llevar esos archivos a tu servidor, configurar MEALIE_ENRICHER_IMAGE y ejecutar:
-
-~~~sh
-docker compose pull
-docker compose up -d --no-build --wait
-~~~
-
-**Estado del paquete:** la configuración de descarga está preparada; la publicación de una imagen en GHCR sigue pendiente. Este repositorio contiene el código fuente y el Dockerfile para construirla.
-
-## Catálogo BEDCA local
-
-Prepara los tres CSV externos de BEDCA y conviértelos con:
-
-~~~sh
-uv run mealie-catalog import-bedca --input-dir data/bedca --output data/catalogs/catalogos.duckdb --dataset-version 2026-08-19
-~~~
-
-Después activa `CATALOG_ENABLED=true`. En Docker, el perfil `catalog-import`
-prepara un volumen independiente que la aplicación consulta en solo lectura.
-Los datos BEDCA no se redistribuyen en el repositorio ni en la imagen.
-
-El selector respeta estados como crudo/cocido y puede dejar un ingrediente
-pendiente cuando falte información. **Decisions selecciona alimentos; Python
-calcula los nutrientes.** Las tablas para futuros productos y precios de
-supermercados están preparadas, sin datos ni recopiladores todavía.
-
-[Preparación, configuración y actualización del catálogo](docs/11-catalogos-duckdb.md).
-
-## Ver lo que está pasando
-
-Abre el historial con el servicio arrancado:
-
-~~~text
-http://DIRECCION-DEL-SERVICIO:8000/estimator/history
-~~~
-
-Ahí puedes:
-
-- Seguir cada receta y abrirla directamente en Mealie.
-- Consultar estado, cambios aplicados, duración y errores.
-- Desplegar los nutrientes estimados por ración.
-- Filtrar por origen del evento y estado.
-- Recibir actualizaciones cada **dos segundos**, con tema claro y oscuro.
-
-Usa el puerto que hayas publicado. El historial conserva **200 entradas** por defecto durante un máximo de **24 horas** y se pierde al reiniciar.
-
-Para ver datos sintéticos en desarrollo, configura DEV_SEED_HISTORY=true. [Más sobre la vista web y el historial](docs/09-etiquetas-y-vista-web.md).
-
-## Etiquetas que entiendes de un vistazo
-
-| Calorías por ración | Etiqueta en Mealie |
-|---|---|
-| Menos de 350 kcal | **Calorías:Bajas** |
-| De 350 a 600 kcal | **Calorías:Moderadas** |
-| Más de 600 y hasta 850 kcal | **Calorías:Altas** |
-| Más de 850 kcal | **Calorías:Muy altas** |
-
-La digestibilidad se etiqueta como **Digestión:Fácil**, **Digestión:Moderada**, **Digestión:Lenta** o **Digestión:Desconocida**, siguiendo las reglas del original.
-
-Las etiquetas automáticas inglesas se sustituyen al volver a procesar la receta. Si los ingredientes no han cambiado, se reutiliza la nutrición guardada y se actualizan solo las etiquetas y sus extras. Las etiquetas personales se conservan.
-
-## Cómo funciona
-
-~~~mermaid
-flowchart LR
-    A["Mealie · evento de receta"] --> B["Cola por receta"]
-    B --> C["Conversión y búsqueda"]
-    C --> D["Open Food Facts"]
-    C --> E["Fallback IA opcional"]
-    D --> F["Nutrientes y etiquetas"]
-    E --> F
-    F --> G["Actualizar Mealie"]
-    G --> H["Historial web"]
-~~~
-
-El SDK de agentes ejecuta las operaciones LLM existentes con el proveedor, endpoint y modelo configurados. Se conservan los prompts y parámetros; no se añaden herramientas, memoria del agente, delegación, exportación de trazas ni reintentos LLM.
-
-## Configuración
-
-El [.env.example principal](.env.example) sirve para el desarrollo y la construcción local. El [ejemplo de despliegue](docker/.env.example) contiene la configuración completa para una imagen descargada.
-
-| Variable | Para qué sirve |
-|---|---|
-| MEALIE_URL | Dirección de tu instancia Mealie. |
-| MEALIE_API_TOKEN | Token con acceso a las recetas. |
-| MEALIE_API_TOKEN_&lt;ID_DEL_HOGAR&gt; | Token específico de un hogar; reemplaza signos del ID por guiones bajos. |
-| LLM_ENABLED | Activa o desactiva el fallback LLM. |
-| LLM_BASE_URL / LLM_ENDPOINT_URL | URL base y endpoint del proveedor compatible. |
-| LLM_API_KEY / LLM_MODEL | Credencial y modelo del proveedor elegido. |
-| ESTIMATE_STRATEGY | all para todas las recetas o tagged para filtrar. |
-| ESTIMATE_TAG | Etiqueta que selecciona recetas cuando la estrategia es tagged. |
-| OFF_LANGUAGE | Idioma de búsqueda de Open Food Facts. |
-| CACHE_DB_PATH | Ruta de la caché; en Docker, /app/data/cache.db. |
-| PORT | Puerto del proceso; 8000 por defecto. |
-| PUBLISHED_PORT | Puerto del servidor en el Compose independiente de docker/. |
-
-Los defaults del código conservan Mistral y OFF en alemán. El Compose original usa OpenAI/gpt-4o-mini y OFF en inglés. Los ejemplos reflejan esos contextos; configura explícitamente el proveedor y el idioma que vayas a utilizar. **OpenAI Agents SDK no obliga a cambiar de proveedor.**
-
-[Variables, defaults y contratos completos](docs/03-compatibilidad-y-validacion.md).
-
-## API disponible
-
-| Método | Ruta | Función |
-|---|---|---|
-| GET | /health | Estado del servicio y fecha UTC. |
-| POST | /webhook | Recibir el evento Mealie en document_data. |
-| POST | /estimate | Forzar una estimación mediante content.slug. |
-| POST | /backfill | Recorrer las recetas existentes en segundo plano. |
-| GET | /estimator/history | Abrir la vista de actividad. |
-| GET | /estimator/history.json | Consultar el historial; admite since en milisegundos. |
-
-Ejemplo de cuerpo para POST /estimate:
-
-~~~json
-{"content": {"slug": "mi-receta"}}
-~~~
-
-Las peticiones de procesamiento aceptadas responden **202**; el resultado final se consulta en el historial.
-
-## Desarrollo con uv
-
-Necesitas **uv y Python 3.14**:
-
-~~~sh
-uv sync --locked
-~~~
-
-Prepara y edita .env como en el arranque Docker; después:
+In PowerShell, replace `cp` with `Copy-Item`. Edit `.env`, then run:
 
 ~~~sh
 uv run --env-file .env python -m mealie_enricher
 ~~~
 
-El entrypoint respeta PORT. Ejecuta **un solo proceso**, ya que cola, limitadores e historial viven en memoria.
+For a local Docker build, use `docker compose up -d --build calorie-estimator` from the repository root. Run **one application process**: its queue, rate limiters and history are in memory.
 
-## Validación
+### Checks
 
 ~~~sh
 uv run ruff check src tests alembic
 uv run ruff format --check src tests alembic
 uv run mypy src
-uv run pytest --cov=mealie_enricher --cov-report=term-missing
+uv run pytest
 ~~~
 
-La última validación de la adaptación al español registró **189 pruebas Python y 2 pruebas Docker aprobadas**, con **125 casos de referencia**. Las ordinarias usan datos sintéticos y transporte simulado, incluido el Runner real del SDK. Docker se comprueba por separado contra Mealie v3.19.2 y OFF local.
+Ordinary tests use synthetic data and mocked transports. Docker integration and real-provider checks are separate, opt-in checks. [Validation evidence and scope, in Spanish](docs/06-resultados-ejecucion.md).
 
-[Resultados y alcance de la evidencia](docs/06-resultados-ejecucion.md) · [Plan y pruebas Docker](docs/05-plan-de-implementacion.md).
+## Limitations
 
-## Limitaciones conservadas
+- Nutrition and digestibility values are estimates. The legacy OFF path uses the first match and retains approximations such as ml=g.
+- Missing nutrients and LLM-parsed zeros retain legacy behavior outside the catalog path.
+- Webhooks and backfill preserve manually entered calories; `POST /estimate` forces recalculation.
+- Pending tasks and history do not survive a restart. Run a single instance.
+- HTTP routes retain upstream access behavior and do not add authentication. Deploy on a trusted network or behind your authenticated reverse proxy.
+- Local BEDCA data must be provided separately. Real-provider success is distinct from mocked tests.
 
-- Las cifras son estimaciones: OFF utiliza la primera coincidencia y las conversiones mantienen aproximaciones como ml=g.
-- Los nutrientes desconocidos y los ceros del parser LLM conservan las reglas originales.
-- Webhook y backfill respetan las calorías manuales; POST /estimate fuerza el recálculo.
-- Historial, cola y limitadores son locales al proceso. Las tareas pendientes no se recuperan automáticamente tras reiniciar.
-- Las rutas y CORS conservan el comportamiento del original.
+## Documentation
 
-## Documentación
+**[Leer el README en español](docs/README.es.md)** · **[Índice de documentación en español](docs/README.md)**
 
-| Guía | Contenido |
+| Guide | Language |
 |---|---|
-| [Despliegue con imagen](docker/README.md) | Descarga, variables, actualización y volumen persistente. |
-| [Etiquetas e historial](docs/09-etiquetas-y-vista-web.md) | Catálogo español, transición de etiquetas antiguas y vista web. |
-| [Operación y retorno](docs/07-operacion-y-retorno.md) | Copia de caché y procedimiento de vuelta al original. |
-| [Arquitectura](docs/02-arquitectura.md) | Módulos, responsabilidades y capa de IA. |
-| [Compatibilidad](docs/03-compatibilidad-y-validacion.md) | Contratos y limitaciones que se mantienen. |
-| [Registro completo](docs/README.md) | Decisiones, plan y resultados de la migración. |
+| [Image deployment](docker/README.md) / [Despliegue con imagen](docker/README.es.md) | English / Español |
+| [Tags and history](docs/09-etiquetas-y-vista-web.md) | Español |
+| [Catalogs and BEDCA](docs/11-catalogos-duckdb.md) | Español |
+| [Operations and rollback](docs/07-operacion-y-retorno.md) | Español |
+| [Architecture](docs/02-arquitectura.md) | Español |
+| [Compatibility and API contracts](docs/03-compatibilidad-y-validacion.md) | Español |
+| [Validation with real Mealie](docs/13-pruebas-mealie-real.md) | Español |
 
-## Créditos y licencia
+## Contributing
 
-Basado en [timo-reymann/mealie-calorie-estimator](https://github.com/timo-reymann/mealie-calorie-estimator), versión 1.12.3. Se conservan [LICENSE](LICENSE) y [NOTICE](NOTICE) de la referencia.
+Bug reports, ingredient-resolution examples, documentation improvements and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). You can open issues in English or Spanish.
 
-El logo pertenece al proyecto [Mealie](https://github.com/mealie-recipes/mealie). La portada es una ilustración del proyecto; no es una captura de su interfaz. [Origen y atribución de los recursos visuales](docs/assets/README.md).
+## Credits and license
+
+Based on [timo-reymann/mealie-calorie-estimator](https://github.com/timo-reymann/mealie-calorie-estimator), version 1.12.3. This project retains its [GPLv3 license](LICENSE) and [third-party notices](NOTICE).
+
+The Mealie logo belongs to the [Mealie project](https://github.com/mealie-recipes/mealie). This is an independent companion project. [Visual asset sources and attribution](docs/assets/README.md).
