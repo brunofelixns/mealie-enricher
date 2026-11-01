@@ -62,3 +62,9 @@ La prueba positiva de OpenAI en vivo sigue pendiente: el intento autorizado del
 2026-10-31 recibió AuthenticationError. Los escenarios 401/429 y recuperación de
 esta suite son simulados. No acreditan acceso real a un modelo ni disponibilidad
 del proveedor.
+
+## Ampliación con Mealie real
+
+La siguiente validación añade 14 escenarios contra el servicio y Mealie reales
+en Docker, incluido el procesamiento de los CSV externos de BEDCA disponibles
+localmente. [Escenarios, ejecución y resultados](13-pruebas-mealie-real.md).

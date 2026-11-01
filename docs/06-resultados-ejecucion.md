@@ -232,3 +232,13 @@ Se conserva la visibilidad privada. Publicar el código no ha publicado una imag
 - Ruff correcto; formato de 96 archivos comprobado; mypy correcto en los 45 archivos de producción.
 - OpenAI se prueba mediante el SDK real con transporte interceptado y claves sintéticas. No se ha repetido la consulta real fallida por autenticación ni se ha utilizado ninguna clave personal en estas pruebas.
 - [Matriz de escenarios y comandos](12-validacion-catalogos.md).
+
+## 2026-11-01 — Ampliación de pruebas con Mealie real
+
+- Nuevos escenarios HTTP en Docker: **14 correctos en 123,74 s**, con Mealie v3.19.2 real aislado, SQLite y DuckDB reales. Incluyen cambios crudo/cocido, raciones, etiquetas y datos personales, calorías manuales, ingredientes desconocidos o eliminados, backfill, errores, reinicios y sustitución del catálogo.
+- BEDCA real local: 957 alimentos y 31.166 componentes importados en el volumen temporal; Mealie guarda 384 kcal y 8 g de proteína por ración, con referencia bedca:904. Los archivos externos no se incluyen en Git ni se modifican.
+- Regresión Docker anterior: **3 correctas en 67,55 s**. Total: **17 pruebas Docker correctas** entre ambas ejecuciones.
+- Suite ordinaria: **334 correctas y 17 Docker omitidas en 45,33 s**. Ruff/formato y mypy correctos; no hay cambios de producción.
+- El primer intento falla en la infraestructura antes de procesar recetas: puerto no accesible desde Windows con red internal. La red propia normal de Compose con puertos en loopback resuelve el acceso; la ejecución posterior pasa completa.
+- Los proyectos temporales propios se retiran al finalizar. No hay llamadas a OpenAI ni cambios en el Mealie del usuario, publicación de código o de imagen.
+- [Escenarios, resultados y comandos](13-pruebas-mealie-real.md).

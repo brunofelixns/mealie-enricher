@@ -161,3 +161,12 @@ Solo se marcarán tareas completadas después de registrar su evidencia. Un bloq
 - No se modifica el código de producción ni se usa ninguna clave personal o API OpenAI real. Los datos son sintéticos; Docker utiliza únicamente proyectos temporales aislados.
 - Ejecución dirigida: 16 correctas. Suite completa: 334 correctas y 3 Docker omitidas en 30,46 s. Cobertura de líneas 95,59 %; Ruff y formato correctos. [Detalle y comandos](12-validacion-catalogos.md).
 - Cierre: 3 pruebas Docker correctas en 75,51 s, con Mealie real aislado, y mypy correcto en 45 archivos. Todas las comprobaciones solicitadas quedan ejecutadas; la validación positiva del proveedor OpenAI en vivo continúa pendiente de una clave aceptada, como ya estaba documentado.
+
+## 2026-11-01 — Pruebas ampliadas contra Mealie real aislado
+
+- El usuario solicita más pruebas reales. Se añaden 14 escenarios HTTP con la aplicación, Mealie v3.19.2, SQLite y DuckDB reales en un proyecto Compose temporal con red, cuenta, puertos y volúmenes propios.
+- Verificados crudo/cocido, raciones, cambio de nota y hash, migración de etiquetas, preservación de metadatos personales y calorías manuales, estimación explícita, masa desconocida, eliminación de ingredientes, suma parcial heredada, backfill, 404 y recuperación, reinicio y actualización explícita del catálogo.
+- Se incorpora una prueba opcional con los CSV BEDCA reales locales: 957 alimentos y 31.166 componentes importados en el volumen temporal. Una receta de 200 g de arroz integral para dos raciones devuelve desde Mealie 384 kcal, 8 g de proteína y referencia bedca:904.
+- Docker Desktop estaba detenido y se inicia para las pruebas. El primer intento de la nueva infraestructura falla antes de registrar la cuenta por el acceso al puerto desde una red internal; se sustituye por la red Compose propia normal con puertos en loopback. Ejecución posterior: 14 correctas en 123,74 s.
+- Suite ordinaria: 334 correctas y 17 Docker omitidas en 45,33 s; Ruff y formato correctos; mypy correcto en 45 archivos. No se modifica producción ni se consulta OpenAI. [Detalle reproducible](13-pruebas-mealie-real.md).
+- Regresión de los tres escenarios Docker anteriores: 3 correctos en 67,55 s. Total Docker en ambas ejecuciones: 17 correctos. Confirmada la retirada de los proyectos temporales propios; no se publica código ni imagen.
