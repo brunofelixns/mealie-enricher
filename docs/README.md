@@ -12,12 +12,13 @@ Esta carpeta conserva el alcance, las decisiones, el diseño y el avance de la m
 - Fase 0 completada: referencia fijada, typecheck correcto y 140 pruebas upstream aprobadas.
 - 125 capturas reproducibles, 40 contratos identificados y una base de caché heredada generados.
 - Fases 0–8 completadas: 187 pruebas Python y 2 Docker aprobadas, cobertura 95 %, revisión final corregida. Agents SDK verificado con transporte simulado.
-- Proveedor LLM real, CI remoto y publicación de imagen en GHCR sin ejecutar.
+- En la validación inicial no se ejecutaron proveedor LLM real, CI remoto ni publicación de imagen en GHCR. La publicación posterior de GHCR se registra por separado más abajo.
 - Adaptación posterior D07: etiquetas automáticas en español; 189 pruebas Python y 2 Docker aprobadas. Reglas y umbrales conservados.
 - Código publicado en [brunofelixns/mealie-enricher, rama main](https://github.com/brunofelixns/mealie-enricher/tree/main), con README visual, portada y logo oficial de Mealie.
 - [Resultados y evidencia de ejecución](06-resultados-ejecucion.md).
 
 - Ampliación 1.13.0: SQLite solo caché y DuckDB/BEDCA integrados; 334 pruebas ordinarias y 17 Docker correctas, incluidas escrituras reales en Mealie con BEDCA local. Decisions probado con transporte simulado; la prueba real recibió AuthenticationError. [Guía de catálogos](11-catalogos-duckdb.md) y [validación con Mealie real](13-pruebas-mealie-real.md).
+- Publicación open source del 2026-11-01: repositorio público con presentación inglesa y documentación española; imagen GHCR pública 1.13.0/latest para amd64 y arm64, descarga anónima y despliegue verificados. [Evidencia y digest](14-publicacion-open-source.md).
 
 ## Lectura recomendada
 
@@ -36,6 +37,7 @@ Esta carpeta conserva el alcance, las decisiones, el diseño y el avance de la m
 | [11-catalogos-duckdb.md](11-catalogos-duckdb.md) | BEDCA, catálogos DuckDB, Decisions y preparación con Docker |
 | [12-validacion-catalogos.md](12-validacion-catalogos.md) | Pruebas del flujo completo, reinicios, actualización y recuperación |
 | [13-pruebas-mealie-real.md](13-pruebas-mealie-real.md) | Escenarios HTTP reales con Mealie aislado y exportación BEDCA local |
+| [14-publicacion-open-source.md](14-publicacion-open-source.md) | Publicación pública, metadatos GitHub, imagen GHCR y digest verificado |
 | [../docker/README.md](../docker/README.md) | Descargar, configurar y ejecutar la imagen publicada en GHCR |
 | [referencias/propuesta-inicial.md](referencias/propuesta-inicial.md) | Copia del texto adjunto aportado por el usuario |
 

@@ -1,5 +1,7 @@
 # Publicación del código en GitHub
 
+Este documento registra la primera subida privada del 2026-10-29. La [publicación open source del 2026-11-01](14-publicacion-open-source.md) actualiza la visibilidad e incorpora la imagen pública de GHCR.
+
 ## Destino autorizado
 
 El usuario solicita publicar el código en [brunofelixns/mealie-enricher](https://github.com/brunofelixns/mealie-enricher) y preparar un README visual con una imagen representativa y el logo de Mealie.

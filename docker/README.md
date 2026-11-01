@@ -79,7 +79,9 @@ Stop with `docker compose down`. This preserves volumes. History and pending tas
 
 ## Optional BEDCA catalog
 
-BEDCA data is not redistributed with the source or image. Place your separately obtained `bedca_foods.csv`, `bedca_foodvalues.csv` and `bedca_units.csv` in `bedca/`, or set `BEDCA_INPUT_DIR`. Set `BEDCA_DATASET_VERSION` to identify the export.
+A **bundled BEDCA variant** includes DuckDB and the original CSV files for non-commercial use under BEDCA's terms. Use [.env.bedca.example](.env.bedca.example) with this Compose; no import is needed. It is prepared locally; this change does not publish it to GHCR. [Build, deploy and update guide, in Spanish](../docs/14-imagen-con-bedca.md).
+
+For the base image, place your separately obtained `bedca_foods.csv`, `bedca_foodvalues.csv` and `bedca_units.csv` in `bedca/`, or set `BEDCA_INPUT_DIR`. Set `BEDCA_DATASET_VERSION` to identify the export.
 
 ~~~sh
 docker compose --profile catalog run --rm catalog-import
@@ -99,10 +101,10 @@ Build, test and publish the source revision being released. For example, on Powe
 
 ~~~powershell
 $releaseRevision = git rev-parse HEAD
-docker buildx build --platform linux/amd64,linux/arm64 --build-arg VERSION=1.13.0 --build-arg VCS_REF=$releaseRevision --tag ghcr.io/brunofelixns/mealie-enricher:1.13.0 --tag ghcr.io/brunofelixns/mealie-enricher:latest --push .
+docker buildx build --platform linux/amd64,linux/arm64 --provenance=false --sbom=false --build-arg VERSION=1.13.0 --build-arg VCS_REF=$releaseRevision --tag ghcr.io/brunofelixns/mealie-enricher:1.13.0 --tag ghcr.io/brunofelixns/mealie-enricher:latest --push .
 docker buildx imagetools inspect ghcr.io/brunofelixns/mealie-enricher:1.13.0
 ~~~
 
-Use a new version for future releases and verify a clean deployment before announcing them. OCI labels connect the image to this repository. Package visibility is managed separately from repository visibility; verify that an unauthenticated client can pull the image.
+Use a new version for future releases and verify a clean deployment before announcing them. Optional provenance and SBOM attestations are disabled in this command because GHCR rejected the initial publication containing them; source, version and license remain in the image's OCI labels. Package visibility is managed separately from repository visibility; verify that an unauthenticated client can pull the image.
 
 [GHCR documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
