@@ -175,7 +175,10 @@ duplicados, registros huérfanos, bases/unidades incoherentes y números no fini
   contrato actual. Se preservan también los demás componentes originales.
 - Prueba real de Decisions: rechazada por autenticación con la clave disponible;
   no se considera validación satisfactoria del proveedor.
-- Suite final: 318 pruebas correctas y 3 casos Docker omitidos en la ejecución ordinaria. Ruff y mypy correctos (45 archivos de fuente). Imagen Docker local 1.13.0 construida; 3 pruebas Docker correctas con Mealie real aislado y datos sintéticos (112,58 s).
+- Validación del 2026-10-31: 318 pruebas correctas y 3 casos Docker omitidos en la ejecución ordinaria. Ruff y mypy correctos (45 archivos de fuente). Imagen Docker local 1.13.0 construida; 3 pruebas Docker correctas con Mealie real aislado y datos sintéticos (112,58 s).
+
+La [validación adicional del 2026-11-01](12-validacion-catalogos.md) añade 16
+escenarios completos: 334 pruebas ordinarias y 3 Docker correctas.
 
 ## Fuentes
 

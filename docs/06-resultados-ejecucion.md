@@ -223,3 +223,12 @@ Se conserva la visibilidad privada. Publicar el código no ha publicado una imag
 - Resolución con DuckDB real, sin proveedor: Arroz permanece ambiguo; Arroz cocido encuentra bedca:2661 mediante alias hervido; Arroz integral crudo encuentra bedca:904. Esta comprobación verifica identidad/flujo, no certifica la exactitud nutricional de la fuente (véase la observación de 2661 en el documento 11).
 - Una llamada sintética real de Decisions, autorizada por el usuario: AuthenticationError. El proveedor no se considera validado positivamente. El SDK/contrato HTTP y la abstención se prueban con transporte simulado; los fallos no se fijan en caché y no hay reintentos automáticos.
 - Docker final: 3 pruebas correctas en 112,58 s. Incluyen Mealie v3.19.2 real aislado, flujo heredado, cambio a BEDCA, limpieza real de calorías al pasar a ambigüedad, importador del Compose de despliegue, permisos de appuser, lectura de catálogo y volúmenes separados. Se eliminaron únicamente los proyectos y volúmenes temporales propios.
+
+## 2026-11-01 — Validación adicional de los flujos completos
+
+- Añadidos 16 escenarios de integración en `test_catalog_workflows.py` y `test_catalog_operations.py`, sin cambios de producción.
+- Suite completa con cobertura: 334 correctas y 3 Docker omitidas, 30,46 s. Cobertura de líneas 1.866/1.952 (95,59 %).
+- Docker: 3 correctas en 75,51 s; Mealie real aislado, flujo heredado, BEDCA, borrado de valores anteriores e importación del catálogo con volúmenes separados.
+- Ruff correcto; formato de 96 archivos comprobado; mypy correcto en los 45 archivos de producción.
+- OpenAI se prueba mediante el SDK real con transporte interceptado y claves sintéticas. No se ha repetido la consulta real fallida por autenticación ni se ha utilizado ninguna clave personal en estas pruebas.
+- [Matriz de escenarios y comandos](12-validacion-catalogos.md).

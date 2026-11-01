@@ -153,3 +153,11 @@ Solo se marcarán tareas completadas después de registrar su evidencia. Un bloq
 - La construcción local de la imagen 1.13.0 funciona y contiene DuckDB 2.0.0. La comprobación de tipos completa queda correcta para 45 archivos. Verificación final repetida tras ajustes de revisión: pendiente de registrar el cierre.
 - Cierre de verificación: 318 pruebas ordinarias correctas y 3 Docker omitidas en esa ejecución; Ruff y mypy correctos. Docker opt-in: 3 correctas en 112,58 s, incluyendo Mealie real v3.19.2 aislado y borrado efectivo de nutrición anterior cuando pasa a desconocida.
 - Se conservan CSV externos en `data/bedca/` y catálogo preparado en `data/catalogs/catalogos.duckdb`, todos ignorados por Git. No se cambia la configuración real del usuario ni se publica imagen. La activación del catálogo y la configuración de una clave OpenAI aceptada se documentan en el documento 11.
+
+## 2026-11-01 — Validación adicional solicitada
+
+- El usuario solicita crear las pruebas necesarias para validar la ampliación. Se comprueba el estado local y se ejecuta una base fresca: 318 pruebas correctas, 3 Docker omitidas y cobertura de líneas 95,44 %.
+- Se añaden 16 escenarios en dos archivos: flujo HTTP con SDK OpenAI real interceptado; abstención, rechazo, 401, 429 y timeout; recuperación sin esperar TTL; caché tras reinicio; cambio de nota; sustitución versionada del catálogo; fallo de publicación con archivo anterior intacto; liberación de DuckDB tras arranque incompleto; migración de las cuatro tablas heredadas; fallback a OFF; unidades sin masa conocida; y protección de calorías manuales.
+- No se modifica el código de producción ni se usa ninguna clave personal o API OpenAI real. Los datos son sintéticos; Docker utiliza únicamente proyectos temporales aislados.
+- Ejecución dirigida: 16 correctas. Suite completa: 334 correctas y 3 Docker omitidas en 30,46 s. Cobertura de líneas 95,59 %; Ruff y formato correctos. [Detalle y comandos](12-validacion-catalogos.md).
+- Cierre: 3 pruebas Docker correctas en 75,51 s, con Mealie real aislado, y mypy correcto en 45 archivos. Todas las comprobaciones solicitadas quedan ejecutadas; la validación positiva del proveedor OpenAI en vivo continúa pendiente de una clave aceptada, como ya estaba documentado.

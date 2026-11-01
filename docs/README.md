@@ -15,7 +15,7 @@ Esta carpeta conserva el alcance, las decisiones, el diseño y el avance de la m
 - Código publicado en [brunofelixns/mealie-enricher, rama main](https://github.com/brunofelixns/mealie-enricher/tree/main), con README visual, portada y logo oficial de Mealie.
 - [Resultados y evidencia de ejecución](06-resultados-ejecucion.md).
 
-- Ampliación 1.13.0: SQLite solo caché y DuckDB/BEDCA integrados; 318 pruebas ordinarias y 3 Docker correctas. Decisions probado con transporte simulado; la prueba real recibió AuthenticationError. [Guía de catálogos](11-catalogos-duckdb.md).
+- Ampliación 1.13.0: SQLite solo caché y DuckDB/BEDCA integrados; 334 pruebas ordinarias y 3 Docker correctas. Decisions probado con transporte simulado; la prueba real recibió AuthenticationError. [Guía de catálogos](11-catalogos-duckdb.md).
 
 ## Lectura recomendada
 
@@ -32,6 +32,7 @@ Esta carpeta conserva el alcance, las decisiones, el diseño y el avance de la m
 | [09-etiquetas-y-vista-web.md](09-etiquetas-y-vista-web.md) | Etiquetas en español y consulta de la actividad |
 | [10-publicacion-github.md](10-publicacion-github.md) | Primera publicación del código y recursos del README |
 | [11-catalogos-duckdb.md](11-catalogos-duckdb.md) | BEDCA, catálogos DuckDB, Decisions y preparación con Docker |
+| [12-validacion-catalogos.md](12-validacion-catalogos.md) | Pruebas del flujo completo, reinicios, actualización y recuperación |
 | [../docker/README.md](../docker/README.md) | Descargar, configurar y ejecutar la imagen publicada en GHCR |
 | [referencias/propuesta-inicial.md](referencias/propuesta-inicial.md) | Copia del texto adjunto aportado por el usuario |
 
