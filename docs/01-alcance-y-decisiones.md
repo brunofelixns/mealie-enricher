@@ -112,7 +112,20 @@ autoriza ahora una ampliación opcional, detallada en
   estados y notas, no se supone ml=g y se limpian valores automáticos obsoletos.
   Con catálogo desactivado se mantienen los contratos de la migración original.
 
-## Referencias
+## Evolución del 2026-11-01: variante con datos incluidos
+
+- D13: el usuario solicita incluir DuckDB y conservar los CSV en Docker; confirma
+  distribución pública no comercial. Esta decisión sustituye la exclusión de
+  datos de la imagen en D09 únicamente para la variante BEDCA. Los datos siguen
+  excluidos de Git y de la imagen base.
+- El mantenedor valida y genera el catálogo durante build. El arranque consulta
+  `/opt/bedca/catalogos.duckdb` sin descargas, importaciones ni escrituras de datos.
+- Se conservan los CSV originales, manifiesto y condiciones propias de BEDCA.
+  La licencia del código no concede derechos adicionales sobre el dataset.
+- [Diseño y operación](15-imagen-con-bedca.md). Este cambio prepara y prueba
+  la imagen local; no publica un paquete ni modifica su visibilidad.
+
+## Referencias vigentes
 
 - [uv](https://docs.astral.sh/uv/guides/projects/).
 - [FastAPI](https://fastapi.tiangolo.com/).

@@ -12,8 +12,10 @@ de candidatos, sin generar valores nutricionales del catálogo.
 
 - La integración es configurable: sin catálogo habilitado se mantiene el flujo
   compatible del original. Si se habilita, el archivo debe existir y ser válido.
-- BEDCA se importa desde CSV externos; no se redistribuye el dataset en Git ni
-  en la imagen. Se conservan los registros originales y su procedencia, junto a
+- BEDCA se importa desde CSV externos; no se incluye el dataset en Git ni
+  en la imagen base. La [variante BEDCA](15-imagen-con-bedca.md) lo incorpora
+  junto con sus CSV originales para el ámbito no comercial confirmado por el usuario.
+  Se conservan los registros originales y su procedencia, junto a
   valores derivados con unidades normalizadas. Un desconocido es NULL, nunca 0.
 - El catálogo se abre en solo lectura. Un importador construye otro archivo,
   valida, cierra y publica la nueva versión; se activa con reinicio controlado.
@@ -32,9 +34,11 @@ de candidatos, sin generar valores nutricionales del catálogo.
 
 Importar explícitamente BEDCA con una CLI disponible tanto en uv como dentro de
 Docker. La aplicación no descarga ni importa datos durante cada arranque. El
-archivo de catálogo vive en un volumen separado de la caché y puede montarse en
-solo lectura en el servicio HTTP. La primera preparación es un paso explícito;
-los siguientes arranques reutilizan el archivo.
+archivo de catálogo propio vive en un volumen separado de la caché y puede
+montarse en solo lectura en el servicio HTTP. En la imagen base, la primera
+preparación es un paso explícito; los siguientes arranques reutilizan el archivo.
+La variante BEDCA lo prepara al construir la imagen y lo consulta en
+`/opt/bedca/catalogos.duckdb`, sin importación en el servidor.
 
 ## Preparar BEDCA con uv
 
@@ -156,9 +160,10 @@ de precios ni coste de recetas.
 
 ## Condiciones de datos
 
-No se incluyen los CSV ni el DuckDB generado en Git o en la imagen. El operador
-aporta los datos respetando las condiciones de BEDCA; la aplicación conserva
-atribución y originales. Normalizar para cálculos no sustituye los registros
+No se incluyen los CSV ni el DuckDB generado en Git o en la imagen base. En la
+variante que incluye BEDCA se conservan los CSV, el catálogo, atribución y
+condiciones de uso propias, separadas de la licencia del código. En la imagen
+base, el operador aporta los datos. Normalizar para cálculos no sustituye los registros
 originales ni convierte valores desconocidos a cero. El importador rechaza
 duplicados, registros huérfanos, bases/unidades incoherentes y números no finitos.
 

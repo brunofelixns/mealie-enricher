@@ -9,5 +9,8 @@
 !alembic/**
 !LICENSE
 !NOTICE
+!docker/
+!docker/bedca/
+!docker/bedca/NOTICE.md
 **/__pycache__
 **/*.pyc

@@ -108,7 +108,10 @@ uv run mealie-catalog import-bedca --input-dir data/bedca --output data/catalogs
 
 Después activa `CATALOG_ENABLED=true`. En Docker, el perfil `catalog-import`
 prepara un volumen independiente que la aplicación consulta en solo lectura.
-Los datos BEDCA no se redistribuyen en el repositorio ni en la imagen.
+Los datos BEDCA no se incluyen en Git ni en la imagen base. La [variante con
+BEDCA incluido](15-imagen-con-bedca.md) conserva DuckDB y los tres CSV originales
+y permite arrancar sin importar. Está preparada localmente para uso no comercial,
+bajo las condiciones de BEDCA; esta entrega no la publica en GHCR.
 
 El selector respeta estados como crudo/cocido y puede dejar un ingrediente
 pendiente cuando falte información. **Decisions selecciona alimentos; Python

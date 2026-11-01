@@ -132,7 +132,9 @@ Python performs the nutrient calculations. In catalog mode, Decisions selects fo
 
 ### Optional BEDCA catalog
 
-BEDCA data is **not included** in the repository or image. Obtain the three required CSV exports separately and place them in `bedca/` next to your deployment `.env`:
+The base image requires BEDCA data separately. An optional **BEDCA image variant** bundles DuckDB and the original CSV files for startup without importing. It is prepared locally for non-commercial use under the dataset's own terms; this change does not publish the variant. [Bundled variant guide, in Spanish](docs/15-imagen-con-bedca.md).
+
+For the base image, obtain the three required CSV exports separately and place them in `bedca/` next to your deployment `.env`:
 
 ~~~text
 bedca_foods.csv
@@ -227,7 +229,7 @@ Ordinary tests use synthetic data and mocked transports. Docker integration and 
 - Webhooks and backfill preserve manually entered calories; `POST /estimate` forces recalculation.
 - Pending tasks and history do not survive a restart. Run a single instance.
 - HTTP routes retain upstream access behavior and do not add authentication. Deploy on a trusted network or behind your authenticated reverse proxy.
-- Local BEDCA data must be provided separately. Real-provider success is distinct from mocked tests.
+- The base image requires separate BEDCA data; the bundled variant retains BEDCA's own terms. Real-provider success is distinct from mocked tests.
 
 ## Documentation
 

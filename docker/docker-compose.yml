@@ -8,7 +8,7 @@ services:
       - .env
     environment:
       PORT: ${PORT:-8000}
-      CATALOG_DB_PATH: /app/catalogs/catalogos.duckdb
+      CATALOG_DB_PATH: ${CATALOG_DB_PATH:-/app/catalogs/catalogos.duckdb}
     ports:
       - "${PUBLISHED_PORT:-8000}:${PORT:-8000}"
     volumes:

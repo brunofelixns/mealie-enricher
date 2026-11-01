@@ -242,3 +242,13 @@ Se conserva la visibilidad privada. Publicar el código no ha publicado una imag
 - El primer intento falla en la infraestructura antes de procesar recetas: puerto no accesible desde Windows con red internal. La red propia normal de Compose con puertos en loopback resuelve el acceso; la ejecución posterior pasa completa.
 - Los proyectos temporales propios se retiran al finalizar. No hay llamadas a OpenAI ni cambios en el Mealie del usuario, publicación de código o de imagen.
 - [Escenarios, resultados y comandos](13-pruebas-mealie-real.md).
+
+## 2026-11-01 — Imagen con BEDCA y CSV originales incluidos
+
+- Suite completa con todas las integraciones opcionales activadas: **358 correctas, 0 omitidas, 402,68 s**. Incluye 334 ordinarias y 24 Docker; la nueva variante añade 7 escenarios.
+- Ambos Compose aceptan el catálogo incluido fuera del volumen. Verificados CSV byte a byte, manifiesto, atribución, permisos, configuración inicial y fallo de build ante datos inválidos.
+- Despliegue sin importación con volumen de catálogo vacío. Con Mealie real, cambiar de imagen actualiza 360→400 kcal y la firma de la receta sin perder SQLite.
+- Variante real local `mealie-enricher:bedca`, linux/amd64: 957 alimentos, 31.166 componentes y tres CSV incluidos. Mealie devuelve 384 kcal y 8 g de proteína con referencia bedca:904, sin montaje de CSV ni importador en el despliegue.
+- Ruff/formato y mypy (45 archivos fuente) correctos; revisión independiente sin hallazgos accionables. No cambia el código de estimación ni se llama a OpenAI.
+- Proyectos y volúmenes temporales retirados. La imagen real queda local; no se publica un tag BEDCA ni se acredita ARM para esta variante. La imagen base publicada se conserva.
+- [Construcción, despliegue, condiciones y evidencia](15-imagen-con-bedca.md).

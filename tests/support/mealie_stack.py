@@ -37,12 +37,13 @@ def synthetic_catalog(path, raw_kcal=360):
 
 
 class MealieStack:
-    def __init__(self, path):
+    def __init__(self, path, *, bundled_image=None):
         self.path = path
         self.project = "enricher-real-" + uuid.uuid4().hex[:10]
         self.source = synthetic_catalog(path / "bedca")
         self.slugs = []
         self.foods, self.units = {}, {}
+        self.bundled_image = bundled_image
         self.values = {
             "TEST_MEALIE_PORT": str(_free_port()),
             "TEST_ESTIMATOR_PORT": str(_free_port()),
@@ -78,7 +79,9 @@ class MealieStack:
                 )
             )
         }
-        image = os.getenv("CATALOG_TEST_IMAGE", "mealie-enricher:catalog-1.13.0")
+        if bundled_image:
+            self.values["CATALOG_DB_PATH"] = "/opt/bedca/catalogos.duckdb"
+        image = bundled_image or os.getenv("CATALOG_TEST_IMAGE", "mealie-enricher:catalog-1.13.0")
         override = path / "isolation.json"
         override.write_text(
             json.dumps(
@@ -163,7 +166,8 @@ class MealieStack:
         self.mealie.headers["Authorization"] = "Bearer " + token
         self.values["MEALIE_API_TOKEN"] = token
         self.save_env()
-        self.import_catalog()
+        if not self.bundled_image:
+            self.import_catalog()
         self.restart_app()
 
     def import_catalog(self, replace=False, check=True):
@@ -291,7 +295,7 @@ class MealieStack:
             "mealie-catalog",
             "inspect",
             "--catalog",
-            "/app/catalogs/catalogos.duckdb",
+            self.values.get("CATALOG_DB_PATH", "/app/catalogs/catalogos.duckdb"),
         )
         return json.loads(result.stdout)
 

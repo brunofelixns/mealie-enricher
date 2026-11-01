@@ -106,6 +106,13 @@ El historial y las tareas continúan en memoria y se pierden al reiniciar, igual
 
 ## Catálogo BEDCA opcional
 
+La [variante con BEDCA incluido](../docs/15-imagen-con-bedca.md) conserva DuckDB
+y los tres CSV originales en la imagen para uso no comercial. Usa
+[.env.bedca.example](.env.bedca.example) con este Compose para arrancar sin importar.
+Está preparada localmente; esta entrega no publica un nuevo tag en GHCR.
+
+Para la imagen base, sigue la preparación manual:
+
 Coloca `bedca_foods.csv`, `bedca_foodvalues.csv` y `bedca_units.csv` en `bedca/`
 o configura `BEDCA_INPUT_DIR`. Con una imagen que incluya la versión 1.13.0:
 

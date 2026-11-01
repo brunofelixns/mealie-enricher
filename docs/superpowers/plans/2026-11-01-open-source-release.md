@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Preserve Spanish documentation and existing application behavior.
-- Exclude local credentials, caches, and BEDCA data from Git and the image.
+- Exclude local credentials, caches, and BEDCA data from Git and the base image. The separately documented optional BEDCA variant retains the dataset's own non-commercial terms.
 - Preserve existing commits and any unrelated working changes.
 - Do not claim registry publication until tags and digests are verified remotely.
 - Verify anonymous access separately from authenticated publication.

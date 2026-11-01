@@ -1,0 +1,25 @@
+# syntax=docker/dockerfile:1
+# Build with --build-context bedca_source=./data/bedca.
+ARG BASE_IMAGE=ghcr.io/brunofelixns/mealie-enricher:1.13.0
+ARG BEDCA_DATASET_VERSION=2026-08-19
+
+FROM ${BASE_IMAGE} AS bedca-builder
+ARG BEDCA_DATASET_VERSION
+COPY --from=bedca_source --chown=1000:1000 bedca_foods.csv bedca_foodvalues.csv bedca_units.csv /tmp/bedca-bundle/source/
+COPY --chown=1000:1000 docker/bedca/NOTICE.md /tmp/bedca-bundle/NOTICE.md
+RUN python -m mealie_enricher.catalog.cli import-bedca \
+      --input-dir /tmp/bedca-bundle/source \
+      --output /tmp/bedca-bundle/catalogos.duckdb \
+      --dataset-version "$BEDCA_DATASET_VERSION" > /tmp/bedca-bundle/manifest.json \
+    && chmod -R a-w /tmp/bedca-bundle
+
+FROM ${BASE_IMAGE}
+ARG BEDCA_DATASET_VERSION
+LABEL org.opencontainers.image.title="Mealie Enricher with BEDCA" \
+    org.opencontainers.image.description="Ready-to-run BEDCA catalog; bundled data is subject to AESAN/BEDCA non-commercial terms" \
+    org.opencontainers.image.licenses="GPL-3.0-only AND LicenseRef-AESAN-BEDCA" \
+    dev.mealie-enricher.bedca.dataset-version="$BEDCA_DATASET_VERSION" \
+    dev.mealie-enricher.bedca.terms="https://www.bedca.net/bdpub/UsoBD.pdf"
+COPY --from=bedca-builder /tmp/bedca-bundle /opt/bedca
+ENV CATALOG_ENABLED=true CATALOG_DB_PATH=/opt/bedca/catalogos.duckdb
+USER appuser
