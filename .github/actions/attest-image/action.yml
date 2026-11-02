@@ -11,7 +11,7 @@ inputs:
     description: SBOM CycloneDX de la plataforma
     default: ''
   predicate-path:
-    description: Procedencia SLSA de la promoción verificada
+    description: Evidencia de la verificación y promoción del candidato
     default: ''
 runs:
   using: composite
@@ -24,7 +24,7 @@ runs:
         subject-digest: ${{ inputs.digest }}
         sbom-path: ${{ inputs.sbom-path }}
         predicate-path: ${{ inputs.predicate-path }}
-        predicate-type: ${{ inputs.predicate-path && 'https://slsa.dev/provenance/v1' || '' }}
+        predicate-type: ${{ inputs.predicate-path && 'https://github.com/brunofelixns/mealie-enricher/ci/verified-promotion/v1' || '' }}
         push-to-registry: true
     - name: Conservar bundle de firma
       shell: bash

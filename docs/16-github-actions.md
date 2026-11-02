@@ -247,11 +247,15 @@ de informes y caché también en los runners Linux.
 Se obtiene un SBOM CycloneDX de cada plataforma a partir del mismo inventario
 escaneado. `actions/attest` firma los cuatro SBOM y la procedencia de promoción
 de ambos índices, usando OIDC y almacenando las attestations en GitHub y GHCR.
-La procedencia es de tipo SLSA v1 con buildType `verified-promotion/v1`: identifica
+La promoción utiliza el predicado personalizado
+`https://github.com/brunofelixns/mealie-enricher/ci/verified-promotion/v1`: identifica
 la revisión exacta de la release, el digest del candidato y la ejecución que lo
 verificó y promocionó. Describe también reintentos que reutilizan candidatos;
 no atribuye una reconstrucción inexistente ni confunde el SHA de main con el
-checkout publicado. No se afirma un nivel de certificación SLSA.
+checkout publicado. No declara procedencia de construcción SLSA: GitHub rechaza
+tipos de construcción personalizados bajo ese predicado estándar. Las firmas
+OIDC verifican las afirmaciones de promoción y sus digests, también al reutilizar
+un candidato construido en otra ejecución.
 
 Manifiesto, informes, SBOM y bundles de firma se suben como **assets de la release**
 antes de mover aliases. Sus nombres incluyen run ID e intento y no sustituyen
@@ -273,7 +277,7 @@ Verificación de un digest publicado por este flujo:
 ```bash
 gh attestation verify oci://ghcr.io/brunofelixns/mealie-enricher@sha256:DIGEST \
   --repo brunofelixns/mealie-enricher \
-  --predicate-type https://slsa.dev/provenance/v1
+  --predicate-type https://github.com/brunofelixns/mealie-enricher/ci/verified-promotion/v1
 ```
 
 Los SBOM acreditan manifiestos hijos, no el índice multiplataforma; usar su digest
