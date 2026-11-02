@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0](https://github.com/brunofelixns/mealie-enricher/compare/v1.0.1...v1.1.0) (2026-11-02)
+
+
+### Funcionalidades
+
+* recover incomplete recipe ingredients without changing their source ([#17](https://github.com/brunofelixns/mealie-enricher/issues/17)) ([b106ea3](https://github.com/brunofelixns/mealie-enricher/commit/b106ea30c77033e9d3563e186ee9ecccc90d3eee))
+
+
+### Operación y CI
+
+* **ci:** attest verified promotion with a custom predicate ([7bb9336](https://github.com/brunofelixns/mealie-enricher/commit/7bb9336341112138bf0823fa5998e3fb762f14c2))
+* **ci:** recognize componentless Python release pull requests ([bb92f64](https://github.com/brunofelixns/mealie-enricher/commit/bb92f64279f3d2ffc630a8841f8a14b677406fd9))
+
 ## [1.0.1](https://github.com/brunofelixns/mealie-enricher/compare/v1.0.0...v1.0.1) (2026-11-02)
 
 
