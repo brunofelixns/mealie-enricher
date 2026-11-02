@@ -53,3 +53,4 @@
 - Ruling on review's excluded topics: existing public-image CVE remediation remains a separate change; this task enables detection and blocking. Historical images remain unsigned. No minor findings deferred.
 - Full final local suite after review fixes: 410 passed, 24 opt-in Docker tests skipped, 95.59% coverage. New checks passed on PR #6 (CodeQL Python/Actions, dependency review, title, actionlint/zizmor); full Docker CI remains the integration gate.
 - Test subprocesses and fake scanners write to temporary summary files, so synthetic 96% coverage or clean-image fixtures cannot contaminate the actual Actions summary.
+- GitHub review identified the project's existing ci/revert types missing from the title policy. Both were observed failing, added, and covered by a regression parameterized over every Release Please changelog type. No release configuration or increment rule changes.

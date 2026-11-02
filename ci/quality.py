@@ -7,7 +7,7 @@ from pathlib import Path
 from xml.etree import ElementTree
 
 TITLE = re.compile(
-    r"^(feat|fix|refactor|perf|style|test|docs|build|ops|chore)(?:\([^()\r\n]+\))?!?: ([^\r\n]+)$"
+    r"^(feat|fix|refactor|perf|style|test|docs|build|ops|ci|chore|revert)(?:\([^()\r\n]+\))?!?: ([^\r\n]+)$"
 )
 
 

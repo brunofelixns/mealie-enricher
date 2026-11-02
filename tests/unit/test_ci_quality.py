@@ -1,8 +1,24 @@
 """Release metadata and coverage gates reject misleading inputs."""
 
+import json
+from pathlib import Path
+
 import pytest
 
 from ci.quality import check_coverage, check_title
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        section["type"]
+        for section in json.loads(
+            (Path(__file__).parents[2] / "release-please-config.json").read_text(encoding="utf-8")
+        )["packages"]["."]["changelog-sections"]
+    ],
+)
+def test_title_policy_accepts_every_configured_release_type(kind):
+    check_title(f"{kind}: update the project")
 
 
 @pytest.mark.parametrize(
