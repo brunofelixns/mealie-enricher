@@ -88,10 +88,27 @@ print(json.dumps({'version':version('mealie-enricher'),'architecture':platform.m
 
 
 def smoke(reference, version, revision, variant):
+    index = json.loads(
+        run(["docker", "buildx", "imagetools", "inspect", reference, "--raw"]).stdout
+    )
+    platform_images = {}
+    for architecture in ("amd64", "arm64"):
+        matches = [
+            item["digest"]
+            for item in index.get("manifests", [])
+            if item.get("platform", {}).get("os") == "linux"
+            and item.get("platform", {}).get("architecture") == architecture
+        ]
+        if len(matches) != 1 or not DIGEST.fullmatch(matches[0]):
+            raise ValueError(f"El índice debe identificar una única imagen linux/{architecture}")
+        platform_images[architecture] = reference.rsplit("@", 1)[0] + "@" + matches[0]
+
     for architecture in ("amd64", "arm64"):
         platform = "linux/" + architecture
-        run(["docker", "pull", "--platform", platform, reference])
-        info = json.loads(run(["docker", "image", "inspect", reference]).stdout)[0]
+        # Classic Docker stores cannot bind the same index digest to two platforms.
+        platform_reference = platform_images[architecture]
+        run(["docker", "pull", "--platform", platform, platform_reference])
+        info = json.loads(run(["docker", "image", "inspect", platform_reference]).stdout)[0]
         labels = info["Config"]["Labels"]
         if (
             labels["org.opencontainers.image.version"] != version
@@ -110,7 +127,7 @@ def smoke(reference, version, revision, variant):
                 "--read-only",
                 "--entrypoint",
                 "python",
-                reference,
+                platform_reference,
                 "-c",
                 PROBE,
                 version,
