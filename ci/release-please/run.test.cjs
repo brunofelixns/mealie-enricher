@@ -116,11 +116,11 @@ test('recovery discovers only bot releases with a merged PR and no receipt', asy
   const listReleases = () => {};
   const listPullRequestsAssociatedWithCommit = () => {};
   const release = {tag_name: 'v1.0.1', body: '', draft: false, prerelease: false,
-    published_at: '2026-11-02', author: {type: 'Bot', login: 'release-bot[bot]'}};
+    published_at: '2026-11-02', author: {type: 'Bot', login: 'github-actions[bot]'}};
   const pull = {merge_commit_sha: 'a'.repeat(40), merged_at: '2026-11-02',
     base: {ref: 'main', repo: {full_name: 'owner/app'}},
-    head: {ref: 'release-please--branches--main'},
-    user: {type: 'Bot', login: 'release-bot[bot]'}, labels: [{name: 'autorelease: tagged'}]};
+    head: {ref: 'release-please--branches--main', repo: {full_name: 'owner/app'}},
+    user: {type: 'Bot', login: 'github-actions[bot]'}, labels: [{name: 'autorelease: tagged'}]};
   const github = {
     rest: {repos: {listReleases, listPullRequestsAssociatedWithCommit},
       git: {getRef: async () => ({data: {object: {type: 'commit', sha: 'a'.repeat(40)}}})}},

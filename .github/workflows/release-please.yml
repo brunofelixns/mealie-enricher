@@ -20,9 +20,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
-      contents: write
-      pull-requests: write
-      issues: write
+      contents: read
+      pull-requests: read
       actions: write
     steps:
       - name: Obtener código
@@ -40,11 +39,35 @@ jobs:
       - name: Instalar SDK oficial bloqueado
         if: steps.current.outputs.current == 'true'
         run: npm ci --prefix ci/release-please --ignore-scripts --no-audit --no-fund
+      - name: Crear token temporal de la App para este repositorio
+        if: steps.current.outputs.current == 'true'
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: mealie-enricher
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+      - name: Comprobar la identidad de la App
+        if: steps.current.outputs.current == 'true'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          ACTUAL_APP: ${{ steps.app-token.outputs.app-slug }}
+          EXPECTED_APP: ${{ vars.RELEASE_APP_SLUG }}
+        with:
+          script: |
+            if (!process.env.EXPECTED_APP || process.env.ACTUAL_APP !== process.env.EXPECTED_APP) {
+              throw new Error('La App autenticada no coincide con RELEASE_APP_SLUG');
+            }
       - name: Mantener PR y solicitar publicaciones
         if: steps.current.outputs.current == 'true'
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASE_APP_SLUG: ${{ vars.RELEASE_APP_SLUG }}
         with:
           script: |
             const {run} = require(`${process.env.GITHUB_WORKSPACE}/ci/release-please/run.cjs`);

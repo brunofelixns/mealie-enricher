@@ -152,6 +152,16 @@ de pull_request; workflow_dispatch se reserva para publicar releases. La opción
 de GitHub App para quitar esa aprobación adicional se consulta al usuario.
 La [guía vigente](16-github-actions.md) distingue el flujo de su evidencia histórica.
 
+## D17: GitHub App para el CI automático de Release Please
+
+El usuario elige una App dedicada para que los eventos de las PR del bot
+arranquen CI sin la aprobación que exige GITHUB_TOKEN. Solo se instala en
+mealie-enricher, con Contents/Pull requests/Issues write y Metadata read.
+El workflow genera tokens temporales limitados y los revoca al terminar.
+La clave queda únicamente como secreto de Actions; Client ID y slug son variables.
+La protección de main, las pruebas y la fusión manual de la PR de versión se
+mantienen. GHCR sigue autenticándose con el token del job de publicación.
+
 ## Fuentes técnicas
 
 - [uv](https://docs.astral.sh/uv/guides/projects/).

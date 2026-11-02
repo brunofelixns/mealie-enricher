@@ -48,7 +48,7 @@ async function findUnpublishedReleases(github, repo) {
     if (object.type !== 'commit') continue;
     const pulls = await github.paginate(github.rest.repos.listPullRequestsAssociatedWithCommit,
       {...repo, commit_sha: object.sha, per_page: 100});
-    try {validateRelease(release, pulls, object.sha, `${repo.owner}/${repo.repo}`);}
+    try {validateRelease(release, pulls, object.sha, `${repo.owner}/${repo.repo}`, process.env.RELEASE_APP_SLUG);}
     catch {continue;}
     pending.push({tagName: release.tag_name});
   }
