@@ -208,7 +208,7 @@ construcción y el dataset continúan perteneciendo al tag validado. Así una
 release anterior no necesita contener los helpers recién incorporados.
 El segundo checkout solo se realiza al validar un tag en `workflow_dispatch`;
 las PR y pushes ya están en el SHA correcto desde el primer checkout. Las
-ejecuciones manuales no guardan caché de uv después de ejecutar código del tag.
+validaciones no guardan caché compartida de uv después de ejecutar código del tag.
 
 Verificación de un digest publicado por este flujo:
 
