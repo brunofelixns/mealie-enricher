@@ -1,0 +1,36 @@
+name: Acreditar imagen verificada
+description: Firmar un SBOM o la procedencia de promoción y conservar el bundle
+inputs:
+  name:
+    description: Nombre fijo de la evidencia
+    required: true
+  digest:
+    description: Digest verificado del índice o manifiesto hijo
+    required: true
+  sbom-path:
+    description: SBOM CycloneDX de la plataforma
+    default: ''
+  predicate-path:
+    description: Procedencia SLSA de la promoción verificada
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Firmar y publicar junto al digest
+      id: attest
+      uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+      with:
+        subject-name: ghcr.io/brunofelixns/mealie-enricher
+        subject-digest: ${{ inputs.digest }}
+        sbom-path: ${{ inputs.sbom-path }}
+        predicate-path: ${{ inputs.predicate-path }}
+        predicate-type: ${{ inputs.predicate-path && 'https://slsa.dev/provenance/v1' || '' }}
+        push-to-registry: true
+    - name: Conservar bundle de firma
+      shell: bash
+      env:
+        BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+        EVIDENCE_NAME: ${{ inputs.name }}
+      run: |
+        [[ "$EVIDENCE_NAME" =~ ^[a-z0-9-]+$ ]]
+        cp "$BUNDLE_PATH" ".cache/release-security/$EVIDENCE_NAME.bundle.json"

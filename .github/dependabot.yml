@@ -1,0 +1,70 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    cooldown:
+      default-days: 7
+    directories: [/, /.github/actions/attest-image, /.github/actions/prepare-bedca]
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Madrid
+    groups:
+      actions:
+        patterns: ['*']
+    commit-message:
+      prefix: ops
+  - package-ecosystem: uv
+    cooldown:
+      default-days: 7
+    allow:
+      - dependency-type: all
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      python-patch-minor:
+        patterns: ['*']
+        update-types: [minor, patch]
+    commit-message:
+      prefix: build
+  - package-ecosystem: npm
+    cooldown:
+      default-days: 7
+    directory: /ci/release-please
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      release-tooling:
+        patterns: ['*']
+        update-types: [minor, patch]
+    commit-message:
+      prefix: build
+  - package-ecosystem: docker
+    cooldown:
+      default-days: 7
+    directories: [/, /docker, /ci/trivy]
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      container-patch-minor:
+        patterns: ['*']
+        update-types: [minor, patch]
+    commit-message:
+      prefix: build
+  - package-ecosystem: docker-compose
+    cooldown:
+      default-days: 7
+    directories: [/, /docker]
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      compose-images:
+        patterns: ['*']
+        update-types: [minor, patch]
+    commit-message:
+      prefix: build

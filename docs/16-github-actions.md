@@ -14,6 +14,59 @@ por sus propias PR. El bot no fusiona su PR ni escribe directamente en main.
 La protección exige PR y CI también al administrador, sin exigir un segundo
 revisor humano en este repositorio personal. No permite force push ni borrado.
 
+## Comprobaciones de calidad y seguridad
+
+La suite completa se ejecuta en `pull_request`, pushes a `main` y ejecuciones
+manuales. Los pushes a ramas no repiten la validación de una PR. El nombre del
+check obligatorio **Suite completa y calidad** y el rechazo de tests omitidos
+se conservan. La cobertura de `src/mealie_enricher` debe alcanzar el **95 %**;
+la referencia ordinaria medida antes de esta ampliación es **95,59 %**.
+El resumen de Actions muestra cobertura y número de escenarios.
+
+[quality.yml](../.github/workflows/quality.yml) ejecuta actionlint **1.7.12**
+(archivo descargado con SHA-256 comprobado) y zizmor **1.31.1**, incluyendo
+acciones compuestas y configuración de Dependabot. Solo se excluye en actionlint
+el diagnóstico concreto de `concurrency.queue`, que esa versión no conoce.
+Las excepciones de zizmor están junto a cada uso y justifican el checkout exacto
+del tag y la App de un solo repositorio. Los títulos de PR siguen los tipos
+Conventional Commits del proyecto, con scope y `!` opcionales, descripción
+iniciada en minúscula y sin punto final. El evento `edited` vuelve a comprobarlos.
+Dependency Review rechaza vulnerabilidades nuevas HIGH/CRITICAL, también en
+dependencias de desarrollo o de ámbito desconocido; no escribe comentarios.
+
+[security.yml](../.github/workflows/security.yml) analiza Python y Actions con
+CodeQL `security-extended` en PR, `main` y semanalmente. Además, cada martes a
+las **05:23 UTC** resuelve una vez los aliases `latest` y `bedca`, selecciona
+sus manifiestos amd64/arm64 y ejecuta el mismo escáner que la publicación.
+La base de vulnerabilidades de Trivy se actualiza; no se utiliza un resultado
+anterior como aprobación. Los informes completos duran 90 días en Actions.
+Se suben SARIF con cuatro categorías estables a Code Scanning para deduplicar
+hallazgos y aprovechar sus alertas, sin crear issues o comentarios repetidos.
+
+[compatibility.yml](../.github/workflows/compatibility.yml), cada miércoles a
+las **05:41 UTC** o manualmente, consulta la release estable oficial de Mealie
+y ejecuta toda la suite en proyectos Docker aislados con esa imagen. Las PR
+conservan la versión fijada en Compose. No accede a una instalación personal,
+no llama a proveedores LLM y no publica imágenes.
+
+### Actualizaciones de dependencias
+
+Aquí no existía `renovate.json`: la referencia a Renovate correspondía a
+mealie-mcp-server. Se mantiene un único bot, **Dependabot**, con actualizaciones
+semanales agrupadas de Actions, uv (también dependencias indirectas), npm del
+SDK de release, Dockerfiles y Compose. Las versiones nuevas esperan siete días;
+las actualizaciones de seguridad conservan el tratamiento propio de GitHub.
+Las PR se revisan y pasan CI; no hay automerge ni credenciales nuevas.
+
+El pin de Trivy está en [ci/trivy/Dockerfile](../ci/trivy/Dockerfile), incluyendo
+versión y digest, y queda cubierto por el gestor Docker de Dependabot. El helper
+Python consume ese pin; evita incrustar un digest fuera del alcance del bot.
+El gestor Actions incluye explícitamente las carpetas de las acciones compuestas;
+así mantiene también el SHA de `actions/attest`, no solo los workflows.
+Esto traslada las mejoras de mantenimiento propuestas para Renovate sin activar
+un segundo servicio. El refresco de uv.lock lo realizan sus PR de actualización;
+no se programa una regeneración ciega del lock ni se cambian los metadatos de versión.
+
 ## GitHub App para CI sin aprobación adicional
 
 Release Please utiliza la App privada y dedicada **Mealie Release brunofelixns**
@@ -122,7 +175,45 @@ que el control de aliases y la promoción no compitan con otra release.
 Se construyen candidatos inmutables y se comprueban ambas arquitecturas antes
 de promover versiones. Los manifiestos hijos se ejecutan por su propio digest
 para evitar el conflicto del almacén clásico de Docker. ARM se prueba con QEMU.
-No se generan SBOM ni attestations de provenance.
+Los índices conservan el formato sin attestations embebidas de BuildKit.
+Antes de promocionar se ejecuta [ci/security.py](../ci/security.py) sobre los
+cuatro manifiestos hijos por digest. Se rechazan informes vacíos o incompletos
+y vulnerabilidades HIGH/CRITICAL con una versión corregida disponible. Los
+hallazgos sin corrección y de menor gravedad permanecen en los informes completos.
+El escáner no monta el socket Docker; consulta el registro con su imagen fijada.
+
+Se obtiene un SBOM CycloneDX de cada plataforma a partir del mismo inventario
+escaneado. `actions/attest` firma los cuatro SBOM y la procedencia de promoción
+de ambos índices, usando OIDC y almacenando las attestations en GitHub y GHCR.
+La procedencia es de tipo SLSA v1 con buildType `verified-promotion/v1`: identifica
+la revisión exacta de la release, el digest del candidato y la ejecución que lo
+verificó y promocionó. Describe también reintentos que reutilizan candidatos;
+no atribuye una reconstrucción inexistente ni confunde el SHA de main con el
+checkout publicado. No se afirma un nivel de certificación SLSA.
+
+Manifiesto, informes, SBOM y bundles de firma se suben como **assets de la release**
+antes de mover aliases. Sus nombres incluyen run ID e intento y no sustituyen
+evidencias de intentos previos. No dependen de la retención de Actions. Los
+reintentos vuelven a escanear antes de firmar y promocionar; un fallo no deja
+un recibo de seguridad correcto reutilizable.
+
+El control de cobertura se conserva desde el checkout de confianza antes de
+cambiar al código del tag. Para publicar, las herramientas genéricas de escaneo
+y firma se obtienen del SHA del workflow en `.cache/trusted-ci`; la receta de
+construcción y el dataset continúan perteneciendo al tag validado. Así una
+release anterior no necesita contener los helpers recién incorporados.
+
+Verificación de un digest publicado por este flujo:
+
+```bash
+gh attestation verify oci://ghcr.io/brunofelixns/mealie-enricher@sha256:DIGEST \
+  --repo brunofelixns/mealie-enricher \
+  --predicate-type https://slsa.dev/provenance/v1
+```
+
+Los SBOM acreditan manifiestos hijos, no el índice multiplataforma; usar su digest
+y el predicate type CycloneDX al verificar su attestation. Las releases históricas
+no adquieren firmas retrospectivas por integrar estos workflows.
 
 Los tags de versión nunca se sustituyen por otro digest. Un reintento antiguo
 solo repara esos tags y no mueve latest/bedca ni la release vigente de GitHub.

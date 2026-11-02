@@ -3,7 +3,7 @@ run-name: ${{ inputs.release_tag && format('Publicar {0}', inputs.release_tag) |
 
 on:
   push:
-    branches: ['**']
+    branches: [main]
   pull_request:
   workflow_dispatch:
     inputs:
@@ -32,7 +32,7 @@ jobs:
     timeout-minutes: 35
     permissions:
       contents: read
-      pull-requests: read
+      pull-requests: read # Validate the merged release PR before executing its tag.
     outputs:
       sha: ${{ steps.source.outputs.sha }}
       version: ${{ steps.source.outputs.version || steps.identity.outputs.version }}
@@ -73,6 +73,10 @@ jobs:
             validateRelease(release, pulls, result.sha, `${context.repo.owner}/${context.repo.repo}`, process.env.RELEASE_APP_SLUG);
             core.setOutput('sha', result.sha);
             core.setOutput('version', result.version);
+      - name: Conservar el control de cobertura de la revisión de confianza
+        run: |
+          mkdir -p "$RUNNER_TEMP/enricher-ci"
+          cp ci/quality.py "$RUNNER_TEMP/enricher-ci/quality.py"
       - name: Obtener la revisión exacta que se comprobará
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -108,7 +112,7 @@ jobs:
           uv run --frozen ruff format --check .
           uv run --frozen mypy src/mealie_enricher
       - name: Preparar BEDCA con checksums
-        uses: ./.github/actions/prepare-bedca
+        uses: ./.github/actions/prepare-bedca # zizmor: ignore[self-repository] -- execute the validated checkout, including release tags
       - name: Construir las imágenes de prueba
         run: |
           docker buildx use default
@@ -123,8 +127,9 @@ jobs:
       - name: Ejecutar toda la suite, incluido Mealie real
         run: |
           mkdir -p .cache
-          uv run --frozen pytest -q --cov=mealie_enricher --cov-report=xml --junitxml=.cache/ci-results.xml
+          uv run --frozen pytest -q --cov=mealie_enricher --cov-report=xml --cov-fail-under=95 --junitxml=.cache/ci-results.xml
           python ci/check_test_report.py .cache/ci-results.xml
+          python "$RUNNER_TEMP/enricher-ci/quality.py" coverage coverage.xml --junit .cache/ci-results.xml
       - name: Conservar informes
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
@@ -148,8 +153,10 @@ jobs:
       cancel-in-progress: false
       queue: max
     permissions:
-      contents: write
-      packages: write
+      contents: write # Upload durable release evidence and update its receipt.
+      packages: write # Publish verified image digests and OCI attestations.
+      id-token: write # Obtain short-lived Sigstore signing identity.
+      attestations: write # Store the signed evidence in GitHub.
     env:
       IMAGE_REPOSITORY: ghcr.io/brunofelixns/mealie-enricher
       RELEASE_TAG: ${{ inputs.release_tag }}
@@ -164,8 +171,14 @@ jobs:
           persist-credentials: false
       - name: Confirmar tag y metadatos
         run: python ci/release_policy.py verify --tag "$RELEASE_TAG"
+      - name: Obtener herramientas de seguridad de la revisión de confianza
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.sha }}
+          path: .cache/trusted-ci
+          persist-credentials: false
       - name: Preparar BEDCA con checksums
-        uses: ./.github/actions/prepare-bedca
+        uses: ./.github/actions/prepare-bedca # zizmor: ignore[self-repository] -- execute the validated release checkout
       - name: Preparar emulación ARM
         uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
       - name: Preparar Buildx multiplataforma
@@ -181,6 +194,63 @@ jobs:
           python ci/images.py build --repository "$IMAGE_REPOSITORY" \
             --version "$RELEASE_VERSION" --revision "$RELEASE_SHA" \
             --output .cache/release-images.json
+      - name: Escanear los cuatro digests y generar SBOM y procedencia
+        id: security
+        run: python .cache/trusted-ci/ci/security.py --manifest .cache/release-images.json --output .cache/release-security
+      - name: Acreditar SBOM base amd64
+        uses: ./.cache/trusted-ci/.github/actions/attest-image # zizmor: ignore[self-repository] -- trusted workflow SHA, independent of historical release checkout
+        with:
+          name: base-amd64
+          digest: ${{ steps.security.outputs.base_amd64_digest }}
+          sbom-path: .cache/release-security/base-amd64.cdx.json
+      - name: Acreditar SBOM base arm64
+        uses: ./.cache/trusted-ci/.github/actions/attest-image # zizmor: ignore[self-repository] -- trusted workflow SHA, independent of historical release checkout
+        with:
+          name: base-arm64
+          digest: ${{ steps.security.outputs.base_arm64_digest }}
+          sbom-path: .cache/release-security/base-arm64.cdx.json
+      - name: Acreditar SBOM BEDCA amd64
+        uses: ./.cache/trusted-ci/.github/actions/attest-image # zizmor: ignore[self-repository] -- trusted workflow SHA, independent of historical release checkout
+        with:
+          name: bedca-amd64
+          digest: ${{ steps.security.outputs.bedca_amd64_digest }}
+          sbom-path: .cache/release-security/bedca-amd64.cdx.json
+      - name: Acreditar SBOM BEDCA arm64
+        uses: ./.cache/trusted-ci/.github/actions/attest-image # zizmor: ignore[self-repository] -- trusted workflow SHA, independent of historical release checkout
+        with:
+          name: bedca-arm64
+          digest: ${{ steps.security.outputs.bedca_arm64_digest }}
+          sbom-path: .cache/release-security/bedca-arm64.cdx.json
+      - name: Acreditar procedencia de la promoción base
+        uses: ./.cache/trusted-ci/.github/actions/attest-image # zizmor: ignore[self-repository] -- trusted workflow SHA, independent of historical release checkout
+        with:
+          name: base-provenance
+          digest: ${{ steps.security.outputs.base_digest }}
+          predicate-path: .cache/release-security/base.provenance.json
+      - name: Acreditar procedencia de la promoción BEDCA
+        uses: ./.cache/trusted-ci/.github/actions/attest-image # zizmor: ignore[self-repository] -- trusted workflow SHA, independent of historical release checkout
+        with:
+          name: bedca-provenance
+          digest: ${{ steps.security.outputs.bedca_digest }}
+          predicate-path: .cache/release-security/bedca.provenance.json
+      - name: Guardar evidencias duraderas antes de promocionar
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const {data: release} = await github.rest.repos.getReleaseByTag({...context.repo, tag: process.env.RELEASE_TAG});
+            const prefix = `evidence-${context.runId}-${process.env.GITHUB_RUN_ATTEMPT}-`;
+            const existing = new Set((await github.paginate(github.rest.repos.listReleaseAssets, {...context.repo, release_id: release.id})).map(a => a.name));
+            const files = ['.cache/release-images.json', ...fs.readdirSync('.cache/release-security').map(name => `.cache/release-security/${name}`)];
+            for (const file of files) {
+              const name = prefix + path.basename(file);
+              if (existing.has(name)) continue;
+              await github.rest.repos.uploadReleaseAsset({
+                ...context.repo, release_id: release.id, name,
+                data: fs.readFileSync(file), headers: {'content-type': 'application/json'}
+              });
+            }
       - name: Consultar releases estables antes de promocionar
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
@@ -218,6 +288,8 @@ jobs:
               `BEDCA: ${images.repository}:${images.version}-bedca`, `Digest: ${images.bedca_digest}`,
               `Revisión: ${images.revision}`, '',
               'Suite completa correcta. Plataformas: linux/amd64 y linux/arm64; ARM mediante QEMU.',
+              'Escaneo Trivy de los cuatro manifiestos; SBOM CycloneDX por plataforma y procedencia de promoción firmados con GitHub OIDC y publicados en GHCR.',
+              'Informes y bundles verificables conservados como assets de esta release.',
               'BEDCA conserva DuckDB y los CSV originales, bajo sus condiciones de uso no comercial:',
               'https://www.bedca.net/bdpub/UsoBD.pdf'
             ].join('\n');
@@ -230,7 +302,9 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: publicacion-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .cache/release-images.json
+          path: |
+            .cache/release-images.json
+            .cache/release-security/
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 30

@@ -104,7 +104,7 @@ services:
     profiles: [test]
 
   mealie:
-    image: ghcr.io/mealie-recipes/mealie:v3.19.2
+    image: ${TEST_MEALIE_IMAGE:-ghcr.io/mealie-recipes/mealie:v3.19.2}
     ports:
       - "127.0.0.1:${TEST_MEALIE_PORT:-9000}:9000"
     volumes:

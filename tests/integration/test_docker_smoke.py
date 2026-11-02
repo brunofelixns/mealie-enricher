@@ -53,6 +53,9 @@ def test_container_with_real_mealie_and_synthetic_off(tmp_path):
         "DEV_SEED_HISTORY": "false",
     }
 
+    if image_override := os.environ.get("TEST_MEALIE_IMAGE"):
+        values["TEST_MEALIE_IMAGE"] = image_override
+
     def save_env():
         env_path.write_text("\n".join(f"{k}={v}" for k, v in values.items()), encoding="utf-8")
 

@@ -1,0 +1,88 @@
+name: Seguridad de código e imágenes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '23 5 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write # Upload Python/Actions CodeQL analyses to code scanning.
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, actions]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+      - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        with:
+          category: /language:${{ matrix.language }}
+  published-images:
+    name: Escanear digests publicados
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      security-events: write # Upload stable SARIF categories; GitHub deduplicates alerts.
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Resolver aliases una vez y analizar ambas plataformas
+        run: python ci/security.py --published --output .cache/security
+      - name: Registrar alertas base amd64
+        if: ${{ !cancelled() && hashFiles('.cache/security/base-amd64.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        with:
+          sarif_file: .cache/security/base-amd64.sarif
+          category: trivy-base-amd64
+      - name: Registrar alertas base arm64
+        if: ${{ !cancelled() && hashFiles('.cache/security/base-arm64.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        with:
+          sarif_file: .cache/security/base-arm64.sarif
+          category: trivy-base-arm64
+      - name: Registrar alertas BEDCA amd64
+        if: ${{ !cancelled() && hashFiles('.cache/security/bedca-amd64.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        with:
+          sarif_file: .cache/security/bedca-amd64.sarif
+          category: trivy-bedca-amd64
+      - name: Registrar alertas BEDCA arm64
+        if: ${{ !cancelled() && hashFiles('.cache/security/bedca-arm64.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        with:
+          sarif_file: .cache/security/bedca-arm64.sarif
+          category: trivy-bedca-arm64
+      - name: Conservar informes completos incluso ante hallazgos
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: escaneo-publicado-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .cache/security/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 90
