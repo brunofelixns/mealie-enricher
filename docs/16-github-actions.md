@@ -62,6 +62,30 @@ Las notas de release registran la PR agrupada como una entrada de mantenimiento.
 Las versiones nuevas esperan siete días;
 las actualizaciones de seguridad conservan el tratamiento propio de GitHub.
 Las PR se revisan y pasan CI; no hay automerge ni credenciales nuevas.
+Las imágenes Python permanecen en **3.14.x**, según `requires-python`: se
+permiten parches y se excluyen saltos minor/major del runtime. La comprobación
+del SDK compara las líneas `FROM` antes y después de actualizar la versión de
+la aplicación, permitiendo actualizaciones legítimas de las imágenes base.
+
+### Avisos de CodeQL revisados
+
+El análisis estático del pipeline dejó cinco avisos conservadores en `6dd2b05`:
+[#1](https://github.com/brunofelixns/mealie-enricher/security/code-scanning/1),
+[#2](https://github.com/brunofelixns/mealie-enricher/security/code-scanning/2),
+[#3](https://github.com/brunofelixns/mealie-enricher/security/code-scanning/3),
+[#4](https://github.com/brunofelixns/mealie-enricher/security/code-scanning/4) y
+[#6](https://github.com/brunofelixns/mealie-enricher/security/code-scanning/6).
+Una revisión independiente de código y API los clasifica como no accionables
+en el flujo actual: el checkout señalado solo puede ejecutarse por
+workflow_dispatch con tag; la validación previa exige ancestría de main,
+metadatos coincidentes y la PR fusionada exacta del bot configurado en este repo.
+El paso de metadatos señalado por #1 exige tag vacío y es mutuamente excluyente
+con ese checkout. No se encontró una ruta que eludiera estas comprobaciones.
+
+La validación de procedencia es el control decisivo: desactivar la caché por
+sí solo no impide que código malicioso utilice la capacidad de caché del runtime.
+Los avisos permanecen visibles y las consultas continúan activas. La valoración
+es estática y corresponde a los permisos, eventos y validadores comprobados.
 
 El pin de Trivy está en [ci/trivy/Dockerfile](../ci/trivy/Dockerfile), incluyendo
 versión y digest, y queda cubierto por el gestor Docker de Dependabot. El helper

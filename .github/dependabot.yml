@@ -35,11 +35,17 @@ updates:
     directories: [/, /docker, /ci/trivy]
     patterns: ['*']
     multi-ecosystem-group: weekly-dependencies
+    ignore:
+      - dependency-name: python
+        update-types: [version-update:semver-major, version-update:semver-minor]
     cooldown:
       default-days: 7
   - package-ecosystem: docker-compose
     directories: [/, /docker]
     patterns: ['*']
     multi-ecosystem-group: weekly-dependencies
+    ignore:
+      - dependency-name: python
+        update-types: [version-update:semver-major, version-update:semver-minor]
     cooldown:
       default-days: 7

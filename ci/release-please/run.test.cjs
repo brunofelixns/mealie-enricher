@@ -48,9 +48,10 @@ test('actual SDK updates only our lock entry and Docker version', () => {
   );
   assert.match(lock, /name = "other"\nversion = "99.0.0"/);
   assert.match(lock, /name = "mealie-enricher"\nversion = "2.3.4"/);
-  const docker = new Generic({version}).updateContent(fs.readFileSync(path.join(root, 'Dockerfile'), 'utf8'));
+  const dockerSource = fs.readFileSync(path.join(root, 'Dockerfile'), 'utf8');
+  const docker = new Generic({version}).updateContent(dockerSource);
   assert.match(docker, /^ARG VERSION=2\.3\.4$/m);
-  assert.match(docker, /python:3\.14\.6-slim/);
+  assert.deepEqual(docker.match(/^FROM .+$/gm), dockerSource.match(/^FROM .+$/gm));
   const project = new PyProjectToml({version}).updateContent(
     '[project]\nname="mealie-enricher"\nversion="1.0.0"\n'
   );
