@@ -54,6 +54,9 @@ Please como releaseAs. Después de crear releases pendientes, el gestor solicita
 inmediatamente, actualiza los tags locales y recalcula la siguiente versión.
 Así una PR funcional fusionada después de la PR de versión se propone para la
 publicación posterior, incluso con varias fusiones cercanas.
+Se comprueba que main no avance durante la propuesta. El CI de la PR del bot
+calcula además la versión esperada desde su base y rechaza una propuesta que
+omita el incremento requerido por esos cambios.
 El SDK actualiza pyproject.toml, únicamente la entrada
 mealie-enricher de uv.lock, ARG VERSION del Dockerfile, manifest y CHANGELOG.
 No cambia las versiones de dependencias. Las anotaciones del Dockerfile y el
@@ -96,6 +99,12 @@ No existe una transacción global entre todos los tags y GitHub: un fallo puede
 dejar publicación parcial. Re-run failed jobs recupera la misma publicación;
 también se puede lanzar el workflow en main con el tag publicado correspondiente.
 Los tags anteriores a esta implantación conservan su pipeline histórico.
+
+El gestor también reconcilia las releases del bot sin el recibo de publicación
+GHCR en sus notas. Si falló la petición de workflow_dispatch después de crear
+la release, reintentar el gestor recupera esa solicitud aunque el SDK ya no
+devuelva la release como nueva. No duplica una publicación que siga en curso.
+La creación de PR y esta reconciliación se mantienen separadas.
 
 La release y el tag se crean antes de la construcción; si falla la imagen,
 la ejecución queda roja y los aliases conservan el artefacto previo. Las notas
@@ -195,6 +204,13 @@ Actionlint 1.7.12 no reconoce todavía queue: max, documentado por GitHub. Se
 excluye exclusivamente ese diagnóstico al ejecutar el linter; la aceptación
 de la propiedad se verificará también en GitHub Actions al abrir la PR.
 El resultado de integración y la PR del bot se registrarán después.
+
+La revisión automática de la PR de implantación detectó cuatro casos adicionales:
+concurrencia compartida entre push y PR, nombre de rama por defecto de un paquete,
+recuperación tras fallo del despacho y avance de main durante la propuesta.
+Se separan los grupos por evento, se configura separate-pull-requests=false y se
+añaden regresiones con PR construida por el SDK real, recuperación y comprobación
+de la versión propuesta contra la base. Las 14 pruebas Node son correctas.
 
 ## Referencias
 

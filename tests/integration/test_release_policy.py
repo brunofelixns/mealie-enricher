@@ -125,6 +125,17 @@ def test_resolve_rejects_unmerged_code_before_executing_its_validator(repo):
     assert "main" in result.stderr
 
 
+@pytest.mark.parametrize("proposed,valid", [("1.1.0", True), ("1.0.1", False)])
+def test_release_pr_version_must_cover_the_current_base_changes(repo, proposed, valid):
+    git(repo, "commit", "--allow-empty", "-m", "feat: change before release")
+    base = git(repo, "rev-parse", "HEAD")
+    metadata(repo, proposed)
+    result = run(repo, "proposal", "--base", base)
+    assert (result.returncode == 0) is valid
+    if not valid:
+        assert "propuesta" in result.stderr
+
+
 @pytest.mark.parametrize(
     "file", ["pyproject.toml", "uv.lock", "Dockerfile", ".release-please-manifest.json"]
 )

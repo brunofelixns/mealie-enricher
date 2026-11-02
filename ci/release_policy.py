@@ -34,8 +34,8 @@ def git(*args):
     return result.stdout.strip()
 
 
-def plan():
-    source = git("rev-parse", "HEAD")
+def plan(source=None):
+    source = git("rev-parse", (source or "HEAD") + "^{commit}")
     tags = {}
     for tag in git("tag", "--merged", source).splitlines():
         try:
@@ -124,7 +124,10 @@ def aliases(version, releases):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["plan", "resolve", "verify", "metadata", "aliases"])
+    parser.add_argument(
+        "command", choices=["plan", "resolve", "verify", "metadata", "aliases", "proposal"]
+    )
+    parser.add_argument("--base")
     parser.add_argument("--tag")
     parser.add_argument("--version")
     parser.add_argument("--releases", type=Path)
@@ -139,6 +142,13 @@ def main():
             result = resolve(args.tag or "")
         elif args.command == "metadata":
             result = {"version": metadata_version()}
+        elif args.command == "proposal":
+            if not args.base or not re.fullmatch(r"[0-9a-f]{40}", args.base):
+                raise ValueError("Commit base inválido")
+            expected = plan(args.base)["next_version"]
+            if metadata_version() != expected:
+                raise ValueError(f"La versión propuesta debe ser {expected} para esta base")
+            result = {"version": expected}
         else:
             result = aliases(args.version, json.loads(args.releases.read_text(encoding="utf-8")))
         if args.github_output:

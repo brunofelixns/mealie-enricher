@@ -8,6 +8,25 @@ const {GenericToml} = require('release-please/build/src/updaters/generic-toml');
 const {PyProjectToml} = require('release-please/build/src/updaters/python/pyproject-toml');
 const root = path.resolve(__dirname, '../..');
 
+test('manifest produces the branch accepted by publication provenance', async () => {
+  const {Manifest} = require('release-please');
+  const github = {
+    repository: {owner: 'owner', repo: 'app', defaultBranch: 'main'},
+    getFileJson: async name => JSON.parse(fs.readFileSync(path.join(root, name), 'utf8')),
+    getFileContentsOnBranch: async name => ({parsedContent: fs.readFileSync(path.join(root, name), 'utf8')}),
+    findFilesByFilenameAndRef: async () => [],
+    releaseIterator: async function* () {yield {tagName: 'v1.0.0', sha: 'a'.repeat(40), notes: ''};},
+    mergeCommitIterator: async function* () {
+      yield {sha: 'b'.repeat(40), message: 'ops(ci): update pipeline', files: ['ci/example']};
+      yield {sha: 'a'.repeat(40), message: 'chore: baseline', files: []};
+    },
+  };
+  const manifest = await Manifest.fromManifest(github, 'main');
+  const pulls = await manifest.buildPullRequests();
+  assert.equal(pulls.length, 1);
+  assert.equal(pulls[0].headRefName, 'release-please--branches--main');
+});
+
 test('actual SDK updates only our lock entry and Docker version', () => {
   const config = JSON.parse(fs.readFileSync(path.join(root, 'release-please-config.json')));
   const version = Version.parse('2.3.4');
@@ -53,4 +72,53 @@ test('a subsequent PR failure does not lose the created release dispatch', async
     createPullRequests: async () => {throw new Error('API unavailable');},
   }), /API unavailable/);
   assert.deepEqual(dispatched, ['v1.0.1']);
+});
+
+test('rerun recovers a created release after dispatch failed', async () => {
+  const {manage} = require('./run.cjs');
+  const release = {tagName: 'v1.0.1'};
+  const base = {
+    refreshPolicy: async () => '1.0.2', createPullRequests: async () => {},
+    recoverReleases: async () => [release],
+  };
+  await assert.rejects(manage({...base, createReleases: async () => [release],
+    dispatch: async () => {throw new Error('dispatch failed');}}), /dispatch failed/);
+  const recovered = [];
+  await manage({...base, createReleases: async () => [],
+    dispatch: async value => recovered.push(value.tagName)});
+  assert.deepEqual(recovered, ['v1.0.1']);
+});
+
+test('main advancing before PR creation aborts the proposal', async () => {
+  const {manage} = require('./run.cjs');
+  const proposals = [];
+  await assert.rejects(manage({
+    createReleases: async () => [], dispatch: async () => {},
+    refreshPolicy: async () => '1.0.1',
+    assertCurrent: async () => {throw new Error('main advanced');},
+    createPullRequests: async value => proposals.push(value),
+  }), /main advanced/);
+  assert.deepEqual(proposals, []);
+});
+
+test('recovery discovers only bot releases with a merged PR and no receipt', async () => {
+  const {findUnpublishedReleases} = require('./run.cjs');
+  const listReleases = () => {};
+  const listPullRequestsAssociatedWithCommit = () => {};
+  const release = {tag_name: 'v1.0.1', body: '', draft: false, prerelease: false,
+    published_at: '2026-11-02', author: {type: 'Bot', login: 'release-bot[bot]'}};
+  const pull = {merge_commit_sha: 'a'.repeat(40), merged_at: '2026-11-02',
+    base: {ref: 'main', repo: {full_name: 'owner/app'}},
+    head: {ref: 'release-please--branches--main'},
+    user: {type: 'Bot', login: 'release-bot[bot]'}, labels: [{name: 'autorelease: tagged'}]};
+  const github = {
+    rest: {repos: {listReleases, listPullRequestsAssociatedWithCommit},
+      git: {getRef: async () => ({data: {object: {type: 'commit', sha: 'a'.repeat(40)}}})}},
+    paginate: async method => method === listReleases ? [release,
+      {...release, tag_name: 'v1.0.2', body: '<!-- ghcr-evidence -->'},
+      {...release, tag_name: 'v1.0.3', author: {type: 'User', login: 'owner'}},
+      {...release, tag_name: 'v1.0.0'}] : [pull],
+  };
+  assert.deepEqual(await findUnpublishedReleases(github, {owner: 'owner', repo: 'app'}),
+    [{tagName: 'v1.0.1'}]);
 });

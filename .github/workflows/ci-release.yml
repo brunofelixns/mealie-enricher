@@ -1,4 +1,5 @@
 name: Pruebas y publicación
+run-name: ${{ inputs.release_tag && format('Publicar {0}', inputs.release_tag) || format('CI {0}', github.ref_name) }}
 
 on:
   push:
@@ -16,8 +17,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-release-${{ inputs.release_tag != '' && github.run_id || github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
-  cancel-in-progress: ${{ inputs.release_tag == '' && github.ref != 'refs/heads/main' }}
+  group: ci-release-${{ github.event_name }}-${{ inputs.release_tag && github.run_id || github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/main') }}
 
 env:
   UV_VERSION: '0.11.28'
@@ -78,9 +79,16 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Verificar metadatos de la PR o rama
-        if: inputs.release_tag == ''
+        if: ${{ !inputs.release_tag }}
         id: identity
-        run: python ci/release_policy.py metadata --github-output "$GITHUB_OUTPUT"
+        env:
+          PR_BRANCH: ${{ github.head_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          python ci/release_policy.py metadata --github-output "$GITHUB_OUTPUT"
+          if [ "$PR_BRANCH" = 'release-please--branches--main' ]; then
+            python ci/release_policy.py proposal --base "$BASE_SHA"
+          fi
       - name: Probar SDK oficial de Release Please
         run: |
           npm ci --prefix ci/release-please --ignore-scripts --no-audit --no-fund
