@@ -14,6 +14,39 @@ por sus propias PR. El bot no fusiona su PR ni escribe directamente en main.
 La protección exige PR y CI también al administrador, sin exigir un segundo
 revisor humano en este repositorio personal. No permite force push ni borrado.
 
+## GitHub App para CI sin aprobación adicional
+
+El usuario elige sustituir el token que utiliza el SDK por una App privada y
+dedicada. Su registro/instalación se prepara con permisos exactos y requiere
+la confirmación final del navegador antes de conceder acceso.
+
+| Configuración de Actions | Uso |
+|---|---|
+| Variable RELEASE_APP_CLIENT_ID | Client ID público de la App |
+| Variable RELEASE_APP_SLUG | Identidad esperada del bot |
+| Secreto RELEASE_APP_PRIVATE_KEY | Clave privada de la App |
+
+La App se instala solo en brunofelixns/mealie-enricher. Contents, Pull requests
+e Issues tienen escritura; Metadata, lectura implícita. No recibe permisos
+de administración, workflows, paquetes, cuenta ni organización, ni webhooks.
+La acción oficial create-github-app-token v3 está fijada por SHA; solicita
+únicamente esos tres permisos y ese repositorio. El token caduca como máximo
+en una hora y se revoca al finalizar el job. No se guarda la clave en Git,
+archivos .env, la imagen Docker ni logs.
+
+El SDK crea/actualiza PR y releases con esa identidad. Los eventos de la App
+inician el CI normal de pull_request sin aprobación del mantenedor. El token
+GITHUB_TOKEN del gestor queda en lectura más Actions write para solicitar la
+publicación; GHCR conserva el token de su propio job. No hay fallback silencioso
+al token anterior si la App no está configurada.
+
+La procedencia de releases reconoce solo la App configurada y el bot anterior
+github-actions[bot]. Esto permite continuar la PR existente y reintentar releases
+anteriores durante la transición. Otros bots y autores humanos se rechazan;
+la rama de la PR debe pertenecer también a este mismo repositorio.
+Una vez verificado el CI automático, se deshabilita la creación/aprobación de PR
+mediante GITHUB_TOKEN en la configuración general del repositorio.
+
 ## Workflows y permisos
 
 - [ci-release.yml](../.github/workflows/ci-release.yml): pushes, PR y ejecución
@@ -22,18 +55,16 @@ revisor humano en este repositorio personal. No permite force push ni borrado.
 - [release-please.yml](../.github/workflows/release-please.yml): mantiene la PR
   desde main con el SDK oficial **17.11.2**, fijado por npm lock. Node se utiliza
   únicamente para las herramientas de CI; la aplicación continúa en Python.
-- El gestor recibe contents/pull-requests/issues/actions write. Utiliza
-  GITHUB_TOKEN para su PR, tag/release y workflow_dispatch; no añade PAT ni claves.
+- El SDK del gestor utiliza el token temporal de la App para PR y tag/release.
+  GITHUB_TOKEN tiene contents/pull-requests read y actions write para el despacho.
 - Las comprobaciones tienen permisos de lectura. Solo el job de publicación
   recibe packages write y contents write para añadir evidencias a la release.
   Los checkouts no conservan credenciales Git y no hay git push desde CI.
 
-GitHub crea la ejecución pull_request del bot en estado de aprobación cuando
-la PR se crea con GITHUB_TOKEN. El mantenedor debe usar **Approve workflows to
-run** antes de fusionar. Un workflow_dispatch sobre la rama no sustituye el check
-obligatorio, por lo que no se utiliza para validar PR. Para eliminar esta
-aprobación adicional hace falta una GitHub App o PAT con permisos limitados;
-la elección se ha consultado al usuario y no se crea ninguna credencial sin ella.
+La implantación anterior creaba las PR con GITHUB_TOKEN y exigía **Approve
+workflows to run** antes de fusionar. El usuario elige la App para eliminar
+esa aprobación adicional. Un workflow_dispatch sobre la rama no sustituye el
+check obligatorio; las PR de la App utilizan su evento pull_request normal.
 Tras crear la release, el gestor sí utiliza workflow_dispatch con el tag para
 publicar: aquí se trata de un despliegue, no del check obligatorio de una PR.
 
@@ -223,6 +254,37 @@ solo para el consumidor de CI git-file-utils, por el aviso
 [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
 La selección de archivos mediante la API real del consumidor se comprueba con
 esta versión. No cambia ninguna dependencia de la aplicación Python.
+
+### Cierre remoto de la implantación
+
+- [PR de implantación #1](https://github.com/brunofelixns/mealie-enricher/pull/1)
+  y [corrección #3](https://github.com/brunofelixns/mealie-enricher/pull/3)
+  fusionadas únicamente después de su CI correcto. Main vigente:
+  `d104e9fd969c61447dc548539afa7f179d1ab645`.
+- El gestor [41460730777](https://github.com/brunofelixns/mealie-enricher/actions/runs/41460730777)
+  actualiza automáticamente la misma [PR #2, versión 1.0.1](https://github.com/brunofelixns/mealie-enricher/pull/2).
+  Su diff incluye solo los cuatro metadatos y CHANGELOG; conserva dependencias.
+- Su [CI 41460796759](https://github.com/brunofelixns/mealie-enricher/actions/runs/41460796759)
+  termina con **396 Python correctas, ninguna omitida, y 15 Node correctas**.
+  Pytest tarda 218,56 s. Head probado:
+  `ee4e6b0c52bdd9aff5733b2b0ee594e4fe19e4e2`; PR OPEN y CLEAN.
+- Protección comprobada de nuevo por API: PR y check obligatorio app15368,
+  strict y enforce_admins activos; force push y borrado desactivados.
+- Ambos pushes de implantación a main ejecutan CI correctamente sin publicar.
+  La PR 1.0.1 se deja abierta: su fusión decidirá la publicación siguiente.
+- El mantenedor aprobó el CI real de la PR del bot después de revisar su diff.
+  Con GITHUB_TOKEN este paso será necesario en las siguientes actualizaciones;
+  una GitHub App permitiría CI sin esa aprobación adicional. No se configura
+  ninguna credencial nueva al no haberse elegido esa alternativa.
+- GitHub confirma Dependabot #1 en estado **fixed** tras la corrección de CI.
+
+## Ampliación elegida: App dedicada
+
+Tras el cierre anterior el usuario elige GitHub App para CI totalmente
+automático. Se prepara la integración, la transición del autor de la PR
+existente y el registro privado con los permisos descritos arriba. El registro
+e instalación siguen pendientes de la confirmación de acceso del navegador;
+no se ha creado ni almacenado una clave al documentar esta preparación.
 
 ## Referencias
 

@@ -54,6 +54,7 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           RELEASE_TAG: ${{ inputs.release_tag || '' }}
+          RELEASE_APP_SLUG: ${{ vars.RELEASE_APP_SLUG }}
         with:
           script: |
             const tag = process.env.RELEASE_TAG;
@@ -69,7 +70,7 @@ jobs:
             const pulls = await github.paginate(github.rest.repos.listPullRequestsAssociatedWithCommit, {
               ...context.repo, commit_sha: result.sha, per_page: 100
             });
-            validateRelease(release, pulls, result.sha, `${context.repo.owner}/${context.repo.repo}`);
+            validateRelease(release, pulls, result.sha, `${context.repo.owner}/${context.repo.repo}`, process.env.RELEASE_APP_SLUG);
             core.setOutput('sha', result.sha);
             core.setOutput('version', result.version);
       - name: Obtener la revisión exacta que se comprobará
