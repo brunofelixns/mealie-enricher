@@ -228,6 +228,8 @@ imagen base verificada. Las actualizaciones de seguridad del sistema se aplican
 actualizando ese pin; no se excluyen CVE ni se alteran las dependencias de uv.lock.
 El runtime excluye pip y su rueda de bootstrap de ensurepip, incluidas sus
 dependencias vendorizadas; la instalación pertenece al builder con uv.
+El builder limita a dos los workers de instalación y compilación de bytecode
+para evitar timeouts al iniciar múltiples intérpretes arm64 bajo QEMU.
 Antes de promocionar se ejecuta [ci/security.py](../ci/security.py) sobre los
 cuatro manifiestos hijos por digest. Se rechazan informes vacíos o incompletos
 y vulnerabilidades HIGH/CRITICAL con una versión corregida disponible. Los

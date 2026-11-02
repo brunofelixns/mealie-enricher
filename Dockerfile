@@ -4,7 +4,8 @@ FROM python:3.14.10-slim-trixie@sha256:930e1abba7c4e8f96ed93e8012c35d174d7732752
 FROM python-base AS builder
 COPY --from=uv /uv /usr/local/bin/uv
 WORKDIR /app
-ENV UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1
+# Bound Python compilation workers when building arm64 under QEMU.
+ENV UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1 UV_CONCURRENT_INSTALLS=2
 COPY pyproject.toml uv.lock .python-version ./
 RUN uv sync --locked --no-dev --no-install-project --no-cache
 COPY src ./src
