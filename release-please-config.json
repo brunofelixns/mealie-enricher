@@ -8,7 +8,6 @@
   "packages": {
     ".": {
       "release-type": "python",
-      "package-name": "mealie-enricher",
       "extra-files": [
         {"type": "toml", "path": "uv.lock", "jsonpath": "$.package[?(@.name.value==\"mealie-enricher\")].version"},
         "Dockerfile"
