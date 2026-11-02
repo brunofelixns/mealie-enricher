@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/brunofelixns/mealie-enricher/compare/v1.1.0...v1.2.0) (2026-11-02)
+
+
+### Funcionalidades
+
+* bundle BEDCA in the single default published image ([#18](https://github.com/brunofelixns/mealie-enricher/issues/18)) ([4d41e92](https://github.com/brunofelixns/mealie-enricher/commit/4d41e92039a592da5b81a849b845f4445b6781bb))
+
 ## [1.1.0](https://github.com/brunofelixns/mealie-enricher/compare/v1.0.1...v1.1.0) (2026-11-02)
 
 
