@@ -181,6 +181,10 @@ cuatro manifiestos hijos por digest. Se rechazan informes vacíos o incompletos
 y vulnerabilidades HIGH/CRITICAL con una versión corregida disponible. Los
 hallazgos sin corrección y de menor gravedad permanecen en los informes completos.
 El escáner no monta el socket Docker; consulta el registro con su imagen fijada.
+El contenedor utiliza el UID/GID del runner, un HOME temporal y una caché
+explícita en `/cache/trivy`, conservando raíz de solo lectura y sin capabilities.
+Una prueba Docker verifica que puede escribir únicamente los directorios montados
+de informes y caché también en los runners Linux.
 
 Se obtiene un SBOM CycloneDX de cada plataforma a partir del mismo inventario
 escaneado. `actions/attest` firma los cuatro SBOM y la procedencia de promoción
@@ -202,6 +206,9 @@ cambiar al código del tag. Para publicar, las herramientas genéricas de escane
 y firma se obtienen del SHA del workflow en `.cache/trusted-ci`; la receta de
 construcción y el dataset continúan perteneciendo al tag validado. Así una
 release anterior no necesita contener los helpers recién incorporados.
+El segundo checkout solo se realiza al validar un tag en `workflow_dispatch`;
+las PR y pushes ya están en el SHA correcto desde el primer checkout. Las
+ejecuciones manuales no guardan caché de uv después de ejecutar código del tag.
 
 Verificación de un digest publicado por este flujo:
 

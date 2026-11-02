@@ -8,6 +8,18 @@ import pytest
 
 from ci.security import blocking_findings, platform_digests, validate_sbom
 
+
+def test_scanner_uses_the_host_uid_and_an_accessible_cache_path(tmp_path, monkeypatch):
+    from ci import security
+
+    monkeypatch.setattr(security.os, "getuid", lambda: 1001, raising=False)
+    monkeypatch.setattr(security.os, "getgid", lambda: 1001, raising=False)
+    command = security.container_command(tmp_path / "reports", tmp_path / "cache")
+    assert command[command.index("--user") + 1] == "1001:1001"
+    assert command[command.index("--cache-dir") + 1] == "/cache/trivy"
+    assert any("target=/cache/trivy" in arg for arg in command)
+
+
 REFERENCE = "ghcr.io/example/app@sha256:" + "a" * 64
 
 

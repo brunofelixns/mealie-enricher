@@ -54,3 +54,6 @@
 - Full final local suite after review fixes: 410 passed, 24 opt-in Docker tests skipped, 95.59% coverage. New checks passed on PR #6 (CodeQL Python/Actions, dependency review, title, actionlint/zizmor); full Docker CI remains the integration gate.
 - Test subprocesses and fake scanners write to temporary summary files, so synthetic 96% coverage or clean-image fixtures cannot contaminate the actual Actions summary.
 - GitHub review identified the project's existing ci/revert types missing from the title policy. Both were observed failing, added, and covered by a regression parameterized over every Release Please changelog type. No release configuration or increment rule changes.
+- PR #6 merged as 83b20e6 after 446 Python tests without omissions, 20 Node tests and 95.65% line coverage. All seven checks are required on strict main; admin protection, PRs and no force-push/deletion remain active.
+- Manual Linux scan exposed bind-mount permission denial with dropped capabilities. Follow-up uses the runner UID/GID and explicit non-root cache/HOME paths, with a real Docker filesystem regression added to full CI.
+- CodeQL's conservative dynamic-checkout/cache findings prompted an explicit workflow_dispatch guard on tag checkout and disabled uv caching for manual runs. Normal PR/main CI uses its first exact github.sha checkout.
