@@ -78,6 +78,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/enricher-ci"
           cp ci/quality.py "$RUNNER_TEMP/enricher-ci/quality.py"
       - name: Obtener la revisión exacta que se comprobará
+        if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ steps.source.outputs.sha }}
@@ -103,7 +104,7 @@ jobs:
         with:
           version: ${{ env.UV_VERSION }}
           python-version: ${{ env.PYTHON_VERSION }}
-          enable-cache: true
+          enable-cache: false # No shared cache writes after a release checkout.
       - name: Instalar dependencias bloqueadas
         run: uv sync --locked
       - name: Estilo y tipos

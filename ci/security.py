@@ -93,6 +93,34 @@ def scanner_image():
     return image
 
 
+def container_command(destination, cache):
+    uid = getattr(os, "getuid", lambda: 0)()
+    gid = getattr(os, "getgid", lambda: 0)()
+    return [
+        "docker",
+        "run",
+        "--rm",
+        "--user",
+        f"{uid}:{gid}",
+        "--env",
+        "HOME=/tmp",
+        "--read-only",
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges",
+        "--tmpfs",
+        "/tmp:rw,nosuid,nodev,size=2g",
+        "--mount",
+        f"type=bind,source={destination.resolve()},target=/reports",
+        "--mount",
+        f"type=bind,source={cache.resolve()},target=/cache/trivy",
+        scanner_image(),
+        "--cache-dir",
+        "/cache/trivy",
+    ]
+
+
 def scan(manifest, destination):
     repository = manifest["repository"]
     if not REPOSITORY.fullmatch(repository):
@@ -114,23 +142,7 @@ def scan(manifest, destination):
         for architecture, child in platform_digests(index).items():
             name = f"{variant}-{architecture}"
             reference = f"{repository}@{child}"
-            command = [
-                "docker",
-                "run",
-                "--rm",
-                "--read-only",
-                "--cap-drop",
-                "ALL",
-                "--security-opt",
-                "no-new-privileges",
-                "--tmpfs",
-                "/tmp:rw,nosuid,nodev,size=2g",
-                "--mount",
-                f"type=bind,source={destination.resolve()},target=/reports",
-                "--mount",
-                f"type=bind,source={cache.resolve()},target=/root/.cache/trivy",
-                scanner,
-            ]
+            command = container_command(destination, cache)
             scan_command = [
                 *command,
                 "image",
