@@ -97,14 +97,14 @@ services:
     profiles: [test]
 
   mock-off:
-    image: python:3.14.6-slim
+    image: python:3.14.9-slim
     command: ["python", "/app/mock_off_server.py"]
     volumes:
       - ./tests/support/mock_off_server.py:/app/mock_off_server.py:ro
     profiles: [test]
 
   mealie:
-    image: ${TEST_MEALIE_IMAGE:-ghcr.io/mealie-recipes/mealie:v3.19.2}
+    image: ${TEST_MEALIE_IMAGE:-ghcr.io/mealie-recipes/mealie:v3.30.0}
     ports:
       - "127.0.0.1:${TEST_MEALIE_PORT:-9000}:9000"
     volumes:
