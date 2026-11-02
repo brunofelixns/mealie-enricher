@@ -154,6 +154,9 @@ La [guía vigente](16-github-actions.md) distingue el flujo de su evidencia hist
 
 ## D17: GitHub App para el CI automático de Release Please
 
+Sustituye la identidad GITHUB_TOKEN del SDK descrita en D16, conservando el resto
+del flujo de PR, versiones y publicación.
+
 El usuario elige una App dedicada para que los eventos de las PR del bot
 arranquen CI sin la aprobación que exige GITHUB_TOKEN. Solo se instala en
 mealie-enricher, con Contents/Pull requests/Issues write y Metadata read.
