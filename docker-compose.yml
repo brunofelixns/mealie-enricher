@@ -28,8 +28,8 @@ x-calorie-env: &calorie-env
   HISTORY_MAX_ENTRIES: ${HISTORY_MAX_ENTRIES:-200}
   MEALIE_RECIPE_URL_TEMPLATE: ${MEALIE_RECIPE_URL_TEMPLATE:-}
   DEV_SEED_HISTORY: ${DEV_SEED_HISTORY:-false}
-  CATALOG_ENABLED: ${CATALOG_ENABLED:-false}
-  CATALOG_DB_PATH: ${CATALOG_DB_PATH:-/app/catalogs/catalogos.duckdb}
+  CATALOG_ENABLED: ${CATALOG_ENABLED:-true}
+  CATALOG_DB_PATH: ${CATALOG_DB_PATH:-/opt/bedca/catalogos.duckdb}
   DECISIONS_ENABLED: ${DECISIONS_ENABLED:-false}
   OPENAI_API_KEY: ${OPENAI_API_KEY:-}
   DECISIONS_API_KEY: ${DECISIONS_API_KEY:-}
@@ -41,7 +41,10 @@ x-calorie-env: &calorie-env
 services:
   calorie-estimator:
     image: mealie-enricher:local
-    build: .
+    build:
+      context: .
+      additional_contexts:
+        bedca_source: ${BEDCA_INPUT_DIR:-./data/bedca}
     env_file:
       - path: .env
         required: false
@@ -58,7 +61,10 @@ services:
 
   catalog-import:
     image: mealie-enricher:local
-    build: .
+    build:
+      context: .
+      additional_contexts:
+        bedca_source: ${BEDCA_INPUT_DIR:-./data/bedca}
     profiles: [catalog]
     entrypoint: ["python", "-m", "mealie_enricher.catalog.cli"]
     command:
@@ -75,7 +81,10 @@ services:
 
   calorie-estimator-test:
     image: mealie-enricher:local
-    build: .
+    build:
+      context: .
+      additional_contexts:
+        bedca_source: ${BEDCA_INPUT_DIR:-./data/bedca}
     env_file:
       - path: ${TEST_ENV_FILE:-.compose-test.env}
         required: false

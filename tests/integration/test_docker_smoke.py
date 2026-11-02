@@ -48,6 +48,8 @@ def test_container_with_real_mealie_and_synthetic_off(tmp_path):
         "MEALIE_API_TOKEN": "not-issued-yet",
         "LLM_ENABLED": "false",
         "LLM_API_KEY": "",
+        "CATALOG_ENABLED": "false",
+        "CATALOG_DB_PATH": "/app/catalogs/catalogos.duckdb",
         "EVENT_DEBOUNCE_MS": "0",
         "OFF_LANGUAGE": "de",
         "DEV_SEED_HISTORY": "false",

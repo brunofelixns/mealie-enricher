@@ -10,7 +10,7 @@ from pathlib import Path
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ci.images import DIGEST, REPOSITORY, registry_digest, run
+from ci.images import DIGEST, REPOSITORY, publication_images, registry_digest, run
 
 REPOSITORY_NAME = "ghcr.io/brunofelixns/mealie-enricher"
 
@@ -131,10 +131,8 @@ def scan(manifest, destination):
     cache.mkdir(exist_ok=True)
     scanner = scanner_image()
     artifacts = []
-    for variant in ("base", "bedca"):
-        digest = manifest[f"{variant}_digest"]
-        if not DIGEST.fullmatch(digest):
-            raise ValueError("Digest de escaneo inválido")
+    images = publication_images(manifest)
+    for variant, digest in images.items():
         index_reference = f"{repository}@{digest}"
         index = json.loads(
             run(["docker", "buildx", "imagetools", "inspect", index_reference, "--raw"]).stdout
@@ -247,8 +245,8 @@ def scan(manifest, destination):
         )
     if path := os.environ.get("GITHUB_OUTPUT"):
         with Path(path).open("a", encoding="utf-8") as output:
-            for variant in ("base", "bedca"):
-                output.write(f"{variant}_digest={manifest[f'{variant}_digest']}\n")
+            for variant, digest in images.items():
+                output.write(f"{variant}_digest={digest}\n")
             for item in artifacts:
                 output.write(f"{item['name'].replace('-', '_')}_digest={item['digest']}\n")
     return summary
@@ -264,12 +262,12 @@ def write_provenance(manifest, destination):
     server = os.environ.get("GITHUB_SERVER_URL", "https://github.com")
     repository = os.environ.get("GITHUB_REPOSITORY", "brunofelixns/mealie-enricher")
     invocation = f"{server}/{repository}/actions/runs/{os.environ.get('GITHUB_RUN_ID', 'local')}/attempts/{os.environ.get('GITHUB_RUN_ATTEMPT', '1')}"
-    for variant in ("base", "bedca"):
+    for variant, digest in publication_images(manifest).items():
         predicate = {
             "buildDefinition": {
                 "buildType": "https://github.com/brunofelixns/mealie-enricher/ci/verified-promotion/v1",
                 "externalParameters": {"releaseTag": f"v{manifest['version']}", "variant": variant},
-                "internalParameters": {"candidateDigest": manifest[f"{variant}_digest"]},
+                "internalParameters": {"candidateDigest": digest},
                 "resolvedDependencies": [
                     {"uri": f"git+{server}/{repository}", "digest": {"gitCommit": revision}}
                 ],
@@ -298,10 +296,9 @@ def main():
         if args.published:
             manifest = {
                 "repository": REPOSITORY_NAME,
-                "base_digest": registry_digest(f"{REPOSITORY_NAME}:latest"),
-                "bedca_digest": registry_digest(f"{REPOSITORY_NAME}:bedca"),
+                "image_digest": registry_digest(f"{REPOSITORY_NAME}:latest"),
             }
-            if not manifest["base_digest"] or not manifest["bedca_digest"]:
+            if not manifest["image_digest"]:
                 raise ValueError("Faltan imágenes publicadas")
         else:
             manifest = json.loads(args.manifest.read_text(encoding="utf-8"))

@@ -36,11 +36,11 @@ dependencias de desarrollo o de ámbito desconocido; no escribe comentarios.
 
 [security.yml](../.github/workflows/security.yml) analiza Python y Actions con
 CodeQL `security-extended` en PR, `main` y semanalmente. Además, cada martes a
-las **05:23 UTC** resuelve una vez los aliases `latest` y `bedca`, selecciona
-sus manifiestos amd64/arm64 y ejecuta el mismo escáner que la publicación.
+las **05:23 UTC** resuelve una vez `latest`, selecciona sus manifiestos
+amd64/arm64 y ejecuta el mismo escáner que la publicación.
 La base de vulnerabilidades de Trivy se actualiza; no se utiliza un resultado
 anterior como aprobación. Los informes completos duran 90 días en Actions.
-Se suben SARIF con cuatro categorías estables a Code Scanning para deduplicar
+Se suben SARIF con dos categorías estables a Code Scanning para deduplicar
 hallazgos y aprovechar sus alertas, sin crear issues o comentarios repetidos.
 
 [compatibility.yml](../.github/workflows/compatibility.yml), cada miércoles a
@@ -216,8 +216,13 @@ Prefijo: `ghcr.io/brunofelixns/mealie-enricher`.
 
 | Tags | Contenido |
 |---|---|
-| `X.Y.Z` / `latest` | Base sin datos |
-| `X.Y.Z-bedca` / `bedca` / `latest-bedca` | DuckDB y tres CSV originales |
+| `X.Y.Z` / `latest` (desde 1.2.0) | Aplicación, DuckDB y tres CSV originales |
+| `bedca` / `latest-bedca` | Alias de compatibilidad de la misma imagen completa |
+
+Se construye un único candidato multiplataforma. Desde 1.2.0 no se generan
+variantes `X.Y.Z-bedca`; los tags históricos conservan sus digests originales.
+El manifiesto actual registra `image_digest`. Las herramientas de confianza
+siguen aceptando `base_digest`/`bedca_digest` al recuperar releases anteriores.
 
 Las publicaciones tienen grupos distintos de los pushes y una cola propia
 con queue: max (hasta 100 pendientes). El job de publicación se serializa para
@@ -227,15 +232,16 @@ de promover versiones. Los manifiestos hijos se ejecutan por su propio digest
 para evitar el conflicto del almacén clásico de Docker. ARM se prueba con QEMU.
 Los índices conservan el formato sin attestations embebidas de BuildKit.
 Builder y runtime comparten una única imagen Python 3.14 sobre Debian trixie,
-fijada por versión y digest multiarch. La variante BEDCA hereda el digest de la
-imagen base verificada. Las actualizaciones de seguridad del sistema se aplican
+fijada por versión y digest multiarch. Una etapa importa BEDCA y el resultado
+se incluye en la única imagen final. Las actualizaciones de seguridad del sistema se aplican
 actualizando ese pin; no se excluyen CVE ni se alteran las dependencias de uv.lock.
 El runtime excluye pip y su rueda de bootstrap de ensurepip, incluidas sus
 dependencias vendorizadas; la instalación pertenece al builder con uv.
 El builder limita a dos los workers de instalación y compilación de bytecode
 para evitar timeouts al iniciar múltiples intérpretes arm64 bajo QEMU.
 Antes de promocionar se ejecuta [ci/security.py](../ci/security.py) sobre los
-cuatro manifiestos hijos por digest. Se rechazan informes vacíos o incompletos
+dos manifiestos hijos por digest (cuatro en releases históricas con variantes).
+Se rechazan informes vacíos o incompletos
 y vulnerabilidades HIGH/CRITICAL con una versión corregida disponible. Los
 hallazgos sin corrección y de menor gravedad permanecen en los informes completos.
 El escáner no monta el socket Docker; consulta el registro con su imagen fijada.
@@ -245,8 +251,9 @@ Una prueba Docker verifica que puede escribir únicamente los directorios montad
 de informes y caché también en los runners Linux.
 
 Se obtiene un SBOM CycloneDX de cada plataforma a partir del mismo inventario
-escaneado. `actions/attest` firma los cuatro SBOM y la procedencia de promoción
-de ambos índices, usando OIDC y almacenando las attestations en GitHub y GHCR.
+escaneado. `actions/attest` firma los dos SBOM y la procedencia de promoción
+del índice, usando OIDC y almacenando las attestations en GitHub y GHCR.
+Los reintentos históricos siguen firmando los artefactos de ambas variantes.
 La promoción utiliza el predicado personalizado
 `https://github.com/brunofelixns/mealie-enricher/ci/verified-promotion/v1`: identifica
 la revisión exacta de la release, el digest del candidato y la ejecución que lo
@@ -303,7 +310,7 @@ solo reciben los digests verificados cuando acaba la publicación correctamente.
 
 El paquete mantiene Write en Manage Actions access únicamente para este repo.
 Para arrancar con datos incluidos, usar
-[.env.bedca.example](../docker/.env.bedca.example), manteniendo las
+[.env.example](../docker/.env.example), manteniendo las
 [condiciones propias de BEDCA](../docker/bedca/NOTICE.md).
 El dataset se obtiene de un commit fijo, con tres SHA-256 comprobados; cambiar
 la exportación requiere actualizar conjuntamente commit, checksums y versión.

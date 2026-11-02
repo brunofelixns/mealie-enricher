@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+ARG BEDCA_DATASET_VERSION=bedca-export-2026-08-19
 FROM ghcr.io/astral-sh/uv:0.13.6 AS uv
 FROM python:3.14.10-slim-trixie@sha256:930e1abba7c4e8f96ed93e8012c35d174d7732752731bbd5e8e757d7ec6f3966 AS python-base
 
@@ -12,7 +14,7 @@ COPY src ./src
 COPY LICENSE NOTICE ./
 RUN uv sync --locked --no-dev --no-editable --no-cache
 
-FROM python-base AS runner
+FROM python-base AS app-runtime
 # x-release-please-start-version
 ARG VERSION=1.1.0
 # x-release-please-end
@@ -39,3 +41,25 @@ USER appuser
 VOLUME ["/app/data"]
 EXPOSE 8000
 CMD ["python", "-m", "mealie_enricher"]
+
+# Import verified originals at build time; no network or import at application startup.
+FROM app-runtime AS bedca-builder
+ARG BEDCA_DATASET_VERSION
+COPY --from=bedca_source --chown=1000:1000 bedca_foods.csv bedca_foodvalues.csv bedca_units.csv /tmp/bedca-bundle/source/
+COPY --chown=1000:1000 docker/bedca/NOTICE.md /tmp/bedca-bundle/NOTICE.md
+RUN --network=none python -m mealie_enricher.catalog.cli import-bedca \
+      --input-dir /tmp/bedca-bundle/source \
+      --output /tmp/bedca-bundle/catalogos.duckdb \
+      --dataset-version "$BEDCA_DATASET_VERSION" > /tmp/bedca-bundle/manifest.json \
+    && chmod -R a-w /tmp/bedca-bundle
+
+# The only published image includes the application, catalog, originals and attribution.
+FROM app-runtime AS runner
+ARG BEDCA_DATASET_VERSION
+LABEL org.opencontainers.image.description="Mealie nutrition enricher with ready-to-run BEDCA catalog and original CSVs" \
+    org.opencontainers.image.licenses="GPL-3.0-only AND LicenseRef-AESAN-BEDCA" \
+    dev.mealie-enricher.bedca.dataset-version="$BEDCA_DATASET_VERSION" \
+    dev.mealie-enricher.bedca.terms="https://www.bedca.net/bdpub/UsoBD.pdf"
+COPY --from=bedca-builder /tmp/bedca-bundle /opt/bedca
+ENV CATALOG_ENABLED=true CATALOG_DB_PATH=/opt/bedca/catalogos.duckdb
+USER appuser

@@ -54,21 +54,20 @@ exclusivamente para caché. El modo anterior sigue disponible con
 
 ## Empezar con Docker
 
-### Construir y ejecutar desde este repositorio
+### Descargar y ejecutar la imagen publicada
 
-Necesitas Docker con Compose. Clona el proyecto y prepara la configuración:
+Necesitas Docker con Compose. Descarga los archivos de despliegue:
 
 ~~~sh
-git clone https://github.com/brunofelixns/mealie-enricher.git
+mkdir mealie-enricher
 cd mealie-enricher
-cp .env.example .env
+curl -fsSL https://raw.githubusercontent.com/brunofelixns/mealie-enricher/main/docker/docker-compose.yml -o docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/brunofelixns/mealie-enricher/main/docker/.env.example -o .env
 ~~~
 
-En PowerShell, sustituye el último comando por:
-
-~~~powershell
-Copy-Item .env.example .env
-~~~
+En PowerShell, utiliza `curl.exe` para esas descargas. También puedes copiar
+manualmente los archivos de [docker/](../docker/README.es.md) y guardar
+`.env.example` como `.env`.
 
 Edita .env antes de arrancar:
 
@@ -82,7 +81,8 @@ MEALIE_URL debe ser accesible desde el contenedor. Si Mealie está en otro conte
 
 ~~~sh
 docker compose config --quiet
-docker compose up -d --build calorie-estimator
+docker compose pull calorie-estimator
+docker compose up -d --no-build --wait calorie-estimator
 ~~~
 
 Con el puerto por defecto, el historial estará en [localhost:8000/estimator/history](http://localhost:8000/estimator/history).
@@ -96,22 +96,26 @@ docker compose pull
 docker compose up -d --no-build --wait
 ~~~
 
-**Versión automática:** comienza en 1.0.0. Release Please mantiene una PR de versión y changelog. Fusionarla publica `latest`, versiones fijas y la variante `bedca` tras validar ese commit; las PR funcionales no publican imágenes. [Política y operación](16-github-actions.md).
+**Versión automática:** comienza en 1.0.0. Release Please mantiene una PR de versión y changelog. Desde **1.2.0**, fusionarla publica una imagen completa con BEDCA mediante `latest` y versiones fijas; las PR funcionales no publican imágenes. [Política y operación](16-github-actions.md).
 
-## Catálogo BEDCA local
+## Catálogo BEDCA incluido
 
-Prepara los tres CSV externos de BEDCA y conviértelos con:
+Desde **1.2.0**, la imagen normal contiene DuckDB, los tres CSV originales y la
+atribución de AESAN/BEDCA en `/opt/bedca`. El ejemplo de despliegue ya activa el
+catálogo y configura su ruta. Usa `latest` o un tag normal de versión; el
+servidor arranca con los datos preparados, bajo sus condiciones de uso no comercial.
+[Contenido y actualización](15-imagen-con-bedca.md).
+
+Si necesitas tu propia exportación, puedes importarla por separado:
 
 ~~~sh
 uv run mealie-catalog import-bedca --input-dir data/bedca --output data/catalogs/catalogos.duckdb --dataset-version 2026-08-19
 ~~~
 
-Después activa `CATALOG_ENABLED=true`. En Docker, el perfil `catalog-import`
-prepara un volumen independiente que la aplicación consulta en solo lectura.
-Los datos BEDCA no se incluyen en Git ni en la imagen base. La [variante con
-BEDCA incluido](15-imagen-con-bedca.md) conserva DuckDB y los tres CSV originales
-y permite arrancar sin importar. Se publica desde el workflow de main para uso no comercial,
-bajo las condiciones de BEDCA.
+Después configura la ruta de ese catálogo y activa `CATALOG_ENABLED=true`.
+En Docker, el servicio opcional `catalog-import` prepara el volumen de catálogo
+propio; usa `CATALOG_DB_PATH=/app/catalogs/catalogos.duckdb` para consultarlo.
+Los alias antiguos `bedca` siguen apuntando a la misma imagen completa.
 
 El selector respeta estados como crudo/cocido y puede dejar un ingrediente
 pendiente cuando falte información. **Decisions selecciona alimentos; Python

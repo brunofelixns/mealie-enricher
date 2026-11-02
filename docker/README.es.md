@@ -4,7 +4,7 @@
 
 Esta carpeta permite descargar y ejecutar Mealie Enricher desde **GitHub Container Registry (GHCR)**. Solo necesitas Docker con Compose y estos tres archivos; la instalación no requiere Python, uv ni el código fuente del proyecto.
 
-Main exige PR y pruebas correctas. Release Please propone automáticamente versión y changelog; fusionar su PR publica `latest`, tags de versión y la variante `bedca` para linux/amd64 y linux/arm64 después de validar el commit de la release. [Flujo, versiones y recuperación](../docs/16-github-actions.md).
+Main exige PR y pruebas correctas. Release Please propone automáticamente versión y changelog; fusionar su PR publica una imagen completa mediante `latest` y tags de versión para linux/amd64 y linux/arm64. Desde **1.2.0**, todos incluyen BEDCA. [Flujo, versiones y recuperación](../docs/16-github-actions.md).
 
 ## 1. Preparar la configuración
 
@@ -104,14 +104,15 @@ Este comando conserva el volumen. La opción --volumes eliminaría la caché y n
 
 El historial y las tareas continúan en memoria y se pierden al reiniciar, igual que en la aplicación original. Ejecuta una sola instancia.
 
-## Catálogo BEDCA opcional
+## Catálogo BEDCA incluido
 
-La [variante con BEDCA incluido](../docs/15-imagen-con-bedca.md) conserva DuckDB
-y los tres CSV originales en la imagen para uso no comercial. Usa
-[.env.bedca.example](.env.bedca.example) con este Compose para arrancar sin importar.
-El workflow de main publica su alias `bedca` y tags de versión.
+Desde **1.2.0**, la [imagen normal](../docs/15-imagen-con-bedca.md) conserva DuckDB
+y los tres CSV originales para uso no comercial. El ejemplo estándar ya configura
+`CATALOG_ENABLED=true` y `CATALOG_DB_PATH=/opt/bedca/catalogos.duckdb`.
+`latest` y el tag normal de versión contienen todo; los alias antiguos `bedca`
+apuntan al mismo digest.
 
-Para la imagen base, sigue la preparación manual:
+Si necesitas un catálogo propio, sigue la preparación manual:
 
 Coloca `bedca_foods.csv`, `bedca_foodvalues.csv` y `bedca_units.csv` en `bedca/`
 o configura `BEDCA_INPUT_DIR`. Con una imagen que incluya la funcionalidad de catálogos:
@@ -120,7 +121,8 @@ o configura `BEDCA_INPUT_DIR`. Con una imagen que incluya la funcionalidad de ca
 docker compose --profile catalog run --rm catalog-import
 ~~~
 
-Después activa `CATALOG_ENABLED=true` en `.env` y arranca el servicio. El catálogo
+Después activa `CATALOG_ENABLED=true`, configura
+`CATALOG_DB_PATH=/app/catalogs/catalogos.duckdb` en `.env` y arranca el servicio. El catálogo
 se guarda en `estimator-catalogs`; la aplicación lo monta en solo lectura y la
 caché continúa en `estimator-cache`. Para Decisions configura también
 `DECISIONS_ENABLED=true` y `OPENAI_API_KEY`. El fallback LLM conserva su

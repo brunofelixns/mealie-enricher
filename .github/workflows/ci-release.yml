@@ -117,12 +117,19 @@ jobs:
       - name: Construir las imágenes de prueba
         run: |
           docker buildx use default
-          docker build --tag mealie-enricher:ci --tag mealie-enricher:local .
-          docker buildx build --load --network none \
-            --build-context bedca_source=./data/bedca \
-            --build-arg BASE_IMAGE=mealie-enricher:ci \
-            --build-arg BEDCA_DATASET_VERSION=bedca-export-2026-08-19 \
-            --file docker/Dockerfile.bedca --tag mealie-enricher:ci-bedca .
+          if grep -q '^FROM app-runtime AS bedca-builder$' Dockerfile; then
+            # One complete image; local aliases keep historical test fixtures compatible.
+            docker buildx build --load --build-context bedca_source=./data/bedca \
+              --tag mealie-enricher:ci --tag mealie-enricher:ci-bedca --tag mealie-enricher:local .
+          else
+            # Historical release checkouts keep their original two-image test contract.
+            docker build --tag mealie-enricher:ci --tag mealie-enricher:local .
+            docker buildx build --load --network none \
+              --build-context bedca_source=./data/bedca \
+              --build-arg BASE_IMAGE=mealie-enricher:ci \
+              --build-arg BEDCA_DATASET_VERSION=bedca-export-2026-08-19 \
+              --file docker/Dockerfile.bedca --tag mealie-enricher:ci-bedca .
+          fi
       - name: Descargar imágenes del Mealie aislado
         run: docker compose --profile test pull mealie mock-off
       - name: Ejecutar toda la suite, incluido Mealie real
@@ -195,40 +202,67 @@ jobs:
           python ci/images.py build --repository "$IMAGE_REPOSITORY" \
             --version "$RELEASE_VERSION" --revision "$RELEASE_SHA" \
             --output .cache/release-images.json
-      - name: Escanear los cuatro digests y generar SBOM y procedencia
+      - name: Escanear los digests de plataforma y generar SBOM y procedencia
         id: security
         run: python .cache/trusted-ci/ci/security.py --manifest .cache/release-images.json --output .cache/release-security
+      - name: Acreditar SBOM de la imagen amd64
+        if: steps.security.outputs.image_digest != ''
+        uses: ./.cache/trusted-ci/.github/actions/attest-image # zizmor: ignore[self-repository] -- trusted workflow SHA
+        with:
+          name: image-amd64
+          digest: ${{ steps.security.outputs.image_amd64_digest }}
+          sbom-path: .cache/release-security/image-amd64.cdx.json
+      - name: Acreditar SBOM de la imagen arm64
+        if: steps.security.outputs.image_digest != ''
+        uses: ./.cache/trusted-ci/.github/actions/attest-image # zizmor: ignore[self-repository] -- trusted workflow SHA
+        with:
+          name: image-arm64
+          digest: ${{ steps.security.outputs.image_arm64_digest }}
+          sbom-path: .cache/release-security/image-arm64.cdx.json
+      - name: Acreditar procedencia de la imagen completa
+        if: steps.security.outputs.image_digest != ''
+        uses: ./.cache/trusted-ci/.github/actions/attest-image # zizmor: ignore[self-repository] -- trusted workflow SHA
+        with:
+          name: image-provenance
+          digest: ${{ steps.security.outputs.image_digest }}
+          predicate-path: .cache/release-security/image.provenance.json
       - name: Acreditar SBOM base amd64
+        if: steps.security.outputs.base_digest != ''
         uses: ./.cache/trusted-ci/.github/actions/attest-image # zizmor: ignore[self-repository] -- trusted workflow SHA, independent of historical release checkout
         with:
           name: base-amd64
           digest: ${{ steps.security.outputs.base_amd64_digest }}
           sbom-path: .cache/release-security/base-amd64.cdx.json
       - name: Acreditar SBOM base arm64
+        if: steps.security.outputs.base_digest != ''
         uses: ./.cache/trusted-ci/.github/actions/attest-image # zizmor: ignore[self-repository] -- trusted workflow SHA, independent of historical release checkout
         with:
           name: base-arm64
           digest: ${{ steps.security.outputs.base_arm64_digest }}
           sbom-path: .cache/release-security/base-arm64.cdx.json
       - name: Acreditar SBOM BEDCA amd64
+        if: steps.security.outputs.bedca_digest != ''
         uses: ./.cache/trusted-ci/.github/actions/attest-image # zizmor: ignore[self-repository] -- trusted workflow SHA, independent of historical release checkout
         with:
           name: bedca-amd64
           digest: ${{ steps.security.outputs.bedca_amd64_digest }}
           sbom-path: .cache/release-security/bedca-amd64.cdx.json
       - name: Acreditar SBOM BEDCA arm64
+        if: steps.security.outputs.bedca_digest != ''
         uses: ./.cache/trusted-ci/.github/actions/attest-image # zizmor: ignore[self-repository] -- trusted workflow SHA, independent of historical release checkout
         with:
           name: bedca-arm64
           digest: ${{ steps.security.outputs.bedca_arm64_digest }}
           sbom-path: .cache/release-security/bedca-arm64.cdx.json
       - name: Acreditar procedencia de la promoción base
+        if: steps.security.outputs.base_digest != ''
         uses: ./.cache/trusted-ci/.github/actions/attest-image # zizmor: ignore[self-repository] -- trusted workflow SHA, independent of historical release checkout
         with:
           name: base-provenance
           digest: ${{ steps.security.outputs.base_digest }}
           predicate-path: .cache/release-security/base.provenance.json
       - name: Acreditar procedencia de la promoción BEDCA
+        if: steps.security.outputs.bedca_digest != ''
         uses: ./.cache/trusted-ci/.github/actions/attest-image # zizmor: ignore[self-repository] -- trusted workflow SHA, independent of historical release checkout
         with:
           name: bedca-provenance
@@ -283,13 +317,16 @@ jobs:
             const {data: release} = await github.rest.repos.getReleaseByTag({...context.repo, tag: process.env.RELEASE_TAG});
             const marker = '<!-- ghcr-evidence -->';
             const notes = (release.body || '').split(marker)[0].trimEnd();
+            const imageNotes = images.image_digest
+              ? [`Imagen completa (BEDCA incluido): ${images.repository}:${images.version}`, `Digest: ${images.image_digest}`]
+              : [`Base: ${images.repository}:${images.version}`, `Digest: ${images.base_digest}`,
+                 `BEDCA: ${images.repository}:${images.version}-bedca`, `Digest: ${images.bedca_digest}`];
             const evidence = [
               marker, '', '### Imágenes verificadas', '',
-              `Base: ${images.repository}:${images.version}`, `Digest: ${images.base_digest}`,
-              `BEDCA: ${images.repository}:${images.version}-bedca`, `Digest: ${images.bedca_digest}`,
+              ...imageNotes,
               `Revisión: ${images.revision}`, '',
               'Suite completa correcta. Plataformas: linux/amd64 y linux/arm64; ARM mediante QEMU.',
-              'Escaneo Trivy de los cuatro manifiestos; SBOM CycloneDX por plataforma y procedencia de promoción firmados con GitHub OIDC y publicados en GHCR.',
+              'Escaneo Trivy de cada manifiesto de plataforma; SBOM CycloneDX y procedencia de promoción firmados con GitHub OIDC y publicados en GHCR.',
               'Informes y bundles verificables conservados como assets de esta release.',
               'BEDCA conserva DuckDB y los CSV originales, bajo sus condiciones de uso no comercial:',
               'https://www.bedca.net/bdpub/UsoBD.pdf'

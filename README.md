@@ -52,7 +52,7 @@ You need a running Mealie instance, an API token and Docker with Compose. Images
 ghcr.io/brunofelixns/mealie-enricher:latest
 ~~~
 
-Versions are managed automatically from **1.0.0**. Changes enter protected main through passing pull requests. Release Please maintains a version and changelog PR; merging that PR triggers full validation and publication of the base and BEDCA images. Public images can be pulled without a GitHub account. [CI and release policy](docs/16-github-actions.md).
+Versions are managed automatically from **1.0.0**. Changes enter protected main through passing pull requests. Release Please maintains a version and changelog PR; merging that PR triggers full validation and publication. From **1.2.0**, `latest` and version tags contain one complete image with BEDCA already included. Public images can be pulled without a GitHub account. [CI and release policy](docs/16-github-actions.md).
 
 Download the deployment files:
 
@@ -130,27 +130,21 @@ flowchart LR
 
 Python performs the nutrient calculations. In catalog mode, Decisions selects food matches and can leave ingredients unresolved when evidence is insufficient. It does not calculate nutrition. The LLM fallback and Decisions are separate, optional settings.
 
-### Optional BEDCA catalog
+### Included BEDCA catalog
 
-The base image requires BEDCA data separately. An optional **BEDCA image variant** bundles DuckDB and the original CSV files for startup without importing. It is published by the main workflow for non-commercial use under the dataset's own terms. [Bundled variant guide, in Spanish](docs/15-imagen-con-bedca.md).
+From **1.2.0**, the normal image includes the ready-to-use DuckDB catalog, original
+BEDCA CSVs and attribution under `/opt/bedca`. The deployment example enables
+`CATALOG_ENABLED=true` and uses `CATALOG_DB_PATH=/opt/bedca/catalogos.duckdb`.
+Pull `latest` or a normal version tag; no variant choice, CSV download or import
+is needed on the server. [Contents and updates, in Spanish](docs/15-imagen-con-bedca.md).
 
-For the base image, obtain the three required CSV exports separately and place them in `bedca/` next to your deployment `.env`:
+The included data retain AESAN/BEDCA's non-commercial terms. Existing `bedca`
+aliases point to this same image for compatibility. Historical tags through
+1.1.0 retain their original contents; new releases do not publish `X.Y.Z-bedca`.
 
-~~~text
-bedca_foods.csv
-bedca_foodvalues.csv
-bedca_units.csv
-~~~
-
-Import them into the catalog volume:
-
-~~~sh
-docker compose --profile catalog run --rm catalog-import
-~~~
-
-Then set `CATALOG_ENABLED=true` in `.env` and recreate the service. The app mounts the catalog read-only, while its SQLite cache uses a separate writable volume. Set `BEDCA_DATASET_VERSION` to identify your export.
-
-[Catalog preparation and updates, in Spanish](docs/11-catalogos-duckdb.md). Tables for future supermarket products and prices are present; no product datasets or collectors are included.
+For a custom catalog, use the optional importer and explicitly set
+`CATALOG_DB_PATH=/app/catalogs/catalogos.duckdb`; its volume is mounted read-only.
+SQLite uses a separate writable volume. [Custom catalog preparation, in Spanish](docs/11-catalogos-duckdb.md).
 
 ## Configuration
 
@@ -237,7 +231,11 @@ In PowerShell, replace `cp` with `Copy-Item`. Edit `.env`, then run:
 uv run --env-file .env python -m mealie_enricher
 ~~~
 
-For a local Docker build, use `docker compose up -d --build calorie-estimator` from the repository root. Run **one application process**: its queue, rate limiters and history are in memory.
+For a local Docker build, first prepare the three verified BEDCA CSVs in
+`data/bedca` following the [build preparation guide](docs/15-imagen-con-bedca.md#construcción-para-mantenedores).
+They are external build inputs, including when catalog use is disabled at runtime.
+Then use `docker compose up -d --build calorie-estimator` from the repository root.
+Run **one application process**: its queue, rate limiters and history are in memory.
 
 ### Checks
 
@@ -257,7 +255,7 @@ Ordinary tests use synthetic data and mocked transports. Docker integration and 
 - Webhooks and backfill preserve manually entered calories; `POST /estimate` forces recalculation.
 - Pending tasks and history do not survive a restart. Run a single instance.
 - HTTP routes retain upstream access behavior and do not add authentication. Deploy on a trusted network or behind your authenticated reverse proxy.
-- The base image requires separate BEDCA data; the bundled variant retains BEDCA's own terms. Real-provider success is distinct from mocked tests.
+- Included BEDCA data retain their own non-commercial terms. Real-provider success is distinct from mocked tests.
 
 ## Documentation
 
