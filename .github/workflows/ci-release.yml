@@ -44,14 +44,14 @@ jobs:
       BEDCA_BUNDLED_TEST_IMAGE: mealie-enricher:ci-bedca
     steps:
       - name: Obtener el validador de la revisión de confianza
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - name: Resolver y comprobar la procedencia antes de ejecutar el tag
         id: source
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           RELEASE_TAG: ${{ inputs.release_tag || '' }}
           RELEASE_APP_SLUG: ${{ vars.RELEASE_APP_SLUG }}
@@ -79,7 +79,7 @@ jobs:
           cp ci/quality.py "$RUNNER_TEMP/enricher-ci/quality.py"
       - name: Obtener la revisión exacta que se comprobará
         if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ steps.source.outputs.sha }}
           fetch-depth: 0
@@ -133,7 +133,7 @@ jobs:
           python "$RUNNER_TEMP/enricher-ci/quality.py" coverage coverage.xml --junit .cache/ci-results.xml
       - name: Conservar informes
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: pruebas-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
@@ -165,7 +165,7 @@ jobs:
       RELEASE_SHA: ${{ needs.verify.outputs.sha }}
     steps:
       - name: Obtener la revisión validada
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.verify.outputs.sha }}
           fetch-depth: 0
@@ -173,7 +173,7 @@ jobs:
       - name: Confirmar tag y metadatos
         run: python ci/release_policy.py verify --tag "$RELEASE_TAG"
       - name: Obtener herramientas de seguridad de la revisión de confianza
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
           path: .cache/trusted-ci
@@ -235,7 +235,7 @@ jobs:
           digest: ${{ steps.security.outputs.bedca_digest }}
           predicate-path: .cache/release-security/bedca.provenance.json
       - name: Guardar evidencias duraderas antes de promocionar
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const fs = require('fs');
@@ -253,7 +253,7 @@ jobs:
               });
             }
       - name: Consultar releases estables antes de promocionar
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const fs = require('fs');
@@ -273,7 +273,7 @@ jobs:
             python ci/images.py promote --manifest .cache/release-images.json --version-only
           fi
       - name: Añadir evidencias de las imágenes a la release
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PUBLISH_ALIASES: ${{ steps.aliases.outputs.publish_aliases }}
         with:
@@ -300,7 +300,7 @@ jobs:
             });
       - name: Conservar manifiesto de publicación
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: publicacion-${{ github.run_id }}-${{ github.run_attempt }}
           path: |

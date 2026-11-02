@@ -25,11 +25,11 @@ jobs:
       CATALOG_TEST_IMAGE: mealie-enricher:ci
       BEDCA_BUNDLED_TEST_IMAGE: mealie-enricher:ci-bedca
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Resolver la release estable oficial
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const {data: release} = await github.rest.repos.getLatestRelease({owner: 'mealie-recipes', repo: 'mealie'});
@@ -62,7 +62,7 @@ jobs:
           python ci/check_test_report.py .cache/compatibility.xml
       - name: Conservar informe
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: compatibilidad-${{ github.run_id }}-${{ github.run_attempt }}
           path: .cache/compatibility.xml
