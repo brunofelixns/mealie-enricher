@@ -226,6 +226,8 @@ Builder y runtime comparten una única imagen Python 3.14 sobre Debian trixie,
 fijada por versión y digest multiarch. La variante BEDCA hereda el digest de la
 imagen base verificada. Las actualizaciones de seguridad del sistema se aplican
 actualizando ese pin; no se excluyen CVE ni se alteran las dependencias de uv.lock.
+El runtime excluye pip y su rueda de bootstrap de ensurepip, incluidas sus
+dependencias vendorizadas; la instalación pertenece al builder con uv.
 Antes de promocionar se ejecuta [ci/security.py](../ci/security.py) sobre los
 cuatro manifiestos hijos por digest. Se rechazan informes vacíos o incompletos
 y vulnerabilidades HIGH/CRITICAL con una versión corregida disponible. Los

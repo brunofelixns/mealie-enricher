@@ -25,7 +25,10 @@ LABEL org.opencontainers.image.title="Mealie Enricher" \
     org.opencontainers.image.revision="$VCS_REF"
 WORKDIR /app
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
-RUN groupadd --gid 1000 appuser && useradd --uid 1000 --gid 1000 --create-home appuser \
+# uv installs the environment in builder; exclude pip and its bootstrap wheel from runtime.
+RUN python -m pip uninstall --yes pip \
+    && rm -rf /usr/local/lib/python3.14/ensurepip \
+    && groupadd --gid 1000 appuser && useradd --uid 1000 --gid 1000 --create-home appuser \
     && mkdir /app/data /app/catalogs && chown appuser:appuser /app/data /app/catalogs
 COPY --from=builder /app/.venv ./.venv
 COPY alembic.ini ./
