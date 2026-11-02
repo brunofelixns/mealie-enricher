@@ -109,6 +109,7 @@ def test_empty_sbom_is_rejected(data):
 def fake_scanner(monkeypatch, destination, *, vulnerable=False, broken=False):
     from ci import security
 
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(destination / "test-summary.md"))
     references = []
 
     def execute(args, check=True):

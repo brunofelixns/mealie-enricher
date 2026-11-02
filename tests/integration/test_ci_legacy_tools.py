@@ -9,7 +9,9 @@ from pathlib import Path
 ROOT = Path(__file__).parents[2]
 
 
-def test_trusted_coverage_tool_survives_a_legacy_source_checkout(tmp_path):
+def test_trusted_coverage_tool_survives_a_legacy_source_checkout(tmp_path, monkeypatch):
+    summary = tmp_path / "test-summary.md"
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary))
     trusted = tmp_path / "runner-temp"
     legacy = tmp_path / "legacy-source"
     trusted.mkdir()
@@ -26,6 +28,7 @@ def test_trusted_coverage_tool_survives_a_legacy_source_checkout(tmp_path):
     )
     assert result.returncode == 0, result.stderr
     assert "96.00%" in result.stdout
+    assert "96.00%" in summary.read_text(encoding="utf-8")
     assert not (legacy / "ci/quality.py").exists()
 
 

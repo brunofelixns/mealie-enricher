@@ -51,3 +51,5 @@
 - Final review: three actionable findings, all addressed in one pass. Keep generic quality/security/signing tools at the trusted workflow SHA for old-source recovery, inherit the Compose pin unless explicitly overridden, and cover both composite-action directories in Dependabot.
 - Recovery and policy regression suite after the fixes: 76 passed. The default-image regression was observed failing before the fix; legacy CLI tests explicitly cover missing helpers in the source checkout and Windows UTF-8.
 - Ruling on review's excluded topics: existing public-image CVE remediation remains a separate change; this task enables detection and blocking. Historical images remain unsigned. No minor findings deferred.
+- Full final local suite after review fixes: 410 passed, 24 opt-in Docker tests skipped, 95.59% coverage. New checks passed on PR #6 (CodeQL Python/Actions, dependency review, title, actionlint/zizmor); full Docker CI remains the integration gate.
+- Test subprocesses and fake scanners write to temporary summary files, so synthetic 96% coverage or clean-image fixtures cannot contaminate the actual Actions summary.
