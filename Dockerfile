@@ -1,5 +1,7 @@
 FROM ghcr.io/astral-sh/uv:0.11.28 AS uv
-FROM python:3.14.6-slim AS builder
+FROM python:3.14.10-slim-trixie@sha256:930e1abba7c4e8f96ed93e8012c35d174d7732752731bbd5e8e757d7ec6f3966 AS python-base
+
+FROM python-base AS builder
 COPY --from=uv /uv /usr/local/bin/uv
 WORKDIR /app
 ENV UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1
@@ -9,7 +11,7 @@ COPY src ./src
 COPY LICENSE NOTICE ./
 RUN uv sync --locked --no-dev --no-editable --no-cache
 
-FROM python:3.14.6-slim AS runner
+FROM python-base AS runner
 # x-release-please-start-version
 ARG VERSION=1.0.0
 # x-release-please-end
