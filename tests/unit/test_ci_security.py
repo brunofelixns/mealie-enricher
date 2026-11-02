@@ -203,7 +203,14 @@ def test_failed_retry_cannot_leave_a_stale_success_receipt(tmp_path, monkeypatch
     receipt = tmp_path / "security-summary.json"
     receipt.write_text('{"passed": true}')
     with pytest.raises(RuntimeError, match="Registry unavailable"):
-        scan({"repository": "ghcr.io/example/app", "base_digest": "sha256:" + "c" * 64}, tmp_path)
+        scan(
+            {
+                "repository": "ghcr.io/example/app",
+                "base_digest": "sha256:" + "c" * 64,
+                "bedca_digest": "sha256:" + "d" * 64,
+            },
+            tmp_path,
+        )
     assert not receipt.exists()
 
 
@@ -224,3 +231,46 @@ def test_provenance_binds_release_checkout_rather_than_workflow_main_sha(tmp_pat
         definition = predicate["buildDefinition"]
         assert definition["resolvedDependencies"][0]["digest"] == {"gitCommit": "d" * 40}
         assert definition["internalParameters"]["candidateDigest"] == manifest[f"{variant}_digest"]
+
+
+@pytest.mark.parametrize("vulnerable", [False, True])
+def test_complete_image_scans_each_platform_once_and_preserves_security_gate(
+    tmp_path, monkeypatch, vulnerable
+):
+    from ci.security import scan
+
+    references = fake_scanner(monkeypatch, tmp_path, vulnerable=vulnerable)
+    outputs = tmp_path / "github-output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(outputs))
+    manifest = {"repository": "ghcr.io/example/app", "image_digest": "sha256:" + "c" * 64}
+    if vulnerable:
+        with pytest.raises(ValueError, match="bloquea"):
+            scan(manifest, tmp_path)
+        assert not outputs.exists()
+    else:
+        scan(manifest, tmp_path)
+        assert "image_digest=sha256:" + "c" * 64 in outputs.read_text()
+        assert "image_arm64_digest=sha256:" + "b" * 64 in outputs.read_text()
+    evidence = json.loads((tmp_path / "security-summary.json").read_text())
+    assert len(references) == len(evidence["artifacts"]) == 2
+    assert {item["name"] for item in evidence["artifacts"]} == {"image-amd64", "image-arm64"}
+    assert evidence["passed"] is not vulnerable
+
+
+def test_complete_image_provenance_binds_one_digest_and_the_release_checkout(tmp_path):
+    from ci.security import write_provenance
+
+    manifest = {
+        "repository": "ghcr.io/example/app",
+        "version": "1.2.0",
+        "revision": "d" * 40,
+        "image_digest": "sha256:" + "c" * 64,
+    }
+    write_provenance(manifest, tmp_path)
+    paths = list(tmp_path.glob("*.provenance.json"))
+    assert len(paths) == 1
+    predicate = json.loads(paths[0].read_text())
+    definition = predicate["buildDefinition"]
+    assert definition["externalParameters"] == {"releaseTag": "v1.2.0", "variant": "image"}
+    assert definition["internalParameters"]["candidateDigest"] == manifest["image_digest"]
+    assert definition["resolvedDependencies"][0]["digest"] == {"gitCommit": "d" * 40}

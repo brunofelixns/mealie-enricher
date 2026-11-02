@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
-# Build with --build-context bedca_source=./data/bedca.
+# Internal fixture for catalog replacement and historical builds, not a published variant.
+# The root Dockerfile already includes BEDCA. Build with --build-context bedca_source=...
 ARG BASE_IMAGE=mealie-enricher:local
 ARG BEDCA_DATASET_VERSION=2026-08-19
 

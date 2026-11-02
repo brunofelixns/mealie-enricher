@@ -38,6 +38,102 @@ def manifest():
     }
 
 
+def complete_manifest():
+    return {
+        "repository": "ghcr.io/example/app",
+        "version": "1.2.0",
+        "revision": "d" * 40,
+        "image_digest": "sha256:" + "c" * 64,
+    }
+
+
+def test_complete_image_publishes_one_version_and_shared_compatibility_aliases():
+    from ci.images import promote
+
+    data = complete_manifest()
+    registry = Registry({})
+    promote(data, call=registry)
+    assert registry.images == {
+        f"ghcr.io/example/app:{tag}": data["image_digest"]
+        for tag in ("1.2.0", "latest", "bedca", "latest-bedca")
+    }
+
+
+def test_complete_image_conflict_blocks_every_alias_write():
+    from ci.images import promote
+
+    registry = Registry({"ghcr.io/example/app:1.2.0": "sha256:" + "e" * 64})
+    with pytest.raises(ValueError, match="inmutable"):
+        promote(complete_manifest(), call=registry)
+    assert registry.writes == []
+
+
+def test_complete_image_can_repair_version_without_moving_newer_aliases():
+    from ci.images import promote
+
+    current = "sha256:" + "e" * 64
+    registry = Registry({"ghcr.io/example/app:latest": current})
+    promote(complete_manifest(), call=registry, publish_aliases=False)
+    assert registry.writes == ["ghcr.io/example/app:1.2.0"]
+    assert registry.images["ghcr.io/example/app:latest"] == current
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"image_digest": "not-a-digest"},
+        {"base_digest": "sha256:" + "a" * 64},
+        {"bedca_digest": "sha256:" + "b" * 64},
+    ],
+)
+def test_complete_image_rejects_invalid_or_mixed_manifests_before_writes(changes):
+    from ci.images import promote
+
+    registry = Registry({})
+    with pytest.raises(ValueError):
+        promote({**complete_manifest(), **changes}, call=registry)
+    assert registry.writes == []
+
+
+@pytest.mark.parametrize("already_built", [False, True])
+def test_build_pushes_only_one_complete_candidate_and_reuses_it_on_retry(
+    monkeypatch, tmp_path, already_built
+):
+    from ci import images
+
+    monkeypatch.chdir(tmp_path)
+    data = complete_manifest()
+    candidate = "ghcr.io/example/app:build-" + data["revision"]
+    existing = {candidate: data["image_digest"]} if already_built else {}
+    builds, probes = [], []
+
+    def docker(args, check=True):
+        assert args[:3] == ["docker", "buildx", "build"]
+        builds.append(args)
+        metadata = tmp_path / args[args.index("--metadata-file") + 1]
+        metadata.parent.mkdir(parents=True, exist_ok=True)
+        metadata.write_text(json.dumps({"containerimage.digest": data["image_digest"]}))
+        existing[candidate] = data["image_digest"]
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(images, "registry_digest", existing.get)
+    monkeypatch.setattr(images, "run", docker)
+    monkeypatch.setattr(images, "smoke", lambda *args: probes.append(args))
+    output = tmp_path / "release-images.json"
+    images.build(data["repository"], data["version"], data["revision"], output)
+    assert json.loads(output.read_text()) == data
+    assert len(builds) == (0 if already_built else 1)
+    if builds:
+        command = builds[0]
+        assert "--push" in command
+        assert command[command.index("--platform") + 1] == "linux/amd64,linux/arm64"
+        assert command[command.index("--build-context") + 1] == "bedca_source=./data/bedca"
+        assert "BASE_IMAGE=" not in " ".join(command)
+    assert probes == [
+        (data["repository"] + "@" + data["image_digest"], "1.2.0", data["revision"], "image")
+    ]
+
+
 def test_promotion_updates_both_variants_after_immutable_tags_are_checked():
     from ci.images import promote
 

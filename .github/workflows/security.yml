@@ -53,30 +53,18 @@ jobs:
           persist-credentials: false
       - name: Resolver aliases una vez y analizar ambas plataformas
         run: python ci/security.py --published --output .cache/security
-      - name: Registrar alertas base amd64
-        if: ${{ !cancelled() && hashFiles('.cache/security/base-amd64.sarif') != '' }}
+      - name: Registrar alertas de la imagen amd64
+        if: ${{ !cancelled() && hashFiles('.cache/security/image-amd64.sarif') != '' }}
         uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
         with:
-          sarif_file: .cache/security/base-amd64.sarif
-          category: trivy-base-amd64
-      - name: Registrar alertas base arm64
-        if: ${{ !cancelled() && hashFiles('.cache/security/base-arm64.sarif') != '' }}
+          sarif_file: .cache/security/image-amd64.sarif
+          category: trivy-image-amd64
+      - name: Registrar alertas de la imagen arm64
+        if: ${{ !cancelled() && hashFiles('.cache/security/image-arm64.sarif') != '' }}
         uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
         with:
-          sarif_file: .cache/security/base-arm64.sarif
-          category: trivy-base-arm64
-      - name: Registrar alertas BEDCA amd64
-        if: ${{ !cancelled() && hashFiles('.cache/security/bedca-amd64.sarif') != '' }}
-        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
-        with:
-          sarif_file: .cache/security/bedca-amd64.sarif
-          category: trivy-bedca-amd64
-      - name: Registrar alertas BEDCA arm64
-        if: ${{ !cancelled() && hashFiles('.cache/security/bedca-arm64.sarif') != '' }}
-        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
-        with:
-          sarif_file: .cache/security/bedca-arm64.sarif
-          category: trivy-bedca-arm64
+          sarif_file: .cache/security/image-arm64.sarif
+          category: trivy-image-arm64
       - name: Conservar informes completos incluso ante hallazgos
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

@@ -45,14 +45,11 @@ jobs:
           enable-cache: true
       - run: uv sync --locked
       - uses: ./.github/actions/prepare-bedca # zizmor: ignore[self-repository] -- test this checkout
-      - name: Construir las dos variantes de prueba
+      - name: Construir la imagen completa de prueba
         run: |
-          docker build --tag mealie-enricher:ci --tag mealie-enricher:local .
-          docker buildx build --load --network none \
+          docker buildx build --load \
             --build-context bedca_source=./data/bedca \
-            --build-arg BASE_IMAGE=mealie-enricher:ci \
-            --build-arg BEDCA_DATASET_VERSION=bedca-export-2026-08-19 \
-            --file docker/Dockerfile.bedca --tag mealie-enricher:ci-bedca .
+            --tag mealie-enricher:ci --tag mealie-enricher:ci-bedca --tag mealie-enricher:local .
       - name: Descargar Mealie estable para los proyectos aislados
         run: docker compose --profile test pull mealie mock-off
       - name: Ejecutar toda la suite sin publicar

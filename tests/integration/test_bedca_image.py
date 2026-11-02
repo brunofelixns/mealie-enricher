@@ -34,12 +34,14 @@ def docker(*args, check=True):
 
 
 @pytest.mark.parametrize("compose_path", ["docker-compose.yml", "docker/docker-compose.yml"])
-def test_compose_accepts_bundled_catalog_path(tmp_path, compose_path):
+@pytest.mark.parametrize("explicit_path", [False, True])
+def test_compose_uses_bundled_catalog_path_by_default(tmp_path, compose_path, explicit_path):
     shutil.copyfile(ROOT / compose_path, tmp_path / "docker-compose.yml")
     (tmp_path / ".env").write_text("", encoding="utf-8")
     env_file = tmp_path / "bundle.env"
     env_file.write_text(
-        "MEALIE_ENRICHER_IMAGE=synthetic:bedca\nCATALOG_DB_PATH=/opt/bedca/catalogos.duckdb\n",
+        "MEALIE_ENRICHER_IMAGE=synthetic:complete\n"
+        + ("CATALOG_DB_PATH=/opt/bedca/catalogos.duckdb\n" if explicit_path else ""),
         encoding="utf-8",
     )
     environment = {
@@ -169,8 +171,6 @@ def test_bundled_image_starts_in_deployment_compose_without_importing(bundles, t
         "MEALIE_API_TOKEN": "synthetic-unused",
         "MEALIE_URL": "http://unused.invalid",
         "PUBLISHED_PORT": str(_free_port()),
-        "CATALOG_ENABLED": "true",
-        "CATALOG_DB_PATH": "/opt/bedca/catalogos.duckdb",
         "DECISIONS_ENABLED": "false",
         "LLM_ENABLED": "false",
     }

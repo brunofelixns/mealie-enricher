@@ -2,9 +2,10 @@
 
 ## Qué cambia
 
-La variante `bedca` permite arrancar con el catálogo preparado. El mantenedor
-importa y valida los CSV al construir la imagen; el usuario configura Mealie y
-arranca el servicio. No necesita CSV en el servidor, Python, uv ni un importador.
+Desde **1.2.0**, la imagen normal (`latest` o un tag de versión) incluye el
+catálogo preparado. El mantenedor importa y valida los CSV al construirla;
+el usuario configura Mealie y arranca el servicio. Una sola imagen contiene
+aplicación, DuckDB, originales y atribución.
 
 ```text
 /opt/bedca/
@@ -23,53 +24,64 @@ importador existente. Los datos incluidos no son escribibles por `appuser`;
 SQLite continúa en su volumen de `/app/data/cache.db`.
 
 Se usa `/opt/bedca` para que el volumen `/app/catalogs` no oculte el catálogo
-incluido. La variante activa el catálogo y configura su ruta por defecto.
+incluido. La imagen activa el catálogo y configura su ruta por defecto.
 
 ## Despliegue
 
-El workflow de main publica la variante con el alias
-`ghcr.io/brunofelixns/mealie-enricher:bedca` y tags `X.Y.Z-bedca`, después de pasar
-toda la suite. [Flujo automático y versiones](16-github-actions.md).
+El workflow publica una imagen mediante `latest` y `X.Y.Z`, después de pasar
+toda la suite. Los alias antiguos `bedca` y `latest-bedca` apuntan a ese mismo
+digest; no son imágenes distintas. Desde 1.2.0 no se publican tags `X.Y.Z-bedca`.
+Las versiones anteriores conservan su contenido. [Flujo automático](16-github-actions.md).
 
 Usa el [Compose de despliegue](../docker/docker-compose.yml) y copia
-[.env.bedca.example](../docker/.env.bedca.example) como `.env`. Configura:
+[.env.example](../docker/.env.example) como `.env`. Configura:
 
 ```dotenv
-MEALIE_ENRICHER_IMAGE=ghcr.io/brunofelixns/mealie-enricher:bedca
+MEALIE_ENRICHER_IMAGE=ghcr.io/brunofelixns/mealie-enricher:latest
 MEALIE_URL=https://tu-mealie.example.com
 MEALIE_API_TOKEN=tu-token
 CATALOG_ENABLED=true
 CATALOG_DB_PATH=/opt/bedca/catalogos.duckdb
 ```
 
-Con una imagen construida localmente, configura `MEALIE_ENRICHER_IMAGE=mealie-enricher:bedca` y:
+Con una imagen construida localmente, configura `MEALIE_ENRICHER_IMAGE=mealie-enricher:local` y:
 
 ```sh
 docker compose up -d --no-build --pull never --wait calorie-estimator
 ```
 
-Con una variante publicada, usa `docker compose pull` y después
+Con una imagen publicada, usa `docker compose pull` y después
 `docker compose up -d --no-build --wait calorie-estimator`.
 No hace falta ejecutar `catalog-import` ni preparar una carpeta `bedca/`.
 La configuración de IA sigue siendo opcional e independiente.
 
 ## Construcción para mantenedores
 
-Se requieren los tres CSV externos. Desde la raíz, con la imagen base local:
+Se requieren los tres CSV externos, también con `CATALOG_ENABLED=false`:
+desactivar el catálogo al arrancar no cambia el contenido de la imagen.
+Obtén los archivos `output/bedca_foods.csv`, `output/bedca_foodvalues.csv` y
+`output/bedca_units.csv` de la [revisión fija de la exportación](https://github.com/TerjeRu/bedca-database/tree/3e4e0c180267bb158564a03cff1cca510ecb8135/output),
+cópialos a `data/bedca/` y verifica sus SHA-256 con `ci/bedca.sha256`.
+En Linux, desde la raíz, puedes comprobarlos con
+`sha256sum --strict --check ci/bedca.sha256`; en PowerShell, usa
+`Get-FileHash data/bedca/*.csv -Algorithm SHA256` y compara los tres valores.
+El workflow realiza estos pasos mediante la acción `prepare-bedca`.
+Después se construye una sola imagen:
 
 ```sh
-docker build -t mealie-enricher:local .
-docker buildx build --load --network none --build-context bedca_source=./data/bedca --build-arg BASE_IMAGE=mealie-enricher:local --build-arg BEDCA_DATASET_VERSION=bedca-export-2026-08-19 -f docker/Dockerfile.bedca -t mealie-enricher:bedca .
+docker buildx build --load --build-context bedca_source=./data/bedca --build-arg BEDCA_DATASET_VERSION=bedca-export-2026-08-19 -t mealie-enricher:local .
 ```
 
 El contexto `bedca_source` es explícito: los datos siguen excluidos de Git y del
 contexto habitual. Se copian únicamente los tres CSV; otros archivos de esa
 carpeta no entran en la imagen. Una exportación inválida hace fallar el build.
-La importación se ejecuta sin red y con el DuckDB de la propia imagen base.
+La importación se ejecuta sin red y con el DuckDB del runtime preparado en una
+etapa interna. La imagen sin datos es únicamente una etapa de construcción.
 
-Se puede utilizar una base publicada mediante `BASE_IMAGE`; para reproducir una
-publicación conviene fijar su digest verificado. La versión del software sigue
-siendo la de la base; la versión del dataset se identifica por separado.
+`docker/Dockerfile.bedca` se conserva como fixture interna para comprobar el
+reemplazo de catálogos y para construcciones históricas. El pipeline actual
+publica exclusivamente el Dockerfile principal. Software y dataset mantienen
+sus versiones separadas.
 
 ## Actualizar y recuperar los originales
 
@@ -87,11 +99,11 @@ docker compose cp calorie-estimator:/opt/bedca/manifest.json ./bedca-manifest.js
 
 Los originales permanecen en la imagen aunque no se copien al host. Actualizar
 la imagen no modifica los archivos exportados previamente. Para usar un catálogo
-propio, se mantiene la [preparación de la imagen base](11-catalogos-duckdb.md).
+propio, se mantiene la [preparación de catálogos propios](11-catalogos-duckdb.md).
 
 ## Condiciones de los datos
 
-El usuario confirma distribución pública **no comercial**. La variante atribuye
+El usuario confirma distribución pública **no comercial**. La imagen atribuye
 los datos a **AESAN/BEDCA Base de Datos Española de Composición de Alimentos
 v1.0 (2010)**. Sus condiciones figuran en `/opt/bedca/NOTICE.md` y se identifican
 también en las etiquetas OCI. La licencia del código no sustituye las de BEDCA.
@@ -104,7 +116,7 @@ no se certifica la exactitud nutricional científica de toda la fuente.
 - [Condiciones originales AESAN/BEDCA](https://www.bedca.net/bdpub/UsoBD.pdf).
 - [Licencia de la exportación](https://github.com/TerjeRu/bedca-database/blob/main/LICENSE).
 
-## Verificación
+## Verificación histórica de la variante 1.0.0
 
 Verificación anterior al ajuste de numeración a 1.0.0 (2026-11-01):
 

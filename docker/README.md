@@ -77,17 +77,29 @@ The `estimator-cache` volume preserves `/app/data/cache.db`. Keep `CACHE_DB_PATH
 
 Stop with `docker compose down`. This preserves volumes. History and pending tasks are in memory and are lost on restart; run a single application instance.
 
-## Optional BEDCA catalog
+## Included BEDCA catalog
 
-A **bundled BEDCA variant** includes DuckDB and the original CSV files for non-commercial use under BEDCA's terms. Use [.env.bedca.example](.env.bedca.example) with this Compose; no import is needed. Merging the Release Please version PR triggers publication with the `bedca` alias and versioned tags. [Build, deploy and update guide, in Spanish](../docs/15-imagen-con-bedca.md).
+From **1.2.0**, `latest` and normal version tags include the prepared DuckDB
+catalog and original CSV files under `/opt/bedca`, with BEDCA's non-commercial
+terms and attribution. The standard [.env.example](.env.example) enables the
+included catalog. [Contents and updates, in Spanish](../docs/15-imagen-con-bedca.md).
 
-For the base image, place your separately obtained `bedca_foods.csv`, `bedca_foodvalues.csv` and `bedca_units.csv` in `bedca/`, or set `BEDCA_INPUT_DIR`. Set `BEDCA_DATASET_VERSION` to identify the export.
+Keep `CATALOG_ENABLED=true` and `CATALOG_DB_PATH=/opt/bedca/catalogos.duckdb`.
+Existing `bedca` and `latest-bedca` aliases point to the same complete image;
+new releases do not publish a separate version-bedca variant.
+
+For a custom export instead, place your separately obtained `bedca_foods.csv`,
+`bedca_foodvalues.csv` and `bedca_units.csv` in `bedca/`, or set `BEDCA_INPUT_DIR`.
+Set `BEDCA_DATASET_VERSION` to identify the export.
 
 ~~~sh
 docker compose --profile catalog run --rm catalog-import
 ~~~
 
-After import, set `CATALOG_ENABLED=true` in `.env` and recreate the service. The catalog lives in `estimator-catalogs`; the application mounts it read-only. The cache remains in its own writable volume.
+After a custom import, set `CATALOG_ENABLED=true` and
+`CATALOG_DB_PATH=/app/catalogs/catalogos.duckdb` in `.env` and recreate the service.
+The custom catalog lives in `estimator-catalogs`, mounted read-only. The cache
+remains in its own writable volume.
 
 Optional Decisions match selection requires `DECISIONS_ENABLED=true` and `OPENAI_API_KEY` or `DECISIONS_API_KEY`. The fallback LLM remains independent.
 
@@ -108,6 +120,7 @@ gh workflow run ci-release.yml --repo brunofelixns/mealie-enricher --ref main -f
 
 An older release retry preserves the latest image aliases. The workflow checks
 the exact merged release PR, tag and metadata, runs the full suite, then builds
-and verifies both architectures and variants. No manual registry token is needed.
+and verifies the complete image on both architectures. Historical dual-image
+releases retain their recovery contract. No manual registry token is needed.
 
 [CI and release policy, in Spanish](../docs/16-github-actions.md).
