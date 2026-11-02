@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "2265d33a5eaf95d5b7a276fc600c85f6011b05a5",
+  "include-component-in-tag": false,
+  "always-update": true,
+  "packages": {
+    ".": {
+      "release-type": "python",
+      "package-name": "mealie-enricher",
+      "extra-files": [
+        {"type": "toml", "path": "uv.lock", "jsonpath": "$.package[?(@.name.value==\"mealie-enricher\")].version"},
+        "Dockerfile"
+      ],
+      "changelog-sections": [
+        {"type": "feat", "section": "Funcionalidades"},
+        {"type": "fix", "section": "Correcciones"},
+        {"type": "perf", "section": "Rendimiento"},
+        {"type": "refactor", "section": "Refactorización"},
+        {"type": "docs", "section": "Documentación"},
+        {"type": "test", "section": "Pruebas"},
+        {"type": "build", "section": "Construcción"},
+        {"type": "ops", "section": "Operación y CI"},
+        {"type": "ci", "section": "Integración continua"},
+        {"type": "chore", "section": "Mantenimiento"},
+        {"type": "style", "section": "Estilo"},
+        {"type": "revert", "section": "Reversiones"}
+      ]
+    }
+  }
+}

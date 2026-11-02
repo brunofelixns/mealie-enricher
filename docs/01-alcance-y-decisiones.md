@@ -140,6 +140,18 @@ y publicar en GHCR solo si pasa, con versión automática. Se mantiene 1.0.0 com
 primera versión propia. El [documento 16](16-github-actions.md) registra la política
 de commits, las variantes, los permisos y la recuperación de fallos.
 
+## D16: main protegida y publicación mediante Release Please
+
+El usuario solicita aplicar PR obligatorias y una PR automática de publicación.
+Sustituye D15 en cuanto al disparador de publicación: una PR funcional fusionada
+no publica; fusionar la PR de versión crea tag/release y solicita la publicación
+de GHCR tras validar ese commit. El bot no puede escribir directamente en main
+ni fusiona su PR. Se conservan la política de versiones, las pruebas y BEDCA.
+Se utiliza GITHUB_TOKEN, sin credenciales nuevas. Su PR requiere aprobar el CI
+de pull_request; workflow_dispatch se reserva para publicar releases. La opción
+de GitHub App para quitar esa aprobación adicional se consulta al usuario.
+La [guía vigente](16-github-actions.md) distingue el flujo de su evidencia histórica.
+
 ## Fuentes técnicas
 
 - [uv](https://docs.astral.sh/uv/guides/projects/).
