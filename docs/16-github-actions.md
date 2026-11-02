@@ -186,6 +186,10 @@ El SDK actualiza pyproject.toml, únicamente la entrada
 mealie-enricher de uv.lock, ARG VERSION del Dockerfile, manifest y CHANGELOG.
 No cambia las versiones de dependencias. Las anotaciones del Dockerfile y el
 selector TOML del lock se prueban con los actualizadores reales del SDK.
+La estrategia Python obtiene el nombre del paquete de pyproject.toml. No se
+configura package-name: con tags sin componente, ese campo impide que el SDK
+reconozca su propia PR agrupada al fusionarla. La prueba recorre tanto la
+generación de esa PR como la construcción de su release en el SHA fusionado.
 La regresión cubre también el `uv.lock` real: permanece idéntico byte a byte
 excepto la versión de la entrada propia. Se utiliza `uv sync --locked` para
 rechazar desajustes con pyproject; los comandos posteriores `uv run --frozen`

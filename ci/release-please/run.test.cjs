@@ -17,7 +17,7 @@ test('SDK file selection remains compatible with the patched minimatch', async (
   assert.deepEqual(await cache.findFilesByGlob('**/*.toml'), ['pyproject.toml', 'ci/settings.toml']);
 });
 
-test('manifest produces the branch accepted by publication provenance', async () => {
+test('manifest can release its generated componentless Python PR after merge', async () => {
   const {Manifest} = require('release-please');
   const baseline = JSON.parse(fs.readFileSync(path.join(root, '.release-please-manifest.json'), 'utf8'))['.'];
   const github = {
@@ -35,6 +35,19 @@ test('manifest produces the branch accepted by publication provenance', async ()
   const pulls = await manifest.buildPullRequests();
   assert.equal(pulls.length, 1);
   assert.equal(pulls[0].headRefName, 'release-please--branches--main');
+  const candidate = pulls[0];
+  github.pullRequestIterator = async function* () {
+    yield {
+      number: 2, title: candidate.title.toString(), body: candidate.body.toString(),
+      headBranchName: candidate.headRefName, baseBranchName: 'main',
+      sha: 'c'.repeat(40), labels: candidate.labels, files: [],
+    };
+  };
+  const releases = await manifest.buildReleases();
+  assert.equal(releases.length, 1);
+  assert.equal(releases[0].tag.toString(), `v${candidate.title.getVersion()}`);
+  assert.equal(releases[0].sha, 'c'.repeat(40));
+  assert.equal(releases[0].pullRequest.number, 2);
 });
 
 test('actual SDK updates only our lock entry and Docker version', () => {
