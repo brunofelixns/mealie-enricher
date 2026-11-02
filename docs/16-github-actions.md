@@ -53,10 +53,39 @@ no llama a proveedores LLM y no publica imágenes.
 
 Aquí no existía `renovate.json`: la referencia a Renovate correspondía a
 mealie-mcp-server. Se mantiene un único bot, **Dependabot**, con actualizaciones
-semanales agrupadas de Actions, uv (también dependencias indirectas), npm del
-SDK de release, Dockerfiles y Compose. Las versiones nuevas esperan siete días;
+semanales de Actions, uv (también dependencias indirectas), npm del
+SDK de release, Dockerfiles y Compose. Los cinco ecosistemas pertenecen al grupo
+`weekly-dependencies`: una PR semanal consolidada, con prefijo `chore(deps)` y
+etiqueta `dependencies`, los lunes a las 06:00 Europe/Madrid. El límite del grupo
+es una PR abierta; las actualizaciones de seguridad siguen su tratamiento propio.
+Las notas de release registran la PR agrupada como una entrada de mantenimiento.
+Las versiones nuevas esperan siete días;
 las actualizaciones de seguridad conservan el tratamiento propio de GitHub.
 Las PR se revisan y pasan CI; no hay automerge ni credenciales nuevas.
+Las imágenes Python permanecen en **3.14.x**, según `requires-python`: se
+permiten parches y se excluyen saltos minor/major del runtime. La comprobación
+del SDK compara las líneas `FROM` antes y después de actualizar la versión de
+la aplicación, permitiendo actualizaciones legítimas de las imágenes base.
+
+### Avisos de CodeQL revisados
+
+El análisis estático del pipeline dejó cinco avisos conservadores en `6dd2b05`:
+[#1](https://github.com/brunofelixns/mealie-enricher/security/code-scanning/1),
+[#2](https://github.com/brunofelixns/mealie-enricher/security/code-scanning/2),
+[#3](https://github.com/brunofelixns/mealie-enricher/security/code-scanning/3),
+[#4](https://github.com/brunofelixns/mealie-enricher/security/code-scanning/4) y
+[#6](https://github.com/brunofelixns/mealie-enricher/security/code-scanning/6).
+Una revisión independiente de código y API los clasifica como no accionables
+en el flujo actual: el checkout señalado solo puede ejecutarse por
+workflow_dispatch con tag; la validación previa exige ancestría de main,
+metadatos coincidentes y la PR fusionada exacta del bot configurado en este repo.
+El paso de metadatos señalado por #1 exige tag vacío y es mutuamente excluyente
+con ese checkout. No se encontró una ruta que eludiera estas comprobaciones.
+
+La validación de procedencia es el control decisivo: desactivar la caché por
+sí solo no impide que código malicioso utilice la capacidad de caché del runtime.
+Los avisos permanecen visibles y las consultas continúan activas. La valoración
+es estática y corresponde a los permisos, eventos y validadores comprobados.
 
 El pin de Trivy está en [ci/trivy/Dockerfile](../ci/trivy/Dockerfile), incluyendo
 versión y digest, y queda cubierto por el gestor Docker de Dependabot. El helper
@@ -66,6 +95,18 @@ así mantiene también el SHA de `actions/attest`, no solo los workflows.
 Esto traslada las mejoras de mantenimiento propuestas para Renovate sin activar
 un segundo servicio. El refresco de uv.lock lo realizan sus PR de actualización;
 no se programa una regeneración ciega del lock ni se cambian los metadatos de versión.
+
+### Etiquetas por carpetas
+
+[labeler.yml](../.github/workflows/labeler.yml) aplica las etiquetas predefinidas
+`api`, `db`, `tests`, `docs` y `ci` según
+[sus rutas](../.github/labeler.yml). Se ejecuta con `pull_request_target` y utiliza
+solo la acción oficial fijada por SHA y la configuración de la rama de confianza.
+No hace checkout de la PR. El token tiene lectura del contenido y escritura de
+etiquetas de PR; las etiquetas ya existen, por lo que no necesita `issues: write`.
+La sincronización destructiva está desactivada: conserva las etiquetas manuales
+y las etiquetas `autorelease:*` de Release Please. La ejecución manual acepta
+el número de una PR existente para aplicar las reglas después de implantarlas.
 
 ## GitHub App para CI sin aprobación adicional
 
@@ -145,6 +186,11 @@ El SDK actualiza pyproject.toml, únicamente la entrada
 mealie-enricher de uv.lock, ARG VERSION del Dockerfile, manifest y CHANGELOG.
 No cambia las versiones de dependencias. Las anotaciones del Dockerfile y el
 selector TOML del lock se prueban con los actualizadores reales del SDK.
+La regresión cubre también el `uv.lock` real: permanece idéntico byte a byte
+excepto la versión de la entrada propia. Se utiliza `uv sync --locked` para
+rechazar desajustes con pyproject; los comandos posteriores `uv run --frozen`
+reutilizan ese lock ya validado. `--frozen` por sí mismo omite la comprobación
+de actualización del lock y no sustituye esa validación inicial.
 
 Utiliza Conventional Commits en los commits o en el título de PR si se fusiona
 con squash. No hay commit de versión directo ni `[skip ci]` en la PR de release.

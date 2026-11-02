@@ -48,12 +48,26 @@ test('actual SDK updates only our lock entry and Docker version', () => {
   );
   assert.match(lock, /name = "other"\nversion = "99.0.0"/);
   assert.match(lock, /name = "mealie-enricher"\nversion = "2.3.4"/);
-  const docker = new Generic({version}).updateContent(fs.readFileSync(path.join(root, 'Dockerfile'), 'utf8'));
+  const dockerSource = fs.readFileSync(path.join(root, 'Dockerfile'), 'utf8');
+  const docker = new Generic({version}).updateContent(dockerSource);
   assert.match(docker, /^ARG VERSION=2\.3\.4$/m);
-  assert.match(docker, /python:3\.14\.6-slim/);
+  assert.deepEqual(docker.match(/^FROM .+$/gm), dockerSource.match(/^FROM .+$/gm));
   const project = new PyProjectToml({version}).updateContent(
     '[project]\nname="mealie-enricher"\nversion="1.0.0"\n'
   );
+  assert.match(project, /version\s*=\s*"2\.3\.4"/);
+});
+
+test('real project lock stays byte-identical except for its own package version', () => {
+  const config = JSON.parse(fs.readFileSync(path.join(root, 'release-please-config.json'), 'utf8'));
+  const lockConfig = config.packages['.']['extra-files'].find(file => file.path === 'uv.lock');
+  const before = fs.readFileSync(path.join(root, 'uv.lock'), 'utf8');
+  const version = Version.parse('2.3.4');
+  const after = new GenericToml(lockConfig.jsonpath, version).updateContent(before);
+  const packageEntry = /\[\[package\]\]\r?\nname = "mealie-enricher"\r?\nversion = "[^"]+"/;
+  assert.match(before, packageEntry);
+  assert.equal(after, before.replace(packageEntry, entry => entry.replace(/version = "[^"]+"/, 'version = "2.3.4"')));
+  const project = new PyProjectToml({version}).updateContent(fs.readFileSync(path.join(root, 'pyproject.toml'), 'utf8'));
   assert.match(project, /version\s*=\s*"2\.3\.4"/);
 });
 
