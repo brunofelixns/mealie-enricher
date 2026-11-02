@@ -16,9 +16,9 @@ revisor humano en este repositorio personal. No permite force push ni borrado.
 
 ## GitHub App para CI sin aprobación adicional
 
-El usuario elige sustituir el token que utiliza el SDK por una App privada y
-dedicada. Su registro/instalación se prepara con permisos exactos y requiere
-la confirmación final del navegador antes de conceder acceso.
+Release Please utiliza la App privada y dedicada **Mealie Release brunofelixns**
+(`mealie-release-brunofelixns`). Su registro e instalación se completaron tras
+la confirmación expresa del usuario, con los permisos exactos descritos aquí.
 
 | Configuración de Actions | Uso |
 |---|---|
@@ -26,7 +26,7 @@ la confirmación final del navegador antes de conceder acceso.
 | Variable RELEASE_APP_SLUG | Identidad esperada del bot |
 | Secreto RELEASE_APP_PRIVATE_KEY | Clave privada de la App |
 
-La App se instala solo en brunofelixns/mealie-enricher. Contents, Pull requests
+La App está instalada solo en brunofelixns/mealie-enricher. Contents, Pull requests
 e Issues tienen escritura; Metadata, lectura implícita. No recibe permisos
 de administración, workflows, paquetes, cuenta ni organización, ni webhooks.
 La acción oficial create-github-app-token v3 está fijada por SHA; solicita
@@ -44,8 +44,8 @@ La procedencia de releases reconoce solo la App configurada y el bot anterior
 github-actions[bot]. Esto permite continuar la PR existente y reintentar releases
 anteriores durante la transición. Otros bots y autores humanos se rechazan;
 la rama de la PR debe pertenecer también a este mismo repositorio.
-Una vez verificado el CI automático, se deshabilita la creación/aprobación de PR
-mediante GITHUB_TOKEN en la configuración general del repositorio.
+La creación/aprobación de PR mediante GITHUB_TOKEN está deshabilitada en la
+configuración general del repositorio; sus permisos por defecto son de lectura.
 
 ## Workflows y permisos
 
@@ -281,10 +281,27 @@ esta versión. No cambia ninguna dependencia de la aplicación Python.
 ## Ampliación elegida: App dedicada
 
 Tras el cierre anterior el usuario elige GitHub App para CI totalmente
-automático. Se prepara la integración, la transición del autor de la PR
-existente y el registro privado con los permisos descritos arriba. El registro
-e instalación siguen pendientes de la confirmación de acceso del navegador;
-no se ha creado ni almacenado una clave al documentar esta preparación.
+automático y confirma su creación, instalación limitada y secreto de Actions.
+La App está registrada e instalada con los permisos descritos arriba.
+El canje del manifest se realiza por HTTPS dentro del proceso local; la clave
+se envía por stdin al secreto del repositorio, con destino github.com explícito.
+No se imprime ni se guarda en archivos. El callback local se cierra al terminar.
+
+La [PR #4](https://github.com/brunofelixns/mealie-enricher/pull/4), commit
+e5f13e74084d6c3bb0d17acdd626a516ff73815a, pasa el
+[CI 41470064040](https://github.com/brunofelixns/mealie-enricher/actions/runs/41470064040):
+396 Python sin omisiones en 194,08 s y 20 Node correctas. La publicación se omite.
+La revisión independiente no deja hallazgos pendientes. Tras configurar el
+secreto y las dos variables, la PR se integra mediante squash
+`4161077379282d790eb337c18445e0145dd57676`.
+
+El [gestor 41471806436](https://github.com/brunofelixns/mealie-enricher/actions/runs/41471806436)
+termina correctamente: crea el token limitado, comprueba el slug y actualiza la
+misma PR #2 con autor de commit `mealie-release-brunofelixns[bot]`. Revoca el token
+al finalizar. El [CI pull_request 41471871230](https://github.com/brunofelixns/mealie-enricher/actions/runs/41471871230)
+arranca automáticamente para `7b37d78efb1fc6ea73db0db36e75349c92ef5c1a`, sin
+aprobar workflows ni usar un despacho manual como sustituto del check.
+La PR 1.0.1 permanece abierta; no se publica una release durante esta activación.
 
 ## Referencias
 
