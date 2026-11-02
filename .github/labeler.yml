@@ -1,0 +1,33 @@
+api:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/mealie_enricher/app.py
+          - src/mealie_enricher/models.py
+          - src/mealie_enricher/routes/**
+          - src/mealie_enricher/clients/**
+db:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/mealie_enricher/storage/**
+          - src/mealie_enricher/catalog/store.py
+          - src/mealie_enricher/catalog/schema.py
+          - alembic/**
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - tests/**
+          - ci/release-please/*.test.cjs
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - docs/**
+          - '**/*.md'
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+          - ci/**
+          - release-please-config.json
+          - .release-please-manifest.json
+          - Dockerfile
+          - docker/**

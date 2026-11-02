@@ -34,7 +34,7 @@
 - [x] 2. Add coverage floor and visible test/coverage summary. Verify malformed reports and threshold boundaries; run full ordinary suite to measure the baseline.
 - [x] 3. Add a shared pinned Trivy scanner for both platforms and variants, fail-closed promotion gate, SBOMs, signed provenance and durable release assets. Test reports, platform selection and retries.
 - [x] 4. Add weekly digest scans and Mealie stable compatibility checks. Verify digest resolution and isolated image override without publication.
-- [ ] 5. Document operation and recovery; run lint, types, Python/Node suites, workflow linters and bot config validation. Obtain a fresh whole-branch review, fix actionable findings, open a PR and observe actual checks.
+- [x] 5. Document operation and recovery; run lint, types, Python/Node suites, workflow linters and bot config validation. Obtain a fresh whole-branch review, fix actionable findings, open a PR and observe actual checks.
 
 ## Decisions and evidence
 
@@ -58,3 +58,11 @@
 - Manual Linux scan exposed bind-mount permission denial with dropped capabilities. Follow-up uses the runner UID/GID and explicit non-root cache/HOME paths, with a real Docker filesystem regression added to full CI.
 - CodeQL's conservative dynamic-checkout/cache findings prompted an explicit workflow_dispatch guard on tag checkout and disabled shared uv caching in verification. Normal PR/main CI uses its first exact github.sha checkout. This trades a small dependency download for removing the cache-write surface entirely.
 - Manual compatibility run 41480075135 passed against official stable Mealie v3.30.0; main push CI 41479855194 also passed. The first manual scanner run failed on Linux mount permissions, not on the vulnerability policy, and is followed up explicitly.
+- PR #10 merged as 6dd2b05 after the full CI including the Docker permissions regression. Corrected scan 41482511743 generated four platform reports and SBOMs, uploaded all four SARIF analyses and retained its artifact; it correctly blocked the existing images on 20 distinct fixable CVEs (56 package findings per image).
+
+## User-requested extension: labels and grouped maintenance
+
+- Preserve the already implemented typed TOML updater for uv.lock. Add a real-lock SDK regression proving only the project version changes; keep `uv sync --locked` before subsequent frozen commands. No version-policy or pre-major changes.
+- Add trusted-base actions/labeler v7 without a PR checkout, with predefined api/db/tests/docs/ci labels, additive synchronization and optional manual PR number. Validate both workflow and label rules, then exercise on the existing release PR without touching autorelease labels.
+- Consolidate all five dependency ecosystems in one native multi-ecosystem weekly group with inherited chore(deps) messages and one open ordinary update PR. Keep security-update handling and human merging.
+- Schema and actual zizmor parsing require commit-message on the multi-ecosystem group only; individual update blocks inherit it. No scope-based changelog filtering is introduced; grouping provides one maintenance entry while preserving the existing version policy.
