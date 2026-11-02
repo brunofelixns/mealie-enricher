@@ -108,6 +108,7 @@ class IngredientOutcome(WireModel):
     nutrients: NutrientSet | None
     llm_estimated: bool = False
     catalog: dict[str, Any] | None = Field(default=None, exclude=True)
+    recovery: dict[str, Any] | None = Field(default=None, exclude=True)
 
 
 class EstimateResult(WireModel):

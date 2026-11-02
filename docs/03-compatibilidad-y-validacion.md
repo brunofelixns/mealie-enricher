@@ -4,6 +4,16 @@ Estado: contratos implementados y verificados localmente; resultados finales en 
 
 Excepción de presentación autorizada tras la migración: las etiquetas automáticas de C26 pasan a español. Las reglas y umbrales se mantienen; las etiquetas inglesas registradas se actualizan al volver a procesar su receta. Véase [D07 y su validación](09-etiquetas-y-vista-web.md).
 
+Extensión autorizada el 2026-11-02: los ingredientes incompletos con `originalText`
+se interpretan internamente, conservando los ingredientes originales de Mealie.
+Para esas entradas, C14 incorpora el texto y la versión de recuperación, C21
+intenta recuperar los campos y cuenta los pendientes, y C24 admite pesos decimales
+estrictos en una caché separada. Las entradas completas conservan sus contratos,
+incluido el parser entero de gramos anterior. La adaptación GPT-5/GPT-6 utiliza
+parámetros compatibles y presupuestos específicos del modelo; los errores de
+proveedor y las respuestas truncadas no se aceptan como estimaciones.
+Véase [recuperación de ingredientes](17-recuperacion-ingredientes.md).
+
 Fuente normativa: código en [c2dc71a1d8effe29375391f2fe50da94d27cfd7d](https://github.com/timo-reymann/mealie-calorie-estimator/tree/c2dc71a1d8effe29375391f2fe50da94d27cfd7d). Cuando README y código difieran, caracterizar el código y registrar la diferencia.
 
 ## Contratos HTTP

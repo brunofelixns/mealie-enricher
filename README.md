@@ -173,6 +173,34 @@ The deployment [.env.example](docker/.env.example) lists available settings. The
 
 Code defaults retain Mistral and German OFF search from the original application. The Compose examples use an OpenAI-compatible endpoint and English OFF search. Configure your provider and language explicitly. The Agents SDK adapter does not require changing providers.
 
+For reasoning models (GPT-5/GPT-6 and o-series), the fallback sends `max_completion_tokens`
+and omits `temperature`. Leave `LLM_MAX_TOKENS_GRAMS` and `LLM_MAX_TOKENS_NUTRIENTS`
+empty to use model-specific budgets: 1024/2048 tokens for reasoning models, 10/200
+for classic models. Explicit values take precedence. When switching an existing
+deployment to a reasoning model such as `gpt-6.1-sol`, remove old 10/200 limits
+or increase them; these limits also include reasoning tokens. Truncated responses
+are discarded instead of being cached as estimates. HTTP failure logs include
+the model, provider error code, parameter and request ID when available.
+
+## Incomplete imported ingredients
+
+The enricher automatically recovers missing ingredient fields from `originalText`
+inside a temporary estimation view. For example, `100 gramo(s) Quinoa` supplies
+an exact mass, while `8 unidad(es) Jamoncitos de pollo` supplies a count whose
+food-specific weight can be estimated when `LLM_ENABLED=true` and `LLM_API_KEY`
+is configured. The original Mealie ingredients, reference IDs and instructions
+are preserved; only nutrition, tags and estimator metadata are patched.
+
+Decimal commas, fractions, Spanish/English unit names and explicit package
+weights are supported. Recovered volume requires a food-specific weight estimate.
+Packages without a net weight, quantities such as “to taste”, ranges and conflicting
+fields remain unresolved and count as unmatched rather than zero. Recovery details
+and estimated weights are recorded in `calorie_estimator_ingredient_recovery`.
+Existing partial-sum behavior still applies when some ingredients are unresolved.
+
+This does not require Mealie's ingredient parser or its AI provider configuration.
+[Recovery behavior and Mealie parser troubleshooting, in Spanish](docs/17-recuperacion-ingredientes.md).
+
 ## HTTP API
 
 | Method | Path | Purpose |

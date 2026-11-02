@@ -16,6 +16,7 @@ from ..models import (
     NutrientSet,
     NutritionPatch,
 )
+from .ingredient_recovery import RECOVERY_VERSION, RecoveredIngredient, recover_ingredient
 from .llm_estimator import LlmEstimator
 from .unit_converter import convert_catalog_mass, convert_to_grams
 
@@ -56,16 +57,62 @@ class Estimator:
         ingredient: MealieIngredient,
         recipe: MealieRecipe,
     ) -> IngredientOutcome | None:
+        recovery = recover_ingredient(ingredient)
+        if recovery is None:
+            return await self._evaluate_view(ingredient, recipe)
+        view = recovery.ingredient
+        name = view.food.name if view.food else ingredient.original_text or ingredient.display
+        if recovery.pending_reason:
+            return IngredientOutcome(
+                food_name=name,
+                grams=None,
+                nutrients=None,
+                recovery=recovery.metadata(),
+            )
+        outcome = await self._evaluate_view(view, recipe, recovery)
+        if outcome is None:
+            recovery.pending_reason = "quantity_invalid"
+            outcome = IngredientOutcome(food_name=name, grams=None, nutrients=None)
+        elif outcome.grams is None:
+            recovery.pending_reason = "weight_unknown"
+        elif outcome.nutrients is None:
+            recovery.pending_reason = "nutrients_unknown"
+        outcome.recovery = {
+            **recovery.metadata(),
+            "grams": outcome.grams,
+            "weight_estimated": (
+                outcome.grams is not None
+                and recovery.explicit_grams is None
+                and convert_catalog_mass(js_number(view.quantity), view.unit) is None
+            ),
+        }
+        return outcome
+
+    async def _evaluate_view(
+        self,
+        ingredient: MealieIngredient,
+        recipe: MealieRecipe,
+        recovery: RecoveredIngredient | None = None,
+    ) -> IngredientOutcome | None:
         name = ingredient.food.name if ingredient.food else None
         quantity = js_number(ingredient.quantity)
         if not name or ingredient.quantity is None or quantity <= 0:
             return None
-        grams = convert_to_grams(quantity, ingredient.unit)
+        grams = (
+            recovery.explicit_grams
+            if recovery and recovery.explicit_grams is not None
+            else convert_catalog_mass(quantity, ingredient.unit)
+            if recovery
+            else convert_to_grams(quantity, ingredient.unit)
+        )
         resolution = None
         trace: dict[str, Any] | None = None
         if self.catalog is not None:
-            resolution = await self.catalog.resolve(ingredient_query(ingredient, recipe))
-            if resolution.status != "not_found":
+            query = ingredient_query(ingredient, recipe)
+            if recovery:
+                query.original_text = recovery.context_text
+            resolution = await self.catalog.resolve(query)
+            if resolution.status != "not_found" and not recovery:
                 grams = convert_catalog_mass(quantity, ingredient.unit)
             trace = {
                 "name": name,
@@ -93,8 +140,13 @@ class Estimator:
                 )
         estimated = False
         if grams is None and ingredient.unit and ingredient.unit.name:
-            weight_food = resolution.food.name if resolution and resolution.food else name
-            grams = await self.llm.estimate_grams(quantity, ingredient.unit.name, weight_food)
+            if recovery:
+                grams = await self.llm.estimate_recovered_grams(
+                    quantity, ingredient.unit.name, recovery.weight_food or name
+                )
+            else:
+                weight_food = resolution.food.name if resolution and resolution.food else name
+                grams = await self.llm.estimate_grams(quantity, ingredient.unit.name, weight_food)
             estimated = grams is not None
         if grams is None:
             return IngredientOutcome(
@@ -191,6 +243,24 @@ def compute_ingredient_hash(recipe: MealieRecipe, catalog_signature: str | None 
             ],
         }
         parts.append(json.dumps(context, sort_keys=True, ensure_ascii=False))
+    recovered_inputs = [
+        {
+            "index": index,
+            "original_text": item.original_text,
+            "note": item.note,
+            "unit": item.unit.model_dump() if item.unit else None,
+        }
+        for index, item in enumerate(recipe.recipe_ingredient)
+        if recover_ingredient(item) is not None
+    ]
+    if recovered_inputs:
+        parts.append(
+            json.dumps(
+                {"recovery": RECOVERY_VERSION, "inputs": recovered_inputs},
+                sort_keys=True,
+                ensure_ascii=False,
+            )
+        )
     return hashlib.sha256(",".join(parts).encode("utf-8", errors="replace")).hexdigest()
 
 
@@ -228,6 +298,8 @@ def aggregate_ingredients(
         if outcome is None:
             continue
         trace_values: dict[str, Any] = {"catalog": outcome.catalog} if outcome.catalog else {}
+        if outcome.recovery:
+            trace_values["recovery"] = outcome.recovery
         if outcome.grams is None or outcome.nutrients is None:
             unmatched.append(outcome.food_name)
             matches.append(
@@ -299,6 +371,14 @@ def build_nutrition_patch(
         for item in result.matched_ingredients
         if item.model_extra and item.model_extra.get("catalog")
     ]
+    recovery_traces = [
+        item.model_extra["recovery"]
+        for item in result.matched_ingredients
+        if item.model_extra and item.model_extra.get("recovery")
+    ]
+    if recovery_traces:
+        extras["calorie_estimator_ingredient_recovery"] = json_stringify(recovery_traces)
+    clear_unknown = bool(catalog_traces or recovery_traces or catalog_mode)
     if catalog_traces or catalog_mode:
         extras["calorie_estimator_catalog"] = json_stringify(catalog_traces)
     if llm_names:
@@ -313,11 +393,11 @@ def build_nutrition_patch(
         value = getattr(result.per_serving_nutrients, key)
         if value is not None:
             nutrition[external] = js_number_str(value)
-        elif catalog_traces or catalog_mode:
-            # Missing catalog values must not leave a previous automatic estimate in Mealie.
+        elif clear_unknown:
+            # Missing catalog/recovery values must not retain a previous automatic estimate.
             nutrition[external] = None
-    if (catalog_traces or catalog_mode) and total_kcal is None:
+    if clear_unknown and total_kcal is None:
         extras["calorie_estimator_total_kcal"] = ""
-    if (catalog_traces or catalog_mode) and not llm_names:
+    if clear_unknown and not llm_names:
         extras["calorie_estimator_llm_ingredients"] = "[]"
     return NutritionPatch(nutrition=nutrition, extras=extras)
