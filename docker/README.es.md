@@ -4,7 +4,7 @@
 
 Esta carpeta permite descargar y ejecutar Mealie Enricher desde **GitHub Container Registry (GHCR)**. Solo necesitas Docker con Compose y estos tres archivos; la instalación no requiere Python, uv ni el código fuente del proyecto.
 
-GitHub Actions gestiona la versión y publica `latest`, tags de versión y la variante `bedca` para linux/amd64 y linux/arm64 después de pasar toda la suite en main. [Flujo, versiones y recuperación](../docs/16-github-actions.md).
+Main exige PR y pruebas correctas. Release Please propone automáticamente versión y changelog; fusionar su PR publica `latest`, tags de versión y la variante `bedca` para linux/amd64 y linux/arm64 después de validar el commit de la release. [Flujo, versiones y recuperación](../docs/16-github-actions.md).
 
 ## 1. Preparar la configuración
 
