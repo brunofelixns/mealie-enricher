@@ -8,14 +8,24 @@ const {GenericToml} = require('release-please/build/src/updaters/generic-toml');
 const {PyProjectToml} = require('release-please/build/src/updaters/python/pyproject-toml');
 const root = path.resolve(__dirname, '../..');
 
+test('SDK file selection remains compatible with the patched minimatch', async () => {
+  const {BranchFileCache} = require('@google-automations/git-file-utils');
+  const cache = new BranchFileCache({}, {owner: 'owner', repo: 'app'}, 'main');
+  cache.treeEntryIterator = async function* () {
+    for (const path of ['pyproject.toml', 'ci/settings.toml', 'README.md']) yield {path};
+  };
+  assert.deepEqual(await cache.findFilesByGlob('**/*.toml'), ['pyproject.toml', 'ci/settings.toml']);
+});
+
 test('manifest produces the branch accepted by publication provenance', async () => {
   const {Manifest} = require('release-please');
+  const baseline = JSON.parse(fs.readFileSync(path.join(root, '.release-please-manifest.json'), 'utf8'))['.'];
   const github = {
     repository: {owner: 'owner', repo: 'app', defaultBranch: 'main'},
     getFileJson: async name => JSON.parse(fs.readFileSync(path.join(root, name), 'utf8')),
     getFileContentsOnBranch: async name => ({parsedContent: fs.readFileSync(path.join(root, name), 'utf8')}),
     findFilesByFilenameAndRef: async () => [],
-    releaseIterator: async function* () {yield {tagName: 'v1.0.0', sha: 'a'.repeat(40), notes: ''};},
+    releaseIterator: async function* () {yield {tagName: `v${baseline}`, sha: 'a'.repeat(40), notes: ''};},
     mergeCommitIterator: async function* () {
       yield {sha: 'b'.repeat(40), message: 'ops(ci): update pipeline', files: ['ci/example']};
       yield {sha: 'a'.repeat(40), message: 'chore: baseline', files: []};
