@@ -4,5 +4,6 @@
   "private": true,
   "description": "Release Please tooling used only by GitHub Actions",
   "scripts": {"test": "node --test *.test.cjs"},
-  "dependencies": {"release-please": "17.11.2"}
+  "dependencies": {"release-please": "17.11.2"},
+  "overrides": {"@google-automations/git-file-utils": {"minimatch": "11.0.4"}}
 }

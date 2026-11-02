@@ -212,6 +212,18 @@ Se separan los grupos por evento, se configura separate-pull-requests=false y se
 añaden regresiones con PR construida por el SDK real, recuperación y comprobación
 de la versión propuesta contra la base. Las 14 pruebas Node son correctas.
 
+La implantación #1 se integra con dbdab01 tras 396 pruebas Python y 14 Node en
+verde. El gestor crea realmente la PR #2 para 1.0.1 y su diff contiene solo
+los cuatro metadatos y CHANGELOG. Su ejecución de PR requiere aprobación con
+GITHUB_TOKEN; el mantenedor la aprueba tras revisar el diff.
+
+La primera validación de 1.0.1 descubre una fixture del SDK fijada a 1.0.0;
+se corrige para seguir la versión del manifest. Se fija además minimatch 11.0.4
+solo para el consumidor de CI git-file-utils, por el aviso
+[GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
+La selección de archivos mediante la API real del consumidor se comprueba con
+esta versión. No cambia ninguna dependencia de la aplicación Python.
+
 ## Referencias
 
 - [Release Please](https://github.com/googleapis/release-please).
