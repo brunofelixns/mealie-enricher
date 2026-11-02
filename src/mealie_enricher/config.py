@@ -38,6 +38,13 @@ class LlmSettings(WireModel):
     max_tokens_grams: float = 10
     max_tokens_nutrients: float = 200
 
+    @property
+    def uses_reasoning_tokens(self) -> bool:
+        model = self.model.lower()
+        return re.match(
+            r"^(?:gpt-[56](?:[.-]|$)|o[134](?:-|$))", model
+        ) is not None and not model.endswith("-chat-latest")
+
 
 class EstimateSettings(WireModel):
     strategy: str = "all"
@@ -134,16 +141,18 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         retry_backoff_ms=integer("OFF_RETRY_BACKOFF_MS", 500),
         user_agent=value("OFF_USER_AGENT", OffSettings().user_agent),
     )
+    llm_model = value("LLM_MODEL", "mistral-small-latest")
+    reasoning_tokens = LlmSettings(model=llm_model).uses_reasoning_tokens
     llm = LlmSettings(
         enabled=value("LLM_ENABLED", "false").lower() == "true",
         base_url=value("LLM_BASE_URL", "https://api.mistral.ai/v1"),
         endpoint_url=value("LLM_ENDPOINT_URL", "/chat/completions"),
         api_key=value("LLM_API_KEY"),
-        model=value("LLM_MODEL", "mistral-small-latest"),
+        model=llm_model,
         rate_limit=integer("LLM_RATE_LIMIT", 30),
         temperature=_parse_float(value("LLM_TEMPERATURE", "0.1")),
-        max_tokens_grams=integer("LLM_MAX_TOKENS_GRAMS", 10),
-        max_tokens_nutrients=integer("LLM_MAX_TOKENS_NUTRIENTS", 200),
+        max_tokens_grams=integer("LLM_MAX_TOKENS_GRAMS", 1024 if reasoning_tokens else 10),
+        max_tokens_nutrients=integer("LLM_MAX_TOKENS_NUTRIENTS", 2048 if reasoning_tokens else 200),
     )
     return Settings(
         port=integer("PORT", 8000),

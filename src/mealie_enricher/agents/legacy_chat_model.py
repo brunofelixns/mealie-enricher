@@ -47,23 +47,35 @@ class LegacyChatModel(Model):
             if message.get("role") != "user" or not isinstance(message.get("content"), str):
                 raise ValueError("Expected original user prompt")
             text = message["content"]
+        payload: dict[str, Any] = {
+            "model": self.settings.model,
+            "messages": [{"role": "user", "content": text}],
+        }
+        if self.settings.uses_reasoning_tokens:
+            payload["max_completion_tokens"] = model_settings.max_tokens
+        else:
+            payload.update(
+                temperature=model_settings.temperature,
+                max_tokens=model_settings.max_tokens,
+            )
         response = await self.http.post(
             self.settings.base_url + self.settings.endpoint_url,
             headers={
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + self.settings.api_key,
             },
-            json={
-                "model": self.settings.model,
-                "messages": [{"role": "user", "content": text}],
-                "temperature": model_settings.temperature,
-                "max_tokens": model_settings.max_tokens,
-            },
+            json=payload,
             timeout=None,
             follow_redirects=True,
         )
         response.raise_for_status()
-        content = response.json()["choices"][0]["message"]["content"]
+        choice = response.json()["choices"][0]
+        if choice.get("finish_reason") == "length":
+            raise ValueError(
+                "LLM response truncated by token limit; increase LLM_MAX_TOKENS_GRAMS "
+                "or LLM_MAX_TOKENS_NUTRIENTS (reasoning tokens also count)"
+            )
+        content = choice["message"]["content"]
         if not isinstance(content, str):
             raise ValueError("LLM returned empty response")
         return ModelResponse(

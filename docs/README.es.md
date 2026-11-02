@@ -190,7 +190,34 @@ El [.env.example principal](../.env.example) sirve para el desarrollo y la const
 
 Los defaults del código conservan Mistral y OFF en alemán. El Compose original usa OpenAI/gpt-4o-mini y OFF en inglés. Los ejemplos reflejan esos contextos; configura explícitamente el proveedor y el idioma que vayas a utilizar. **OpenAI Agents SDK no obliga a cambiar de proveedor.**
 
+Con modelos de razonamiento (GPT-5/GPT-6 y serie o), el fallback envía
+`max_completion_tokens` y omite `temperature`. Deja `LLM_MAX_TOKENS_GRAMS` y
+`LLM_MAX_TOKENS_NUTRIENTS` vacíos para utilizar 1024/2048 tokens en estos modelos
+y 10/200 en modelos clásicos. Los valores explícitos tienen prioridad: al cambiar
+a `gpt-6.1-sol`, elimina los antiguos límites 10/200 o auméntalos, ya que también
+cuentan los tokens de razonamiento. Las respuestas truncadas se descartan y no
+se guardan en caché. Los errores HTTP incluyen el modelo, código del proveedor,
+parámetro e identificador de petición cuando están disponibles.
+
 [Variables, defaults y contratos completos](03-compatibilidad-y-validacion.md).
+
+## Ingredientes importados incompletos
+
+El enricher recupera automáticamente los campos ausentes desde `originalText`
+en una copia interna para el cálculo. `100 gramo(s) Quinoa` aporta una masa exacta;
+`8 unidad(es) Jamoncitos de pollo` aporta un número de piezas cuyo peso se puede
+estimar por alimento con `LLM_ENABLED=true` y `LLM_API_KEY` configurada.
+Los ingredientes originales, sus referencias y las instrucciones se conservan.
+Solo se actualizan nutrición, etiquetas y metadatos del estimador.
+
+Se admiten decimales con coma, fracciones, unidades españolas/inglesas y pesos
+explícitos de envases. Los volúmenes requieren una estimación específica del
+alimento. Los sobres sin peso, las cantidades «al gusto», los rangos y los datos
+contradictorios quedan pendientes y cuentan como no resueltos, nunca como cero.
+`calorie_estimator_ingredient_recovery` explica cada recuperación o bloqueo y
+señala los pesos estimados. Se mantiene la suma parcial si faltan ingredientes.
+
+[Funcionamiento y configuración del parser de Mealie](17-recuperacion-ingredientes.md).
 
 ## API disponible
 

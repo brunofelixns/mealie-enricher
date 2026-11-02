@@ -4,7 +4,11 @@ import math
 import re
 
 from ..agents.estimator_agent import AgentLlmRunner
-from ..agents.prompts import build_grams_prompt, build_nutrients_prompt
+from ..agents.prompts import (
+    build_grams_prompt,
+    build_nutrients_prompt,
+    build_recovered_grams_prompt,
+)
 from ..compat import js_number, js_parse_int, js_round
 from ..config import LlmSettings
 from ..models import NutrientSet
@@ -57,6 +61,39 @@ class LlmEstimator:
             return value * quantity
         except Exception as error:
             logger.warning("LLM gram estimation failed: %s", error)
+            return None
+
+    async def estimate_recovered_grams(
+        self, quantity: float, unit_name: str, food_name: str
+    ) -> float | None:
+        if (
+            not self.settings.enabled
+            or not self.settings.api_key
+            or not math.isfinite(quantity)
+            or quantity <= 0
+        ):
+            return None
+        cache_unit = "recovered-weight:v1:" + unit_name
+        try:
+            cached = await self.cache.get_grams(cache_unit, food_name)
+            if cached is not None and math.isfinite(cached) and cached > 0:
+                total = cached * quantity
+                return total if math.isfinite(total) else None
+            await self.limiter.wait("llm")
+            content = await self.runner.complete(
+                build_recovered_grams_prompt(unit_name, food_name),
+                max_tokens=int(self.settings.max_tokens_grams),
+            )
+            if content is None or not re.fullmatch(r"\+?(?:\d+(?:\.\d*)?|\.\d+)", content.strip()):
+                return None
+            value = float(content.strip())
+            total = value * quantity
+            if not math.isfinite(total) or total <= 0:
+                return None
+            await self.cache.set_grams(cache_unit, food_name, value)
+            return total
+        except Exception as error:
+            logger.warning("LLM recovered weight estimation failed: %s", error)
             return None
 
     async def estimate_nutrients(self, food_name: str) -> NutrientSet | None:

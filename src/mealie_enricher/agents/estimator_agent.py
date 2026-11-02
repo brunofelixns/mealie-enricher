@@ -1,3 +1,4 @@
+import json
 import logging
 
 import httpx
@@ -37,6 +38,28 @@ class AgentLlmRunner:
                 ),
             )
             return result.final_output if isinstance(result.final_output, str) else None
+        except httpx.HTTPStatusError as error:
+            response = error.response
+            details = str(error)
+            try:
+                body = response.json()
+                provider_error = body.get("error") if isinstance(body, dict) else None
+                if isinstance(provider_error, dict):
+                    details = json.dumps(
+                        {key: provider_error.get(key) for key in ("code", "param", "message")},
+                        ensure_ascii=False,
+                    )
+            except ValueError:
+                pass
+            details = details.replace(self.settings.api_key, "[redacted]")[:1000]
+            logger.warning(
+                "LLM estimation failed (model=%s, status=%s, request_id=%s): %s",
+                self.settings.model,
+                response.status_code,
+                response.headers.get("x-request-id", "unknown"),
+                details,
+            )
+            return None
         except Exception as error:
             logger.warning("LLM estimation failed: %s", error)
             return None

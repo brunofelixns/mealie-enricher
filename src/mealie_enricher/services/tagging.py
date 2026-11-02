@@ -112,6 +112,10 @@ class TaggingService:
             "calorie_estimator_catalog" not in patch.extras
         ):
             patch.extras["calorie_estimator_catalog"] = "[]"
+        if "calorie_estimator_ingredient_recovery" in (recipe.extras or {}) and (
+            "calorie_estimator_ingredient_recovery" not in patch.extras
+        ):
+            patch.extras["calorie_estimator_ingredient_recovery"] = "[]"
         tags, slugs = await self.resolve_and_merge_tags(
             recipe, result.per_serving_nutrients, household_id
         )
