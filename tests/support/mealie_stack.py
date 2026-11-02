@@ -59,6 +59,8 @@ class MealieStack:
             "BEDCA_INPUT_DIR": self.source.as_posix(),
             "BEDCA_DATASET_VERSION": "synthetic-real-mealie-v1",
         }
+        if image_override := os.environ.get("TEST_MEALIE_IMAGE"):
+            self.values["TEST_MEALIE_IMAGE"] = image_override
         self.environment = {
             key: value
             for key, value in os.environ.items()

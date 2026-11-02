@@ -21,8 +21,8 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      pull-requests: read
-      actions: write
+      pull-requests: read # Inspect release provenance; the App token writes PRs.
+      actions: write # Dispatch the publication workflow after creating a release.
     steps:
       - name: Obtener código
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -45,7 +45,7 @@ jobs:
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
         with:
           client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }} # zizmor: ignore[secrets-outside-env] -- main-only job, dedicated single-repository App, temporary token revoked at job end
           owner: ${{ github.repository_owner }}
           repositories: mealie-enricher
           permission-contents: write

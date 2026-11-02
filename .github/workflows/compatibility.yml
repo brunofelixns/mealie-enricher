@@ -1,0 +1,71 @@
+name: Compatibilidad con Mealie estable
+
+on:
+  schedule:
+    - cron: '41 5 * * 3'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mealie-compatibility
+  cancel-in-progress: true
+
+jobs:
+  compatibility:
+    name: Suite completa con Mealie estable
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      PYTHONUTF8: '1'
+      RUN_DOCKER_SMOKE: '1'
+      RUN_REAL_BEDCA: '1'
+      RUN_BEDCA_IMAGE_REAL: '1'
+      CATALOG_TEST_IMAGE: mealie-enricher:ci
+      BEDCA_BUNDLED_TEST_IMAGE: mealie-enricher:ci-bedca
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Resolver la release estable oficial
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const {data: release} = await github.rest.repos.getLatestRelease({owner: 'mealie-recipes', repo: 'mealie'});
+            if (release.draft || release.prerelease || !/^v\d+\.\d+\.\d+$/.test(release.tag_name)) {
+              throw new Error('La release de Mealie no identifica una versión estable');
+            }
+            core.exportVariable('TEST_MEALIE_IMAGE', `ghcr.io/mealie-recipes/mealie:${release.tag_name}`);
+            await core.summary.addHeading('Compatibilidad').addRaw(`Mealie ${release.tag_name}\n`).write();
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: '0.11.28'
+          python-version: '3.14.6'
+          enable-cache: true
+      - run: uv sync --locked
+      - uses: ./.github/actions/prepare-bedca # zizmor: ignore[self-repository] -- test this checkout
+      - name: Construir las dos variantes de prueba
+        run: |
+          docker build --tag mealie-enricher:ci --tag mealie-enricher:local .
+          docker buildx build --load --network none \
+            --build-context bedca_source=./data/bedca \
+            --build-arg BASE_IMAGE=mealie-enricher:ci \
+            --build-arg BEDCA_DATASET_VERSION=bedca-export-2026-08-19 \
+            --file docker/Dockerfile.bedca --tag mealie-enricher:ci-bedca .
+      - name: Descargar Mealie estable para los proyectos aislados
+        run: docker compose --profile test pull mealie mock-off
+      - name: Ejecutar toda la suite sin publicar
+        run: |
+          mkdir -p .cache
+          uv run --frozen pytest -q --junitxml=.cache/compatibility.xml
+          python ci/check_test_report.py .cache/compatibility.xml
+      - name: Conservar informe
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: compatibilidad-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .cache/compatibility.xml
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30

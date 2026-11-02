@@ -1,0 +1,71 @@
+name: Calidad de CI y dependencias
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workflows:
+    name: actionlint y zizmor
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: '0.11.28'
+          enable-cache: false
+      - name: Descargar actionlint con checksum verificado
+        env:
+          ACTIONLINT_VERSION: '1.7.12'
+          ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+        run: |
+          mkdir -p .cache/tools
+          curl --fail --location --retry 3 "https://github.com/rhysd/actionlint/releases/download/v$ACTIONLINT_VERSION/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" -o .cache/tools/actionlint.tar.gz
+          echo "$ACTIONLINT_SHA256  .cache/tools/actionlint.tar.gz" | sha256sum --check --strict
+          tar -xzf .cache/tools/actionlint.tar.gz -C .cache/tools actionlint
+      - name: Validar YAML, expresiones y shell
+        # actionlint 1.7.12 predates concurrency.queue; ignore only that property diagnostic.
+        run: .cache/tools/actionlint -color -ignore '^unexpected key "queue" for "concurrency" section\.'
+      - name: Analizar seguridad de workflows y acciones compuestas
+        run: uvx zizmor==1.31.1 --offline --persona auditor --format github .github
+  title:
+    name: Título Conventional Commits
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Comprobar título sin interpolarlo como código
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: python ci/quality.py title
+  dependencies:
+    name: Revisión de dependencias
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+          fail-on-scopes: runtime, development, unknown
+          comment-summary-in-pr: never
+          show-openssf-scorecard: false
