@@ -1,15 +1,18 @@
 FROM ghcr.io/astral-sh/uv:0.13.6 AS uv
-FROM python:3.14.9-slim AS builder
+FROM python:3.14.10-slim-trixie@sha256:930e1abba7c4e8f96ed93e8012c35d174d7732752731bbd5e8e757d7ec6f3966 AS python-base
+
+FROM python-base AS builder
 COPY --from=uv /uv /usr/local/bin/uv
 WORKDIR /app
-ENV UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1
+# Bound Python compilation workers when building arm64 under QEMU.
+ENV UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1 UV_CONCURRENT_INSTALLS=2
 COPY pyproject.toml uv.lock .python-version ./
 RUN uv sync --locked --no-dev --no-install-project --no-cache
 COPY src ./src
 COPY LICENSE NOTICE ./
 RUN uv sync --locked --no-dev --no-editable --no-cache
 
-FROM python:3.14.9-slim AS runner
+FROM python-base AS runner
 # x-release-please-start-version
 ARG VERSION=1.0.0
 # x-release-please-end
@@ -23,7 +26,10 @@ LABEL org.opencontainers.image.title="Mealie Enricher" \
     org.opencontainers.image.revision="$VCS_REF"
 WORKDIR /app
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
-RUN groupadd --gid 1000 appuser && useradd --uid 1000 --gid 1000 --create-home appuser \
+# uv installs the environment in builder; exclude pip and its bootstrap wheel from runtime.
+RUN python -m pip uninstall --yes pip \
+    && rm -rf /usr/local/lib/python3.14/ensurepip \
+    && groupadd --gid 1000 appuser && useradd --uid 1000 --gid 1000 --create-home appuser \
     && mkdir /app/data /app/catalogs && chown appuser:appuser /app/data /app/catalogs
 COPY --from=builder /app/.venv ./.venv
 COPY alembic.ini ./
