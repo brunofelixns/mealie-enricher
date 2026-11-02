@@ -1,17 +1,24 @@
 name: Pruebas y publicación
+run-name: ${{ inputs.release_tag && format('Publicar {0}', inputs.release_tag) || format('CI {0}', github.ref_name) }}
 
 on:
   push:
     branches: ['**']
   pull_request:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag publicado que se debe validar y publicar en GHCR (vacío: solo CI)'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-release-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  group: ci-release-${{ github.event_name }}-${{ inputs.release_tag && github.run_id || github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/main') }}
 
 env:
   UV_VERSION: '0.11.28'
@@ -23,6 +30,12 @@ jobs:
     name: Suite completa y calidad
     runs-on: ubuntu-24.04
     timeout-minutes: 35
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+      version: ${{ steps.source.outputs.version || steps.identity.outputs.version }}
     env:
       RUN_DOCKER_SMOKE: '1'
       RUN_REAL_BEDCA: '1'
@@ -30,11 +43,56 @@ jobs:
       CATALOG_TEST_IMAGE: mealie-enricher:ci
       BEDCA_BUNDLED_TEST_IMAGE: mealie-enricher:ci-bedca
     steps:
-      - name: Obtener código
+      - name: Obtener el validador de la revisión de confianza
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
+      - name: Resolver y comprobar la procedencia antes de ejecutar el tag
+        id: source
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag || '' }}
+        with:
+          script: |
+            const tag = process.env.RELEASE_TAG;
+            if (!tag) {
+              core.setOutput('sha', context.sha);
+              return;
+            }
+            if (context.ref !== 'refs/heads/main') throw new Error('Publicar únicamente desde el workflow de main');
+            const {execFileSync} = require('node:child_process');
+            const {validateRelease} = require(`${process.env.GITHUB_WORKSPACE}/ci/release-please/provenance.cjs`);
+            const result = JSON.parse(execFileSync('python', ['ci/release_policy.py', 'resolve', '--tag', tag], {encoding: 'utf8'}));
+            const {data: release} = await github.rest.repos.getReleaseByTag({...context.repo, tag});
+            const pulls = await github.paginate(github.rest.repos.listPullRequestsAssociatedWithCommit, {
+              ...context.repo, commit_sha: result.sha, per_page: 100
+            });
+            validateRelease(release, pulls, result.sha, `${context.repo.owner}/${context.repo.repo}`);
+            core.setOutput('sha', result.sha);
+            core.setOutput('version', result.version);
+      - name: Obtener la revisión exacta que se comprobará
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ steps.source.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verificar metadatos de la PR o rama
+        if: ${{ !inputs.release_tag }}
+        id: identity
+        env:
+          PR_BRANCH: ${{ github.head_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          python ci/release_policy.py metadata --github-output "$GITHUB_OUTPUT"
+          if [ "$PR_BRANCH" = 'release-please--branches--main' ]; then
+            python ci/release_policy.py proposal --base "$BASE_SHA"
+          fi
+      - name: Probar SDK oficial de Release Please
+        run: |
+          npm ci --prefix ci/release-please --ignore-scripts --no-audit --no-fund
+          npm test --prefix ci/release-please
       - name: Preparar uv y Python
         uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
@@ -79,131 +137,99 @@ jobs:
           retention-days: 14
 
   publish:
-    name: Versión automática y GHCR
+    name: Publicar release en GHCR
     needs: verify
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && github.repository == 'brunofelixns/mealie-enricher'
+    if: github.event_name == 'workflow_dispatch' && inputs.release_tag != '' && github.ref == 'refs/heads/main' && github.repository == 'brunofelixns/mealie-enricher'
     runs-on: ubuntu-24.04
     timeout-minutes: 50
+    concurrency:
+      group: ghcr-publication
+      cancel-in-progress: false
+      queue: max
     permissions:
       contents: write
       packages: write
     env:
       IMAGE_REPOSITORY: ghcr.io/brunofelixns/mealie-enricher
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      RELEASE_VERSION: ${{ needs.verify.outputs.version }}
+      RELEASE_SHA: ${{ needs.verify.outputs.sha }}
     steps:
       - name: Obtener la revisión validada
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ needs.verify.outputs.sha }}
           fetch-depth: 0
-      - name: Preparar versión y commit reproducibles
-        id: version
-        run: python scripts/release.py prepare --output .cache/release-plan.json --github-output "$GITHUB_OUTPUT"
-      - name: Comprobar si ya se publicó esta versión
-        id: existing
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
-        env:
-          RELEASE_TAG: ${{ steps.version.outputs.tag }}
-          SOURCE_SHA: ${{ steps.version.outputs.source_sha }}
-          RELEASE_SHA: ${{ steps.version.outputs.release_sha }}
-        with:
-          script: |
-            const head = await github.rest.git.getRef({...context.repo, ref: 'heads/main'});
-            core.setOutput('current', String([
-              process.env.SOURCE_SHA, process.env.RELEASE_SHA
-            ].includes(head.data.object.sha)));
-            try {
-              const release = await github.rest.repos.getReleaseByTag({
-                ...context.repo, tag: process.env.RELEASE_TAG
-              });
-              core.setOutput('published', String(!release.data.draft));
-            } catch (error) {
-              if (error.status !== 404) throw error;
-              core.setOutput('published', 'false');
-            }
+          persist-credentials: false
+      - name: Confirmar tag y metadatos
+        run: python ci/release_policy.py verify --tag "$RELEASE_TAG"
       - name: Preparar BEDCA con checksums
-        if: steps.existing.outputs.published != 'true' && steps.existing.outputs.current == 'true'
         uses: ./.github/actions/prepare-bedca
       - name: Preparar emulación ARM
-        if: steps.existing.outputs.published != 'true' && steps.existing.outputs.current == 'true'
         uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
       - name: Preparar Buildx multiplataforma
-        if: steps.existing.outputs.published != 'true' && steps.existing.outputs.current == 'true'
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
       - name: Autenticar en GHCR con el token del workflow
-        if: steps.existing.outputs.published != 'true' && steps.existing.outputs.current == 'true'
         uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Construir y verificar candidatos amd64 y arm64
-        if: steps.existing.outputs.published != 'true' && steps.existing.outputs.current == 'true'
-        env:
-          RELEASE_VERSION: ${{ steps.version.outputs.version }}
-          RELEASE_SHA: ${{ steps.version.outputs.release_sha }}
         run: |
           python ci/images.py build --repository "$IMAGE_REPOSITORY" \
             --version "$RELEASE_VERSION" --revision "$RELEASE_SHA" \
             --output .cache/release-images.json
-      - name: Guardar versión y tag sin sobrescribir otro push
-        id: push
-        if: steps.existing.outputs.published != 'true' && steps.existing.outputs.current == 'true'
-        run: python scripts/release.py push --plan .cache/release-plan.json --github-output "$GITHUB_OUTPUT"
-      - name: Promocionar versiones y aliases estables
-        if: steps.existing.outputs.published != 'true' && steps.push.outputs.superseded == 'false'
-        run: python ci/images.py promote --manifest .cache/release-images.json
-      - name: Publicar release en GitHub
-        if: steps.existing.outputs.published != 'true' && steps.push.outputs.superseded == 'false'
+      - name: Consultar releases estables antes de promocionar
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const fs = require('fs');
+            const releases = await github.paginate(github.rest.repos.listReleases, {...context.repo, per_page: 100});
+            fs.mkdirSync('.cache', {recursive: true});
+            fs.writeFileSync('.cache/releases.json', JSON.stringify(releases));
+      - name: Evitar retroceder los aliases
+        id: aliases
+        run: python ci/release_policy.py aliases --version "$RELEASE_VERSION" --releases .cache/releases.json --github-output "$GITHUB_OUTPUT"
+      - name: Promocionar la versión y los aliases vigentes
+        env:
+          PUBLISH_ALIASES: ${{ steps.aliases.outputs.publish_aliases }}
+        run: |
+          if [ "$PUBLISH_ALIASES" = 'true' ]; then
+            python ci/images.py promote --manifest .cache/release-images.json
+          else
+            python ci/images.py promote --manifest .cache/release-images.json --version-only
+          fi
+      - name: Añadir evidencias de las imágenes a la release
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
-          RELEASE_TAG: ${{ steps.version.outputs.tag }}
-          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          PUBLISH_ALIASES: ${{ steps.aliases.outputs.publish_aliases }}
         with:
           script: |
             const fs = require('fs');
             const images = JSON.parse(fs.readFileSync('.cache/release-images.json', 'utf8'));
-            const body = [
-              'Suite completa y controles de calidad correctos.',
-              '',
-              `Imagen base: \`${images.repository}:${images.version}\``,
-              `Digest: \`${images.base_digest}\``,
-              `Imagen BEDCA: \`${images.repository}:${images.version}-bedca\``,
-              `Digest: \`${images.bedca_digest}\``,
-              `Revisión: \`${images.revision}\``,
-              '',
-              'Plataformas: linux/amd64 y linux/arm64 (smoke ARM mediante QEMU).',
-              'La variante BEDCA conserva DuckDB y los CSV originales.',
-              'Datos BEDCA para uso no comercial bajo sus condiciones propias:',
+            const {data: release} = await github.rest.repos.getReleaseByTag({...context.repo, tag: process.env.RELEASE_TAG});
+            const marker = '<!-- ghcr-evidence -->';
+            const notes = (release.body || '').split(marker)[0].trimEnd();
+            const evidence = [
+              marker, '', '### Imágenes verificadas', '',
+              `Base: ${images.repository}:${images.version}`, `Digest: ${images.base_digest}`,
+              `BEDCA: ${images.repository}:${images.version}-bedca`, `Digest: ${images.bedca_digest}`,
+              `Revisión: ${images.revision}`, '',
+              'Suite completa correcta. Plataformas: linux/amd64 y linux/arm64; ARM mediante QEMU.',
+              'BEDCA conserva DuckDB y los CSV originales, bajo sus condiciones de uso no comercial:',
               'https://www.bedca.net/bdpub/UsoBD.pdf'
             ].join('\n');
-            let existing;
-            try {
-              existing = (await github.rest.repos.getReleaseByTag({
-                ...context.repo, tag: process.env.RELEASE_TAG
-              })).data;
-            } catch (error) {
-              if (error.status !== 404) throw error;
-            }
-            const details = {
-              ...context.repo, name: `Mealie Enricher ${process.env.RELEASE_VERSION}`,
-              body, make_latest: 'true', draft: false
-            };
-            if (existing?.draft) {
-              await github.rest.repos.updateRelease({...details, release_id: existing.id});
-            } else if (!existing) {
-              await github.rest.repos.createRelease({
-                ...details, tag_name: process.env.RELEASE_TAG,
-                target_commitish: images.revision
-              });
-            }
+            await github.rest.repos.updateRelease({
+              ...context.repo, release_id: release.id, body: `${notes}\n\n${evidence}`,
+              make_latest: process.env.PUBLISH_ALIASES === 'true' ? 'true' : 'false'
+            });
       - name: Conservar manifiesto de publicación
-        if: always() && steps.existing.outputs.published != 'true'
+        if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: publicacion-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            .cache/release-plan.json
-            .cache/release-images.json
+          path: .cache/release-images.json
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 30

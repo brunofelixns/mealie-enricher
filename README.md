@@ -52,7 +52,7 @@ You need a running Mealie instance, an API token and Docker with Compose. Images
 ghcr.io/brunofelixns/mealie-enricher:latest
 ~~~
 
-Versions are managed automatically by GitHub Actions, starting at **1.0.0**. After the complete test suite passes on main, it publishes the base and BEDCA variants and updates their stable tags. Public images can be pulled without a GitHub account. [CI and release policy](docs/16-github-actions.md).
+Versions are managed automatically from **1.0.0**. Changes enter protected main through passing pull requests. Release Please maintains a version and changelog PR; merging that PR triggers full validation and publication of the base and BEDCA images. Public images can be pulled without a GitHub account. [CI and release policy](docs/16-github-actions.md).
 
 Download the deployment files:
 

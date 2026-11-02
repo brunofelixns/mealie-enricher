@@ -44,7 +44,7 @@ def validate_manifest(data):
         raise ValueError("Digest de publicación inválido")
 
 
-def promote(data, *, call=run):
+def promote(data, *, call=run, publish_aliases=True):
     validate_manifest(data)
     repository, version = data["repository"], data["version"]
     targets = [
@@ -56,13 +56,14 @@ def promote(data, *, call=run):
         existing = registry_digest(tag, call=call)
         if existing is not None and existing != digest:
             raise ValueError(f"La versión inmutable ya existe con otro contenido: {tag}")
-    targets.extend(
-        [
-            (f"{repository}:latest", data["base_digest"]),
-            (f"{repository}:bedca", data["bedca_digest"]),
-            (f"{repository}:latest-bedca", data["bedca_digest"]),
-        ]
-    )
+    if publish_aliases:
+        targets.extend(
+            [
+                (f"{repository}:latest", data["base_digest"]),
+                (f"{repository}:bedca", data["bedca_digest"]),
+                (f"{repository}:latest-bedca", data["bedca_digest"]),
+            ]
+        )
     for tag, digest in targets:
         call(["docker", "buildx", "imagetools", "create", "--tag", tag, f"{repository}@{digest}"])
         if registry_digest(tag, call=call) != digest:
@@ -207,12 +208,16 @@ def main():
     builder.add_argument("--output", type=Path, required=True)
     promoter = commands.add_parser("promote")
     promoter.add_argument("--manifest", type=Path, required=True)
+    promoter.add_argument("--version-only", action="store_true")
     args = parser.parse_args()
     try:
         if args.command == "build":
             build(args.repository, args.version, args.revision, args.output)
         else:
-            promote(json.loads(args.manifest.read_text(encoding="utf-8")))
+            promote(
+                json.loads(args.manifest.read_text(encoding="utf-8")),
+                publish_aliases=not args.version_only,
+            )
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
         print(str(error), file=sys.stderr)
         return 1

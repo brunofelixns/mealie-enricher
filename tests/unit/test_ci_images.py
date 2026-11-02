@@ -72,6 +72,19 @@ def test_identical_version_can_repair_a_partial_promotion():
     assert registry.images["ghcr.io/example/app:latest-bedca"] == data["bedca_digest"]
 
 
+def test_old_release_repair_preserves_current_aliases():
+    from ci.images import promote
+
+    current = "sha256:" + "e" * 64
+    registry = Registry(
+        {"ghcr.io/example/app:latest": current, "ghcr.io/example/app:bedca": current}
+    )
+    promote(manifest(), call=registry, publish_aliases=False)
+    assert registry.images["ghcr.io/example/app:latest"] == current
+    assert registry.images["ghcr.io/example/app:bedca"] == current
+    assert registry.images["ghcr.io/example/app:1.0.0"] == manifest()["base_digest"]
+
+
 def test_registry_auth_failure_is_not_treated_as_a_missing_image():
     from ci.images import registry_digest
 

@@ -79,7 +79,7 @@ Stop with `docker compose down`. This preserves volumes. History and pending tas
 
 ## Optional BEDCA catalog
 
-A **bundled BEDCA variant** includes DuckDB and the original CSV files for non-commercial use under BEDCA's terms. Use [.env.bedca.example](.env.bedca.example) with this Compose; no import is needed. The main workflow publishes this variant with the `bedca` alias and versioned tags. [Build, deploy and update guide, in Spanish](../docs/15-imagen-con-bedca.md).
+A **bundled BEDCA variant** includes DuckDB and the original CSV files for non-commercial use under BEDCA's terms. Use [.env.bedca.example](.env.bedca.example) with this Compose; no import is needed. Merging the Release Please version PR triggers publication with the `bedca` alias and versioned tags. [Build, deploy and update guide, in Spanish](../docs/15-imagen-con-bedca.md).
 
 For the base image, place your separately obtained `bedca_foods.csv`, `bedca_foodvalues.csv` and `bedca_units.csv` in `bedca/`, or set `BEDCA_INPUT_DIR`. Set `BEDCA_DATASET_VERSION` to identify the export.
 
@@ -93,18 +93,21 @@ Optional Decisions match selection requires `DECISIONS_ENABLED=true` and `OPENAI
 
 [Catalog preparation and safe updates, in Spanish](../docs/11-catalogos-duckdb.md).
 
-## Manual publication fallback
+## Release and publication recovery
 
-The normal publication path is GitHub Actions after a successful main push. The following remains a manual recovery path if Actions is unavailable. Maintainers can publish without GitHub Actions credits. From the repository root, sign in using `docker login ghcr.io -u YOUR_GITHUB_USERNAME` with a GitHub classic personal access token that has `write:packages`. Enter the token at the password prompt; do not put it in a command, file or issue.
+Main requires pull requests and passing CI. Release Please maintains the version
+and changelog PR; merging it creates the release and requests the tested images.
+Do not edit version numbers or overwrite versioned image tags manually.
 
-Build, test and publish the source revision being released. For example, on PowerShell, after the ordinary suite passes:
+If publication fails, use **Re-run failed jobs**. A maintainer can also request
+validation/publication of a tag created by the current Release Please flow:
 
-~~~powershell
-$releaseRevision = git rev-parse HEAD
-docker buildx build --platform linux/amd64,linux/arm64 --provenance=false --sbom=false --build-arg VERSION=1.0.0 --build-arg VCS_REF=$releaseRevision --tag ghcr.io/brunofelixns/mealie-enricher:1.0.0 --tag ghcr.io/brunofelixns/mealie-enricher:latest --push .
-docker buildx imagetools inspect ghcr.io/brunofelixns/mealie-enricher:latest
+~~~sh
+gh workflow run ci-release.yml --repo brunofelixns/mealie-enricher --ref main -f release_tag=vX.Y.Z
 ~~~
 
-Use a new version for future releases and verify a clean deployment before announcing them. Optional provenance and SBOM attestations are disabled in this command because GHCR rejected the initial publication containing them; source, version and license remain in the image's OCI labels. Package visibility is managed separately from repository visibility; verify that an unauthenticated client can pull the image.
+An older release retry preserves the latest image aliases. The workflow checks
+the exact merged release PR, tag and metadata, runs the full suite, then builds
+and verifies both architectures and variants. No manual registry token is needed.
 
-[GHCR documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
+[CI and release policy, in Spanish](../docs/16-github-actions.md).

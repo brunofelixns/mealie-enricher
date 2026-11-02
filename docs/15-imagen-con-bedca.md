@@ -154,3 +154,7 @@ La ejecución completa de 358 pruebas anterior conserva su numeración y digest
 históricos. Tras ajustar la versión se ejecuta una nueva validación, registrada
 en [resultados](06-resultados-ejecucion.md). Ese ajuste de numeración no publicó un nuevo tag. El workflow añadido después
 gestiona las publicaciones y versiones automáticamente; véase el documento 16.
+
+La variante **1.0.0-bedca** ya está publicada en GHCR, también mediante los
+aliases `bedca` y `latest-bedca`, para amd64 y arm64. La comprobación pública y
+los digests están registrados en [GitHub Actions](16-github-actions.md).

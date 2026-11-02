@@ -96,7 +96,7 @@ docker compose pull
 docker compose up -d --no-build --wait
 ~~~
 
-**Versión automática:** comienza en 1.0.0. Actions publica `latest`, versiones fijas y la variante `bedca` después de pasar toda la suite en main. [Política y operación](16-github-actions.md).
+**Versión automática:** comienza en 1.0.0. Release Please mantiene una PR de versión y changelog. Fusionarla publica `latest`, versiones fijas y la variante `bedca` tras validar ese commit; las PR funcionales no publican imágenes. [Política y operación](16-github-actions.md).
 
 ## Catálogo BEDCA local
 
