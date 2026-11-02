@@ -1,0 +1,20 @@
+name: Preparar exportación BEDCA verificada
+description: Obtener los tres CSV de una revisión fija y comprobar su integridad
+runs:
+  using: composite
+  steps:
+    - name: Descargar revisión fija de BEDCA
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        repository: TerjeRu/bedca-database
+        ref: 3e4e0c180267bb158564a03cff1cca510ecb8135
+        path: .cache/bedca-export
+        persist-credentials: false
+    - name: Copiar y verificar los originales
+      shell: bash
+      run: |
+        mkdir -p data/bedca
+        cp .cache/bedca-export/output/bedca_foods.csv data/bedca/
+        cp .cache/bedca-export/output/bedca_foodvalues.csv data/bedca/
+        cp .cache/bedca-export/output/bedca_units.csv data/bedca/
+        sha256sum --strict --check ci/bedca.sha256

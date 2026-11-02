@@ -27,22 +27,22 @@ incluido. La variante activa el catálogo y configura su ruta por defecto.
 
 ## Despliegue
 
-Estado de esta entrega: variante construida **localmente** con el tag
-`mealie-enricher:1.0.0-bedca`. Esta tarea no publica un nuevo tag en GHCR. Cuando se
-publique, configura `MEALIE_ENRICHER_IMAGE` con ese tag o digest verificado.
+El workflow de main publica la variante con el alias
+`ghcr.io/brunofelixns/mealie-enricher:bedca` y tags `X.Y.Z-bedca`, después de pasar
+toda la suite. [Flujo automático y versiones](16-github-actions.md).
 
 Usa el [Compose de despliegue](../docker/docker-compose.yml) y copia
 [.env.bedca.example](../docker/.env.bedca.example) como `.env`. Configura:
 
 ```dotenv
-MEALIE_ENRICHER_IMAGE=mealie-enricher:1.0.0-bedca
+MEALIE_ENRICHER_IMAGE=ghcr.io/brunofelixns/mealie-enricher:bedca
 MEALIE_URL=https://tu-mealie.example.com
 MEALIE_API_TOKEN=tu-token
 CATALOG_ENABLED=true
 CATALOG_DB_PATH=/opt/bedca/catalogos.duckdb
 ```
 
-Con la imagen local construida:
+Con una imagen construida localmente, configura `MEALIE_ENRICHER_IMAGE=mealie-enricher:bedca` y:
 
 ```sh
 docker compose up -d --no-build --pull never --wait calorie-estimator
@@ -58,8 +58,8 @@ La configuración de IA sigue siendo opcional e independiente.
 Se requieren los tres CSV externos. Desde la raíz, con la imagen base local:
 
 ```sh
-docker build -t mealie-enricher:1.0.0 .
-docker buildx build --load --network none --build-context bedca_source=./data/bedca --build-arg BASE_IMAGE=mealie-enricher:1.0.0 --build-arg BEDCA_DATASET_VERSION=bedca-export-2026-08-19 -f docker/Dockerfile.bedca -t mealie-enricher:1.0.0-bedca .
+docker build -t mealie-enricher:local .
+docker buildx build --load --network none --build-context bedca_source=./data/bedca --build-arg BASE_IMAGE=mealie-enricher:local --build-arg BEDCA_DATASET_VERSION=bedca-export-2026-08-19 -f docker/Dockerfile.bedca -t mealie-enricher:bedca .
 ```
 
 El contexto `bedca_source` es explícito: los datos siguen excluidos de Git y del
@@ -152,5 +152,5 @@ independiente y los CSV no cambian.
 
 La ejecución completa de 358 pruebas anterior conserva su numeración y digest
 históricos. Tras ajustar la versión se ejecuta una nueva validación, registrada
-en [resultados](06-resultados-ejecucion.md). El tag GHCR 1.0.0 no se publica desde
-este cambio; los ejemplos públicos mantienen un artefacto existente vía latest.
+en [resultados](06-resultados-ejecucion.md). Ese ajuste de numeración no publicó un nuevo tag. El workflow añadido después
+gestiona las publicaciones y versiones automáticamente; véase el documento 16.

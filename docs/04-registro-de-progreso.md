@@ -186,3 +186,11 @@ Solo se marcarán tareas completadas después de registrar su evidencia. Un bloq
 - Se actualizan presentación, guías y nombres de imágenes de prueba. Se conserva la numeración antigua en las evidencias históricas y la versión 1.12.3 del proyecto original.
 - El ejemplo de despliegue público sigue utilizando un artefacto existente mediante latest. Se distingue expresamente la versión del código local de la imagen publicada anteriormente; no se declara publicado un tag 1.0.0 por cambiar los metadatos.
 - Verificación final: 334 pruebas ordinarias correctas (24 Docker omitidas) en 47,27 s; 3 comprobaciones Docker dirigidas correctas en 45,20 s, incluido Mealie real con la variante 1.0.0 y BEDCA. Paquete y etiqueta OCI coinciden en ambas imágenes; Ruff/formato y enlaces locales correctos. Se conservan las imágenes locales y se guarda el ajuste sin publicación.
+
+## 2026-11-02 — GitHub Actions y versiones automáticas
+
+- El usuario solicita ejecutar toda la suite en cada subida y actualizar GHCR después de pasarla, con versión automática. Se registran diseño/plan y D15.
+- Workflow de lectura para ramas/PR y publicación dependiente solo en main propietario. Se fijan acciones y exportación BEDCA por revisión, con checksums; el token de publicación es GITHUB_TOKEN, sin añadir PAT.
+- Se implementan versiones reproducibles, exclusión/reserva de v1.13.0, commit/tag atómico, recuperación de reintentos y protección frente a pushes concurrentes. Se añaden 28 pruebas Git reales en repositorios temporales y 10 pruebas de informe/promoción.
+- Calidad local correcta; suite ordinaria: 372 correctas y 24 Docker omitidas en 165,32 s. Actionlint correcto. La revisión independiente detecta la descarga necesaria de Mealie/OFF para runners vacíos y se corrige; sin otros hallazgos.
+- Se prepara la activación y verificación real de Actions y GHCR. [Flujo y operación](16-github-actions.md).

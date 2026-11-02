@@ -24,4 +24,8 @@ Keep changes focused, preserve public HTTP contracts and personal Mealie tags, a
 
 ## Data and attribution
 
-Keep BEDCA exports, local databases, real credentials and personal datasets out of commits and images. Use synthetic fixtures for examples and tests. Preserve the upstream GPLv3 license, third-party notices and visual asset attribution.
+Keep BEDCA exports, local databases, real credentials and personal datasets out of commits and the base image. The separate non-commercial BEDCA variant includes verified data under its own terms. Use synthetic fixtures for ordinary tests. Preserve the upstream GPLv3 license, third-party notices and visual asset attribution.
+
+## Automatic releases
+
+GitHub Actions runs the full suite, including isolated Docker/Mealie/BEDCA tests, on pushes and pull requests. Successful main pushes publish both image variants and a GitHub release. Do not bump version files manually: the bot starts at 1.0.0 and applies the highest commit increment: breaking changes -> major; feat/fix -> minor; other changes -> patch. See the [workflow and recovery guide](docs/16-github-actions.md).

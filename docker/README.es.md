@@ -4,7 +4,7 @@
 
 Esta carpeta permite descargar y ejecutar Mealie Enricher desde **GitHub Container Registry (GHCR)**. Solo necesitas Docker con Compose y estos tres archivos; la instalación no requiere Python, uv ni el código fuente del proyecto.
 
-La versión propia del proyecto es **1.0.0**; su tag GHCR aún no está publicado. Los ejemplos utilizan `latest`, que todavía apunta a la imagen anterior con la numeración antigua, disponible para linux/amd64 y linux/arm64. [Publicación histórica y digest verificado](../docs/14-publicacion-open-source.md).
+GitHub Actions gestiona la versión y publica `latest`, tags de versión y la variante `bedca` para linux/amd64 y linux/arm64 después de pasar toda la suite en main. [Flujo, versiones y recuperación](../docs/16-github-actions.md).
 
 ## 1. Preparar la configuración
 
@@ -109,7 +109,7 @@ El historial y las tareas continúan en memoria y se pierden al reiniciar, igual
 La [variante con BEDCA incluido](../docs/15-imagen-con-bedca.md) conserva DuckDB
 y los tres CSV originales en la imagen para uso no comercial. Usa
 [.env.bedca.example](.env.bedca.example) con este Compose para arrancar sin importar.
-Está preparada localmente; esta entrega no publica un nuevo tag en GHCR.
+El workflow de main publica su alias `bedca` y tags de versión.
 
 Para la imagen base, sigue la preparación manual:
 

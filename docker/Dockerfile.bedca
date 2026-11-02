@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Build with --build-context bedca_source=./data/bedca.
-ARG BASE_IMAGE=mealie-enricher:1.0.0
+ARG BASE_IMAGE=mealie-enricher:local
 ARG BEDCA_DATASET_VERSION=2026-08-19
 
 FROM ${BASE_IMAGE} AS bedca-builder

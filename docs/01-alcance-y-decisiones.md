@@ -133,7 +133,14 @@ numeración propia; no continúa la del repositorio original. Los números antig
 se conservan únicamente en evidencias históricas y referencias al upstream.
 Cambiar el código local no renombra ni publica imágenes de GHCR.
 
-## Referencias técnicas
+## D15: publicación automática desde main
+
+El usuario solicita GitHub Actions para ejecutar toda la suite al subir código
+y publicar en GHCR solo si pasa, con versión automática. Se mantiene 1.0.0 como
+primera versión propia. El [documento 16](16-github-actions.md) registra la política
+de commits, las variantes, los permisos y la recuperación de fallos.
+
+## Fuentes técnicas
 
 - [uv](https://docs.astral.sh/uv/guides/projects/).
 - [FastAPI](https://fastapi.tiangolo.com/).

@@ -8,7 +8,7 @@ Esta carpeta conserva el alcance, las decisiones, el diseño y el avance de la m
 
 ## Estado actual
 
-- Versión propia vigente: **Mealie Enricher 1.0.0**, por indicación del usuario. Las versiones anteriores se conservan en el historial; el nuevo tag 1.0.0 todavía no está publicado en GHCR.
+- Versión propia inicial: **1.0.0**. GitHub Actions calcula y publica las siguientes versiones tras pasar toda la suite en main. [Flujo, permisos y recuperación](16-github-actions.md).
 - Plan aprobado para ejecución el 2026-10-29.
 - Fase 0 completada: referencia fijada, typecheck correcto y 140 pruebas upstream aprobadas.
 - 125 capturas reproducibles, 40 contratos identificados y una base de caché heredada generados.
@@ -20,7 +20,7 @@ Esta carpeta conserva el alcance, las decisiones, el diseño y el avance de la m
 
 - Ampliación 1.13.0: SQLite solo caché y DuckDB/BEDCA integrados; 334 pruebas ordinarias y 17 Docker correctas, incluidas escrituras reales en Mealie con BEDCA local. Decisions probado con transporte simulado; la prueba real recibió AuthenticationError. [Guía de catálogos](11-catalogos-duckdb.md) y [validación con Mealie real](13-pruebas-mealie-real.md).
 - Publicación open source del 2026-11-01: repositorio público con presentación inglesa y documentación española; imagen GHCR pública 1.13.0/latest para amd64 y arm64, descarga anónima y despliegue verificados. [Evidencia y digest](14-publicacion-open-source.md).
-- Variante BEDCA preparada localmente con DuckDB y CSV originales: 358 pruebas correctas, incluidas 24 Docker, sin importación al desplegar. El nuevo tag BEDCA aún no está publicado. [Uso y construcción](15-imagen-con-bedca.md).
+- Variante BEDCA preparada localmente con DuckDB y CSV originales: 358 pruebas correctas, incluidas 24 Docker, sin importación al desplegar. [Uso y construcción](15-imagen-con-bedca.md).
 
 ## Lectura recomendada
 
@@ -41,6 +41,7 @@ Esta carpeta conserva el alcance, las decisiones, el diseño y el avance de la m
 | [13-pruebas-mealie-real.md](13-pruebas-mealie-real.md) | Escenarios HTTP reales con Mealie aislado y exportación BEDCA local |
 | [14-publicacion-open-source.md](14-publicacion-open-source.md) | Publicación pública, metadatos GitHub, imagen GHCR y digest verificado |
 | [15-imagen-con-bedca.md](15-imagen-con-bedca.md) | Variante Docker con DuckDB y CSV originales, sin importación al desplegar |
+| [16-github-actions.md](16-github-actions.md) | Suite completa, versión automática y publicación GHCR |
 | [../docker/README.md](../docker/README.md) | Descargar, configurar y ejecutar la imagen publicada en GHCR |
 | [referencias/propuesta-inicial.md](referencias/propuesta-inicial.md) | Copia del texto adjunto aportado por el usuario |
 

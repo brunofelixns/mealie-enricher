@@ -81,7 +81,7 @@ class MealieStack:
         }
         if bundled_image:
             self.values["CATALOG_DB_PATH"] = "/opt/bedca/catalogos.duckdb"
-        image = bundled_image or os.getenv("CATALOG_TEST_IMAGE", "mealie-enricher:1.0.0")
+        image = bundled_image or os.getenv("CATALOG_TEST_IMAGE", "mealie-enricher:local")
         override = path / "isolation.json"
         override.write_text(
             json.dumps(

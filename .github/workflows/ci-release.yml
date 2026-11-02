@@ -1,0 +1,209 @@
+name: Pruebas y publicación
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-release-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  UV_VERSION: '0.11.28'
+  PYTHON_VERSION: '3.14.6'
+  PYTHONUTF8: '1'
+
+jobs:
+  verify:
+    name: Suite completa y calidad
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      RUN_DOCKER_SMOKE: '1'
+      RUN_REAL_BEDCA: '1'
+      RUN_BEDCA_IMAGE_REAL: '1'
+      CATALOG_TEST_IMAGE: mealie-enricher:ci
+      BEDCA_BUNDLED_TEST_IMAGE: mealie-enricher:ci-bedca
+    steps:
+      - name: Obtener código
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Preparar uv y Python
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+      - name: Instalar dependencias bloqueadas
+        run: uv sync --locked
+      - name: Estilo y tipos
+        run: |
+          uv run --frozen ruff check .
+          uv run --frozen ruff format --check .
+          uv run --frozen mypy src/mealie_enricher
+      - name: Preparar BEDCA con checksums
+        uses: ./.github/actions/prepare-bedca
+      - name: Construir las imágenes de prueba
+        run: |
+          docker buildx use default
+          docker build --tag mealie-enricher:ci --tag mealie-enricher:local .
+          docker buildx build --load --network none \
+            --build-context bedca_source=./data/bedca \
+            --build-arg BASE_IMAGE=mealie-enricher:ci \
+            --build-arg BEDCA_DATASET_VERSION=bedca-export-2026-08-19 \
+            --file docker/Dockerfile.bedca --tag mealie-enricher:ci-bedca .
+      - name: Descargar imágenes del Mealie aislado
+        run: docker compose --profile test pull mealie mock-off
+      - name: Ejecutar toda la suite, incluido Mealie real
+        run: |
+          mkdir -p .cache
+          uv run --frozen pytest -q --cov=mealie_enricher --cov-report=xml --junitxml=.cache/ci-results.xml
+          python ci/check_test_report.py .cache/ci-results.xml
+      - name: Conservar informes
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: pruebas-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .cache/ci-results.xml
+            coverage.xml
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
+  publish:
+    name: Versión automática y GHCR
+    needs: verify
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && github.repository == 'brunofelixns/mealie-enricher'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    permissions:
+      contents: write
+      packages: write
+    env:
+      IMAGE_REPOSITORY: ghcr.io/brunofelixns/mealie-enricher
+    steps:
+      - name: Obtener la revisión validada
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - name: Preparar versión y commit reproducibles
+        id: version
+        run: python scripts/release.py prepare --output .cache/release-plan.json --github-output "$GITHUB_OUTPUT"
+      - name: Comprobar si ya se publicó esta versión
+        id: existing
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          SOURCE_SHA: ${{ steps.version.outputs.source_sha }}
+          RELEASE_SHA: ${{ steps.version.outputs.release_sha }}
+        with:
+          script: |
+            const head = await github.rest.git.getRef({...context.repo, ref: 'heads/main'});
+            core.setOutput('current', String([
+              process.env.SOURCE_SHA, process.env.RELEASE_SHA
+            ].includes(head.data.object.sha)));
+            try {
+              const release = await github.rest.repos.getReleaseByTag({
+                ...context.repo, tag: process.env.RELEASE_TAG
+              });
+              core.setOutput('published', String(!release.data.draft));
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              core.setOutput('published', 'false');
+            }
+      - name: Preparar BEDCA con checksums
+        if: steps.existing.outputs.published != 'true' && steps.existing.outputs.current == 'true'
+        uses: ./.github/actions/prepare-bedca
+      - name: Preparar emulación ARM
+        if: steps.existing.outputs.published != 'true' && steps.existing.outputs.current == 'true'
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
+      - name: Preparar Buildx multiplataforma
+        if: steps.existing.outputs.published != 'true' && steps.existing.outputs.current == 'true'
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+      - name: Autenticar en GHCR con el token del workflow
+        if: steps.existing.outputs.published != 'true' && steps.existing.outputs.current == 'true'
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Construir y verificar candidatos amd64 y arm64
+        if: steps.existing.outputs.published != 'true' && steps.existing.outputs.current == 'true'
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_SHA: ${{ steps.version.outputs.release_sha }}
+        run: |
+          python ci/images.py build --repository "$IMAGE_REPOSITORY" \
+            --version "$RELEASE_VERSION" --revision "$RELEASE_SHA" \
+            --output .cache/release-images.json
+      - name: Guardar versión y tag sin sobrescribir otro push
+        id: push
+        if: steps.existing.outputs.published != 'true' && steps.existing.outputs.current == 'true'
+        run: python scripts/release.py push --plan .cache/release-plan.json --github-output "$GITHUB_OUTPUT"
+      - name: Promocionar versiones y aliases estables
+        if: steps.existing.outputs.published != 'true' && steps.push.outputs.superseded == 'false'
+        run: python ci/images.py promote --manifest .cache/release-images.json
+      - name: Publicar release en GitHub
+        if: steps.existing.outputs.published != 'true' && steps.push.outputs.superseded == 'false'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        with:
+          script: |
+            const fs = require('fs');
+            const images = JSON.parse(fs.readFileSync('.cache/release-images.json', 'utf8'));
+            const body = [
+              'Suite completa y controles de calidad correctos.',
+              '',
+              `Imagen base: \`${images.repository}:${images.version}\``,
+              `Digest: \`${images.base_digest}\``,
+              `Imagen BEDCA: \`${images.repository}:${images.version}-bedca\``,
+              `Digest: \`${images.bedca_digest}\``,
+              `Revisión: \`${images.revision}\``,
+              '',
+              'Plataformas: linux/amd64 y linux/arm64 (smoke ARM mediante QEMU).',
+              'La variante BEDCA conserva DuckDB y los CSV originales.',
+              'Datos BEDCA para uso no comercial bajo sus condiciones propias:',
+              'https://www.bedca.net/bdpub/UsoBD.pdf'
+            ].join('\n');
+            let existing;
+            try {
+              existing = (await github.rest.repos.getReleaseByTag({
+                ...context.repo, tag: process.env.RELEASE_TAG
+              })).data;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+            const details = {
+              ...context.repo, name: `Mealie Enricher ${process.env.RELEASE_VERSION}`,
+              body, make_latest: 'true', draft: false
+            };
+            if (existing?.draft) {
+              await github.rest.repos.updateRelease({...details, release_id: existing.id});
+            } else if (!existing) {
+              await github.rest.repos.createRelease({
+                ...details, tag_name: process.env.RELEASE_TAG,
+                target_commitish: images.revision
+              });
+            }
+      - name: Conservar manifiesto de publicación
+        if: always() && steps.existing.outputs.published != 'true'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: publicacion-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .cache/release-plan.json
+            .cache/release-images.json
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30

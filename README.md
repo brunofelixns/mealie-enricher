@@ -12,7 +12,8 @@
 <p align="center">
   <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.14-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.14"></a>
   <a href="src/mealie_enricher/app.py"><img src="https://img.shields.io/badge/FastAPI-API-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI"></a>
-  <a href="pyproject.toml"><img src="https://img.shields.io/badge/version-1.0.0-2496ED?style=flat-square" alt="Mealie Enricher 1.0.0"></a>
+  <a href="https://github.com/brunofelixns/mealie-enricher/releases/latest"><img src="https://img.shields.io/github/v/release/brunofelixns/mealie-enricher?sort=date&style=flat-square" alt="Latest release"></a>
+  <a href="https://github.com/brunofelixns/mealie-enricher/actions/workflows/ci-release.yml"><img src="https://github.com/brunofelixns/mealie-enricher/actions/workflows/ci-release.yml/badge.svg?branch=main" alt="Tests and publication"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-D65108?style=flat-square" alt="GPL 3.0 license"></a>
 </p>
 
@@ -32,7 +33,7 @@
 
 Mealie Enricher runs alongside [Mealie](https://github.com/mealie-recipes/mealie). It receives recipe events, resolves ingredients, and writes estimated nutrition and automatic tags back to the recipe. A small web interface shows each run and its outcome.
 
-It started as a Python migration of [mealie-calorie-estimator 1.12.3](https://github.com/timo-reymann/mealie-calorie-estimator/tree/c2dc71a1d8effe29375391f2fe50da94d27cfd7d), preserving its HTTP contracts and processing rules. Version **1.0.0** includes optional local **DuckDB/BEDCA catalogs** and **OpenAI Decisions** for ambiguous ingredient matches. The original Open Food Facts path remains available with `CATALOG_ENABLED=false`.
+It started as a Python migration of [mealie-calorie-estimator 1.12.3](https://github.com/timo-reymann/mealie-calorie-estimator/tree/c2dc71a1d8effe29375391f2fe50da94d27cfd7d), preserving its HTTP contracts and processing rules. The current release includes optional local **DuckDB/BEDCA catalogs** and **OpenAI Decisions** for ambiguous ingredient matches. The original Open Food Facts path remains available with `CATALOG_ENABLED=false`.
 
 | Feature | What you get |
 |---|---|
@@ -51,7 +52,7 @@ You need a running Mealie instance, an API token and Docker with Compose. Images
 ghcr.io/brunofelixns/mealie-enricher:latest
 ~~~
 
-The project now uses its own version **1.0.0**. Its versioned GHCR tag has not been published yet; `latest` still points to the previously published image under the old numbering. Public images can be pulled without a GitHub account. [Previous publication record](docs/14-publicacion-open-source.md).
+Versions are managed automatically by GitHub Actions, starting at **1.0.0**. After the complete test suite passes on main, it publishes the base and BEDCA variants and updates their stable tags. Public images can be pulled without a GitHub account. [CI and release policy](docs/16-github-actions.md).
 
 Download the deployment files:
 
@@ -131,7 +132,7 @@ Python performs the nutrient calculations. In catalog mode, Decisions selects fo
 
 ### Optional BEDCA catalog
 
-The base image requires BEDCA data separately. An optional **BEDCA image variant** bundles DuckDB and the original CSV files for startup without importing. It is prepared locally for non-commercial use under the dataset's own terms; this change does not publish the variant. [Bundled variant guide, in Spanish](docs/15-imagen-con-bedca.md).
+The base image requires BEDCA data separately. An optional **BEDCA image variant** bundles DuckDB and the original CSV files for startup without importing. It is published by the main workflow for non-commercial use under the dataset's own terms. [Bundled variant guide, in Spanish](docs/15-imagen-con-bedca.md).
 
 For the base image, obtain the three required CSV exports separately and place them in `bedca/` next to your deployment `.env`:
 

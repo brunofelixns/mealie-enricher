@@ -38,7 +38,7 @@ Mealie Enricher acompaña a tu instalación de [Mealie](https://github.com/meali
 
 Es la migración a Python de [mealie-calorie-estimator 1.12.3](https://github.com/timo-reymann/mealie-calorie-estimator/tree/c2dc71a1d8effe29375391f2fe50da94d27cfd7d), con **uv, FastAPI y OpenAI Agents SDK**. Conserva sus reglas y limitaciones, con la adaptación solicitada de etiquetas automáticas al español.
 
-La versión propia **1.0.0** incluye un modo opcional de **catálogos DuckDB + BEDCA** y
+La versión actual incluye un modo opcional de **catálogos DuckDB + BEDCA** y
 **OpenAI Decisions** para resolver coincidencias ambiguas. SQLite se mantiene
 exclusivamente para caché. El modo anterior sigue disponible con
 `CATALOG_ENABLED=false`.
@@ -96,7 +96,7 @@ docker compose pull
 docker compose up -d --no-build --wait
 ~~~
 
-**Versión del proyecto:** 1.0.0. Su tag GHCR aún no está publicado. La imagen pública `ghcr.io/brunofelixns/mealie-enricher:latest` sigue apuntando al artefacto anterior con la numeración antigua, disponible para linux/amd64 y linux/arm64. [Evidencia histórica](14-publicacion-open-source.md).
+**Versión automática:** comienza en 1.0.0. Actions publica `latest`, versiones fijas y la variante `bedca` después de pasar toda la suite en main. [Política y operación](16-github-actions.md).
 
 ## Catálogo BEDCA local
 
@@ -110,8 +110,8 @@ Después activa `CATALOG_ENABLED=true`. En Docker, el perfil `catalog-import`
 prepara un volumen independiente que la aplicación consulta en solo lectura.
 Los datos BEDCA no se incluyen en Git ni en la imagen base. La [variante con
 BEDCA incluido](15-imagen-con-bedca.md) conserva DuckDB y los tres CSV originales
-y permite arrancar sin importar. Está preparada localmente para uso no comercial,
-bajo las condiciones de BEDCA; esta entrega no la publica en GHCR.
+y permite arrancar sin importar. Se publica desde el workflow de main para uso no comercial,
+bajo las condiciones de BEDCA.
 
 El selector respeta estados como crudo/cocido y puede dejar un ingrediente
 pendiente cuando falte información. **Decisions selecciona alimentos; Python

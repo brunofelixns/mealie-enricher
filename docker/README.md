@@ -4,7 +4,7 @@
 
 Run Mealie Enricher from **GitHub Container Registry (GHCR)** using Docker with Compose. You do not need Python, uv or a source checkout on the server.
 
-Project version: **1.0.0**, with its versioned GHCR tag not yet published. The examples use public `latest`, which still points to the earlier image under the old numbering (linux/amd64 and linux/arm64). [Historical image and verified digest](../docs/14-publicacion-open-source.md).
+GitHub Actions manages versions automatically and publishes `latest` plus immutable version tags for linux/amd64 and linux/arm64 after the full suite passes. [Workflow, versions and recovery](../docs/16-github-actions.md).
 
 ## 1. Configure
 
@@ -79,7 +79,7 @@ Stop with `docker compose down`. This preserves volumes. History and pending tas
 
 ## Optional BEDCA catalog
 
-A **bundled BEDCA variant** includes DuckDB and the original CSV files for non-commercial use under BEDCA's terms. Use [.env.bedca.example](.env.bedca.example) with this Compose; no import is needed. It is prepared locally; this change does not publish it to GHCR. [Build, deploy and update guide, in Spanish](../docs/15-imagen-con-bedca.md).
+A **bundled BEDCA variant** includes DuckDB and the original CSV files for non-commercial use under BEDCA's terms. Use [.env.bedca.example](.env.bedca.example) with this Compose; no import is needed. The main workflow publishes this variant with the `bedca` alias and versioned tags. [Build, deploy and update guide, in Spanish](../docs/15-imagen-con-bedca.md).
 
 For the base image, place your separately obtained `bedca_foods.csv`, `bedca_foodvalues.csv` and `bedca_units.csv` in `bedca/`, or set `BEDCA_INPUT_DIR`. Set `BEDCA_DATASET_VERSION` to identify the export.
 
@@ -93,9 +93,9 @@ Optional Decisions match selection requires `DECISIONS_ENABLED=true` and `OPENAI
 
 [Catalog preparation and safe updates, in Spanish](../docs/11-catalogos-duckdb.md).
 
-## Build and publish a release locally
+## Manual publication fallback
 
-Maintainers can publish without GitHub Actions credits. From the repository root, sign in using `docker login ghcr.io -u YOUR_GITHUB_USERNAME` with a GitHub classic personal access token that has `write:packages`. Enter the token at the password prompt; do not put it in a command, file or issue.
+The normal publication path is GitHub Actions after a successful main push. The following remains a manual recovery path if Actions is unavailable. Maintainers can publish without GitHub Actions credits. From the repository root, sign in using `docker login ghcr.io -u YOUR_GITHUB_USERNAME` with a GitHub classic personal access token that has `write:packages`. Enter the token at the password prompt; do not put it in a command, file or issue.
 
 Build, test and publish the source revision being released. For example, on PowerShell, after the ordinary suite passes:
 
