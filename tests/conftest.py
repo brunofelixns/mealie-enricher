@@ -1,5 +1,4 @@
 import asyncio
-import sys
 
 import pytest
 
@@ -7,9 +6,7 @@ from mealie_enricher.storage.cache import SqliteCache
 
 
 def pytest_asyncio_loop_factories():
-    if sys.platform == "win32":
-        return {"selector": asyncio.SelectorEventLoop}
-    return None
+    return {"selector": asyncio.SelectorEventLoop}
 
 
 @pytest.fixture

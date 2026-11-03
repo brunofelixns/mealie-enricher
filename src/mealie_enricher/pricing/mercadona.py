@@ -19,6 +19,7 @@ import httpx
 from .models import Product, Snapshot
 
 _BASE_URL = "https://tienda.mercadona.es"
+_REQUEST_TIMEOUT_SECONDS = 30.0
 
 
 class _BorrowedTransport(httpx.AsyncBaseTransport):
@@ -221,7 +222,7 @@ class MercadonaClient:
         return httpx.AsyncClient(
             base_url=_BASE_URL,
             transport=_BorrowedTransport(self.http),
-            timeout=self.http.timeout,
+            timeout=httpx.Timeout(_REQUEST_TIMEOUT_SECONDS),
             follow_redirects=True,
             headers={"accept": "application/json"},
         )
@@ -236,8 +237,9 @@ class MercadonaClient:
                     await asyncio.sleep(delay)
             self._last_request = time.monotonic()
             try:
-                response = await session.request(method, url, **kwargs)
-            except httpx.TransportError:
+                async with asyncio.timeout(_REQUEST_TIMEOUT_SECONDS):
+                    response = await session.request(method, url, **kwargs)
+            except httpx.TransportError, TimeoutError:
                 if attempt == 2:
                     raise ValueError("Mercadona transport failed after bounded retries") from None
                 await asyncio.sleep(2**attempt)

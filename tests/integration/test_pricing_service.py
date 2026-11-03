@@ -269,6 +269,90 @@ async def test_restart_reconciles_catalog_activated_before_state_was_saved(tmp_p
             await restarted.close()
 
 
+async def test_running_refresh_preserves_a_new_failed_recipe_request(tmp_path):
+    from mealie_enricher.pricing.service import PricingService
+
+    mealie = Mealie()
+    original_get = mealie.get_recipe
+
+    async def get_recipe(slug, household_id=None):
+        if slug == "concurrent-edit":
+            raise RuntimeError("temporarily unavailable")
+        return await original_get(slug, household_id)
+
+    mealie.get_recipe = get_recipe
+    async with httpx.AsyncClient() as http:
+        service = PricingService(settings(tmp_path), http, mealie, SlugQueue(), selector=Selector())
+        try:
+            service.store.publish(snapshot())
+            await service.refresh()
+            assert not service.state.data["pending_refresh"]
+            process = service.process_slug
+            ready, release = asyncio.Event(), asyncio.Event()
+
+            async def paused(*args, **kwargs):
+                await process(*args, **kwargs)
+                ready.set()
+                await release.wait()
+
+            service.process_slug = paused
+            refresh = asyncio.create_task(service.refresh())
+            await ready.wait()
+            with pytest.raises(RuntimeError, match="unavailable"):
+                await process("concurrent-edit")
+            release.set()
+            await refresh
+            assert service.state.data["pending_refresh"]
+            service.process_slug = process
+            await service.refresh()
+            assert not service.state.data["pending_refresh"]
+        finally:
+            await service.close()
+
+
+@pytest.mark.parametrize("kind", ["scheduled", "retry", "waiting", "idle"])
+async def test_scheduler_runs_only_due_downloads_or_pending_recovery(tmp_path, monkeypatch, kind):
+    from mealie_enricher.pricing import service as module
+
+    config = settings(tmp_path)
+    config.pricing.auto_sync = True
+    config.pricing.sync_interval_hours = 1
+    async with httpx.AsyncClient() as http:
+        service = module.PricingService(config, http, Mealie(), SlugQueue(), selector=Selector())
+        try:
+            service.store.publish(snapshot())
+            await service.refresh()
+            service.state.data.update(
+                next_run=0 if kind == "scheduled" else time.time() + 3600,
+                pending_refresh=kind in {"retry", "waiting"},
+                refresh_retry_at=0 if kind == "retry" else time.time() + 300,
+            )
+            downloads = []
+
+            async def download(postal_code):
+                downloads.append(postal_code)
+                return snapshot()
+
+            async def stop_after_tick(_seconds):
+                raise asyncio.CancelledError
+
+            service.source.download = download
+            monkeypatch.setattr(module.asyncio, "sleep", stop_after_tick)
+            service.start()
+            with pytest.raises(asyncio.CancelledError):
+                await service._scheduler
+            if service._job is not None:
+                await service._job
+            assert downloads == (["27004"] if kind == "scheduled" else [])
+            assert service.state.data["pending_refresh"] == (kind == "waiting")
+            if kind == "scheduled":
+                assert time.time() + 3595 < service.state.data["next_run"] < time.time() + 3605
+            if kind in {"waiting", "idle"}:
+                assert service._job is None
+        finally:
+            await service.close()
+
+
 async def test_shutdown_keeps_writer_ownership_until_publication_thread_finishes(tmp_path):
     from mealie_enricher.pricing.service import PricingService
     from mealie_enricher.pricing.state import PricingOwner

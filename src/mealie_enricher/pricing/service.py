@@ -202,6 +202,7 @@ class PricingService:
                 self.state.save()
 
     async def _refresh_all(self, *, force: bool = False) -> None:
+        generation = self.state.data.get("refresh_generation", 0)
         self.state.data["phase"] = "refreshing"
         self.state.save()
         processed = failed = 0
@@ -223,15 +224,16 @@ class PricingService:
                 except Exception as error:
                     failed += 1
                     logger.warning("Recipe pricing failed type=%s", type(error).__name__)
+        pending = bool(failed) or self.state.data.get("refresh_generation", 0) != generation
         self.state.data.update(
-            phase="partial" if failed else "idle",
+            phase="partial" if pending else "idle",
             refreshed=processed,
             refresh_failed=failed,
-            pending_refresh=bool(failed),
+            pending_refresh=pending,
             refresh_retry_at=time.time() + 300,
             decisions_remaining=budget[0],
         )
-        if not failed:
+        if not pending:
             active = await asyncio.to_thread(self.store.load, "mercadona", self.config.postal_code)
             self.state.data["valued_fingerprint"] = active.fingerprint if active else None
         self.state.save()
@@ -291,8 +293,20 @@ class PricingService:
     ) -> None:
         if self._closed:
             return
-        recipe = await self.mealie.get_recipe(slug, household_id)
-        await self.process_recipe(recipe, force=force, budget=budget)
+        try:
+            recipe = await self.mealie.get_recipe(slug, household_id)
+            await self.process_recipe(recipe, force=force, budget=budget)
+        except Exception, asyncio.CancelledError:
+            retry_at = time.time() + 300
+            if self.state.data["pending_refresh"]:
+                retry_at = min(self.state.data.get("refresh_retry_at", retry_at), retry_at)
+            self.state.data.update(
+                pending_refresh=True,
+                refresh_retry_at=retry_at,
+                refresh_generation=self.state.data.get("refresh_generation", 0) + 1,
+            )
+            self.state.save()
+            raise
 
     async def process_recipe(
         self, recipe: MealieRecipe, *, force: bool = False, budget: list[int] | None = None

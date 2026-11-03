@@ -1,3 +1,4 @@
+import asyncio
 import json
 from decimal import Decimal
 
@@ -122,6 +123,27 @@ async def test_download_scopes_all_reads_and_loads_details_after_complete_traver
     assert "scope=fresh" in api.calls[-1].headers["cookie"]
     paths = [req.url.path for req in api.calls]
     assert paths.index("/api/categories/11/") < paths.index("/api/products/100/")
+
+
+async def test_stalled_product_request_is_bounded_even_when_parent_timeout_is_disabled(monkeypatch):
+    from mealie_enricher.pricing import mercadona
+
+    api = MercadonaAPI()
+
+    async def stalled(request):
+        if request.url.path == "/api/products/100/":
+            await asyncio.Future()
+        return api(request)
+
+    async def no_backoff(_seconds):
+        pass
+
+    monkeypatch.setattr(mercadona, "_REQUEST_TIMEOUT_SECONDS", 0.01, raising=False)
+    monkeypatch.setattr(mercadona.asyncio, "sleep", no_backoff)
+    async with httpx.AsyncClient(transport=httpx.MockTransport(stalled), timeout=None) as http:
+        async with asyncio.timeout(0.25):
+            with pytest.raises(ValueError, match="bounded retries"):
+                await mercadona.MercadonaClient(http, delay_seconds=0).download("27004")
 
 
 async def test_postal_preflight_uses_verified_retrieve_action_endpoint():

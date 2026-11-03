@@ -130,6 +130,14 @@ class OpenAINovaClassifier:
     @staticmethod
     def _evidence(recipe: MealieRecipe) -> dict[str, object]:
         extra = recipe.model_extra or {}
+        instructions = extra.get("recipeInstructions", [])
+        if isinstance(instructions, list):
+            instructions = [
+                {key: step[key] for key in ("text", "title") if key in step}
+                if isinstance(step, dict)
+                else step
+                for step in instructions
+            ]
         return {
             "name": recipe.name,
             "description": extra.get("description", ""),
@@ -139,7 +147,7 @@ class OpenAINovaClassifier:
                 )
                 for item in recipe.recipe_ingredient
             ],
-            "instructions": extra.get("recipeInstructions", []),
+            "instructions": instructions,
         }
 
     def cached(self, recipe: MealieRecipe) -> NovaAssessment | None:

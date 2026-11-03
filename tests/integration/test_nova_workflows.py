@@ -103,6 +103,7 @@ async def test_existing_complete_recipe_gets_nova_without_nutrition_changes_or_w
     recipe["tags"].append({"id": "digest", "name": "Digestión:Fácil", "slug": "digestion-facil"})
     recipe["extras"]["calorie_estimator_tags"] = '["digestion-facil"]'
     recipe["nutrition"] = {"calories": "123"}  # Partial nutrition must also be preserved.
+    recipe["recipeInstructions"][0]["id"] = "first-volatile-reference"
     ingredients = copy.deepcopy(recipe["recipeIngredient"])
     async with httpx.AsyncClient(transport=mealie_transport(recipe, patches)) as external:
         app = create_app(configure(tmp_path), http=external)
@@ -132,6 +133,7 @@ async def test_existing_complete_recipe_gets_nova_without_nutrition_changes_or_w
             assert trace["group"] == 1
             assert trace["confidence"] == 0.98
             assert trace["model"] == "gpt-6-luna"
+            recipe["recipeInstructions"][0]["id"] = "regenerated-reference"
             await app.state.processing.process_webhook("arroz")
             assert len(patches) == 1
             assert len(calls) == 1
