@@ -1,25 +1,21 @@
 import asyncio
 import time
 from collections.abc import AsyncIterator, Callable
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
 import httpx
-from alembic.config import Config
 from fastapi import FastAPI, Request
-from sqlalchemy.engine import URL
 from starlette.exceptions import HTTPException
 from starlette.responses import Response
-
-from alembic import command
 
 from .agents.estimator_agent import AgentLlmRunner
 from .clients.mealie import MealieClient
 from .clients.open_food_facts import OffClient
 from .config import Settings, load_settings
 from .routes import backfill, estimate, history, webhook
+from .routes import pricing as pricing_routes
 from .routes.common import LegacyJSONResponse, PayloadError, internal_error
 from .runtime.rate_limiter import RateLimiter
 from .runtime.slug_queue import SlugQueue
@@ -29,9 +25,10 @@ from .services.llm_estimator import LlmEstimator
 from .services.mealie_theme import MealieThemeClient
 from .services.processing import ProcessingService
 from .services.tagging import TaggingService
-from .storage.cache import SqliteCache
+from .storage.cache import SqlCache
 from .storage.dev_seed import seed_dev_history
 from .storage.history import ExecutionHistory
+from .storage.sql_history import SqlExecutionHistory
 
 
 class _Cors:
@@ -40,6 +37,9 @@ class _Cors:
 
     async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
         if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        if scope.get("path", "").startswith("/pricing/"):
             await self.app(scope, receive, send)
             return
         headers = dict(scope["headers"])
@@ -75,18 +75,6 @@ class _Cors:
         await self.app(child_scope, receive, wrapped)
 
 
-def _migrate_cache(path: str) -> None:
-    Path(path).parent.mkdir(parents=True, exist_ok=True)
-    location = Path(__file__).resolve().parents[2] / "alembic.ini"
-    if not location.exists():
-        location = Path.cwd() / "alembic.ini"
-    config = Config(str(location))
-    config.set_main_option(
-        "sqlalchemy.url", URL.create("sqlite", database=path).render_as_string().replace("%", "%%")
-    )
-    command.upgrade(config, "head")
-
-
 def create_app(
     settings: Settings | None = None,
     *,
@@ -98,9 +86,11 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        await asyncio.to_thread(_migrate_cache, settings.cache.db_path)
-        cache = await SqliteCache.open(
-            settings.cache.db_path, settings.off.cache_ttl_ms, clock_ms=now
+        cache = await SqlCache.open(
+            settings.cache.db_path,
+            settings.off.cache_ttl_ms,
+            clock_ms=now,
+            database_url=settings.database_url,
         )
         client = (
             http
@@ -113,7 +103,13 @@ def create_app(
         )
         catalog = None
         selector = None
+        nova = None
+        pricing = None
         try:
+            if settings.nova_enabled:
+                from .agents.nova_decisions import OpenAINovaClassifier
+
+                nova = OpenAINovaClassifier(settings.decisions)
             resolver = None
             if settings.catalog.enabled:
                 from .agents.catalog_decisions import OpenAIDecisionSelector
@@ -126,30 +122,55 @@ def create_app(
                 resolver = CatalogResolver(catalog, selector, cache)
             limiter = RateLimiter(settings.off, settings.llm)
             queue = SlugQueue(settings.events.debounce_ms)
-            events = ExecutionHistory(int(settings.history.max_entries), clock_ms=now)
+            events: ExecutionHistory = (
+                await SqlExecutionHistory.open(
+                    cache.engine,
+                    int(settings.history.max_entries),
+                    clock_ms=now,
+                    retention_days=settings.history.retention_days,
+                )
+                if settings.database_url
+                else ExecutionHistory(int(settings.history.max_entries), clock_ms=now)
+            )
             seed_dev_history(settings.history, events)
+            await events.flush()
             tasks = TaskRegistry()
             off = OffClient(settings.off, client, cache, limiter)
             llm = LlmEstimator(settings.llm, AgentLlmRunner(settings.llm, client), cache, limiter)
             mealie = MealieClient(settings, client)
-            tagging = TaggingService(mealie, Estimator(off, llm, catalog=resolver))
+            tagging = TaggingService(mealie, Estimator(off, llm, catalog=resolver), nova=nova)
             app.state.settings, app.state.http, app.state.cache = settings, client, cache
             app.state.catalog = catalog
             app.state.history, app.state.tasks, app.state.queue = events, tasks, queue
             app.state.theme = MealieThemeClient(settings.mealie, client, clock_ms=now)
-            app.state.processing = ProcessingService(settings, mealie, tagging, queue, events)
+            if settings.pricing.enabled:
+                from .pricing.service import PricingService
+
+                pricing = PricingService(settings, client, mealie, queue)
+                pricing.start()
+            app.state.pricing = pricing
+            app.state.processing = ProcessingService(
+                settings, mealie, tagging, queue, events, pricing=pricing
+            )
             yield
         finally:
-            if hasattr(app.state, "tasks"):
-                await app.state.tasks.close()
-                await app.state.queue.close()
-            if selector is not None:
-                await selector.close()
-            if catalog is not None:
-                await asyncio.to_thread(catalog.close)
-            await cache.close()
-            if http is None:
-                await client.aclose()
+            # LIFO callbacks guarantee all resources close even if a final SQL write fails.
+            async with AsyncExitStack() as cleanup:
+                if http is None:
+                    cleanup.push_async_callback(client.aclose)
+                cleanup.push_async_callback(cache.close)
+                if catalog is not None:
+                    cleanup.push_async_callback(asyncio.to_thread, catalog.close)
+                if nova is not None:
+                    cleanup.push_async_callback(nova.close)
+                if selector is not None:
+                    cleanup.push_async_callback(selector.close)
+                if hasattr(app.state, "tasks"):
+                    cleanup.push_async_callback(app.state.history.flush)
+                    cleanup.push_async_callback(app.state.queue.close)
+                    cleanup.push_async_callback(app.state.tasks.close)
+                if pricing is not None:
+                    cleanup.push_async_callback(pricing.close)
 
     app = FastAPI(
         lifespan=lifespan,
@@ -160,7 +181,13 @@ def create_app(
         redirect_slashes=False,
     )
     app.add_middleware(_Cors)
-    for router in (webhook.router, estimate.router, backfill.router, history.router):
+    for router in (
+        webhook.router,
+        estimate.router,
+        backfill.router,
+        history.router,
+        pricing_routes.router,
+    ):
         app.include_router(router)
 
     @app.get("/health")

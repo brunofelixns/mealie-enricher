@@ -24,8 +24,9 @@ x-calorie-env: &calorie-env
   ESTIMATE_TAG: ${ESTIMATE_TAG:-estimate}
   EVENT_DEBOUNCE_MS: ${EVENT_DEBOUNCE_MS:-2000}
   LOG_LEVEL: ${LOG_LEVEL:-info}
-  CACHE_DB_PATH: /app/data/cache.db
+  CACHE_DB_PATH: ${CACHE_DB_PATH:-/app/data/cache.db}
   HISTORY_MAX_ENTRIES: ${HISTORY_MAX_ENTRIES:-200}
+  HISTORY_RETENTION_DAYS: ${HISTORY_RETENTION_DAYS:-0}
   MEALIE_RECIPE_URL_TEMPLATE: ${MEALIE_RECIPE_URL_TEMPLATE:-}
   DEV_SEED_HISTORY: ${DEV_SEED_HISTORY:-false}
   CATALOG_ENABLED: ${CATALOG_ENABLED:-true}
@@ -37,6 +38,17 @@ x-calorie-env: &calorie-env
   DECISIONS_MIN_CONFIDENCE: ${DECISIONS_MIN_CONFIDENCE:-0.9}
   DECISIONS_TIMEOUT_SECONDS: ${DECISIONS_TIMEOUT_SECONDS:-20}
   DECISIONS_MAX_CONCURRENCY: ${DECISIONS_MAX_CONCURRENCY:-2}
+  NOVA_ENABLED: ${NOVA_ENABLED:-false}
+  PRICING_ENABLED: ${PRICING_ENABLED:-false}
+  MERCADONA_POSTAL_CODE: ${MERCADONA_POSTAL_CODE:-27004}
+  PRICING_DATA_DIR: ${PRICING_DATA_DIR:-/app/data/supermarkets}
+  PRICING_SYNC_INTERVAL_HOURS: ${PRICING_SYNC_INTERVAL_HOURS:-168}
+  PRICING_AUTO_SYNC: ${PRICING_AUTO_SYNC:-true}
+  PRICING_REQUEST_DELAY_SECONDS: ${PRICING_REQUEST_DELAY_SECONDS:-2}
+  PRICING_MAX_PRODUCTS: ${PRICING_MAX_PRODUCTS:-10000}
+  PRICING_MAX_CANDIDATES: ${PRICING_MAX_CANDIDATES:-12}
+  PRICING_MAX_DECISIONS_PER_RUN: ${PRICING_MAX_DECISIONS_PER_RUN:-500}
+  PRICING_ADMIN_TOKEN: ${PRICING_ADMIN_TOKEN:-}
 
 services:
   calorie-estimator:
@@ -52,11 +64,33 @@ services:
       <<: *calorie-env
       PORT: ${PORT:-8000}
       MEALIE_API_TOKEN: ${MEALIE_API_TOKEN:-}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://postgres:5432/${POSTGRES_DB:-mealie_enricher}}
+      PGUSER: ${POSTGRES_USER:-mealie_enricher}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-enricher-local-only}
     ports:
-      - "${PORT:-8000}:${PORT:-8000}"
+      - "${PUBLISHED_PORT:-${PORT:-8000}}:${PORT:-8000}"
     volumes:
       - estimator-cache:/app/data
       - estimator-catalogs:/app/catalogs:ro
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mealie_enricher}
+      POSTGRES_USER: ${POSTGRES_USER:-mealie_enricher}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-enricher-local-only}
+    volumes:
+      - estimator-postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
     restart: unless-stopped
 
   catalog-import:
@@ -94,6 +128,8 @@ services:
       OFF_SEARCH_BASE_URL: http://mock-off:3000
       PORT: "8000"
       LOG_LEVEL: debug
+      # The legacy Mealie parity stack deliberately exercises the SQLite path.
+      DATABASE_URL: ""
     ports:
       - "127.0.0.1:${TEST_ESTIMATOR_PORT:-8002}:8000"
     volumes:
@@ -132,6 +168,7 @@ services:
     profiles: [test]
 
 volumes:
+  estimator-postgres:
   estimator-catalogs:
   estimator-cache:
   estimator-test-cache:

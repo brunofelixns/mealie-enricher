@@ -1,49 +1,54 @@
 import json
 import time
 from collections.abc import Callable
-from pathlib import Path
 from typing import Any, Self
 
 from pydantic import ValidationError
 from sqlalchemy import Table, delete, select
-from sqlalchemy.dialects.sqlite import insert
-from sqlalchemy.engine import URL
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from ..catalog.models import CatalogResolution
 from ..compat import json_stringify
 from ..models import NutrientSet
+from .database import conflict_insert, create_database_engine, migrate_database
 from .schema import (
     catalog_resolution_cache,
     llm_estimate_cache,
     llm_nutrient_cache,
-    metadata,
     nutrient_cache,
 )
 
 
-class SqliteCache:
+class SqlCache:
     def __init__(self, engine: AsyncEngine, ttl_ms: float, clock_ms: Callable[[], float]) -> None:
         self.engine, self.ttl_ms, self.clock_ms = engine, ttl_ms, clock_ms
 
     @classmethod
     async def open(
-        cls, path: str, ttl_ms: float, *, clock_ms: Callable[[], float] | None = None
+        cls,
+        path: str,
+        ttl_ms: float,
+        *,
+        clock_ms: Callable[[], float] | None = None,
+        database_url: str = "",
     ) -> Self:
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        engine = create_async_engine(URL.create("sqlite+aiosqlite", database=path))
+        engine = create_database_engine(database_url, path)
         cache = cls(engine, ttl_ms, clock_ms or (lambda: time.time() * 1000))
-        async with engine.begin() as conn:
-            await conn.run_sync(metadata.create_all)
-            for table in (
-                nutrient_cache,
-                llm_estimate_cache,
-                llm_nutrient_cache,
-                catalog_resolution_cache,
-            ):
-                await conn.execute(
-                    delete(table).where(table.c.updated_at < cache.clock_ms() - ttl_ms)
-                )
+        try:
+            await migrate_database(engine)
+            async with engine.begin() as conn:
+                for table in (
+                    nutrient_cache,
+                    llm_estimate_cache,
+                    llm_nutrient_cache,
+                    catalog_resolution_cache,
+                ):
+                    await conn.execute(
+                        delete(table).where(table.c.updated_at < cache.clock_ms() - ttl_ms)
+                    )
+        except BaseException:
+            await engine.dispose()
+            raise
         return cache
 
     async def close(self) -> None:
@@ -66,7 +71,7 @@ class SqliteCache:
     async def _set(self, table: Table, key_column: str, key: str, column: str, value: Any) -> None:
         values = {key_column: key, column: value, "updated_at": int(self.clock_ms())}
         statement = (
-            insert(table)
+            conflict_insert(self.engine, table)
             .values(**values)
             .on_conflict_do_update(
                 index_elements=[key_column],
@@ -135,3 +140,7 @@ class SqliteCache:
             "resolution",
             result.model_dump_json(),
         )
+
+
+# Compatibility for existing integrations importing the original cache class.
+SqliteCache = SqlCache

@@ -30,6 +30,17 @@ jobs:
     name: Suite completa y calidad
     runs-on: ubuntu-24.04
     timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:18@sha256:3a4264520e121176619f54ff867d12774bc81e95e7b84db58d63bccdb6144b81
+        env:
+          POSTGRES_PASSWORD: enricher-ci-only
+          POSTGRES_DB: enricher_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d enricher_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
     permissions:
       contents: read
       pull-requests: read # Validate the merged release PR before executing its tag.
@@ -40,8 +51,10 @@ jobs:
       RUN_DOCKER_SMOKE: '1'
       RUN_REAL_BEDCA: '1'
       RUN_BEDCA_IMAGE_REAL: '1'
+      RUN_PRICING_MEALIE_E2E: '1'
       CATALOG_TEST_IMAGE: mealie-enricher:ci
       BEDCA_BUNDLED_TEST_IMAGE: mealie-enricher:ci-bedca
+      TEST_POSTGRES_URL: postgresql+psycopg://postgres:enricher-ci-only@127.0.0.1:5432/enricher_test
     steps:
       - name: Obtener el validador de la revisión de confianza
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -1,6 +1,9 @@
 import json
 import logging
+import sys
 from unittest.mock import patch
+
+import pytest
 
 from mealie_enricher.__main__ import main
 from mealie_enricher.logging import JsonFormatter
@@ -23,3 +26,14 @@ def test_logging_outputs_machine_readable_events():
     assert result["level"] == "info"
     assert result["msg"] == "Processed recipe"
     assert isinstance(result["time"], int)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows psycopg requires a selector loop")
+def test_postgres_entrypoint_selects_a_psycopg_compatible_windows_loop(monkeypatch):
+    monkeypatch.setenv("MEALIE_API_TOKEN", "synthetic")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/enricher")
+    with patch("mealie_enricher.__main__.uvicorn.run") as run:
+        main()
+    assert (
+        run.call_args.kwargs["loop"] == "mealie_enricher.runtime.event_loop:selector_loop_factory"
+    )

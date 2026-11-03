@@ -4,7 +4,11 @@ Estado: arquitectura implementada en Python; empaquetado y validación final en 
 
 ## Forma de la aplicación
 
-Monolito modular asíncrono. Un servicio Python atiende las rutas HTTP y ejecuta tareas en el mismo proceso. Se mantienen SQLite para la caché y estructuras en memoria para cola, limitadores e historial.
+Monolito modular asíncrono. Un servicio Python atiende las rutas HTTP y ejecuta
+tareas en el mismo proceso. Compose configura PostgreSQL para caché e historial
+mediante `DATABASE_URL`, SQLAlchemy asíncrono, psycopg 3 y Alembic.
+La cola, los bloqueos y los limitadores siguen en memoria. Sin `DATABASE_URL`,
+se conserva el modo anterior de caché SQLite e historial temporal.
 
 La versión propia 1.0.0 incluye un modo opcional de catálogos con DuckDB de solo lectura y un
 resolutor de identidad con reglas y Decisions. El importador se ejecuta aparte;
@@ -22,7 +26,7 @@ flowchart TD
     D --> G[Cálculos nutricionales en Python]
     G --> H[Etiquetas y patch de Mealie]
     H --> I[Cliente Mealie]
-    C --> J[Caché SQLite e historial en memoria]
+    C --> J[Caché e historial SQL]
     K[Rutas de historial] --> J
 ~~~
 
@@ -84,7 +88,7 @@ tests/
 | unit_converter / tagging | Conversiones y reglas actuales | Modelos y compatibilidad numérica |
 | clients | Contratos de Mealie y OFF | HTTPX, configuración, caché y limitadores |
 | agents | Ejecución LLM mediante el SDK | Transporte HTTP compatible, prompts y configuración LLM |
-| storage | Caché SQLite e historial en memoria | SQLAlchemy Core, aiosqlite y utilidades estándar |
+| storage | Caché e historial SQL; modo heredado compatible | SQLAlchemy Core, psycopg, aiosqlite y Alembic |
 | runtime | Tareas, exclusión por receta y límites | asyncio, reloj y configuración |
 | app | Composición y ciclo de vida | Construcción de los componentes anteriores |
 
@@ -137,9 +141,16 @@ La documentación oficial confirma el uso del SDK dentro de la aplicación y las
 
 ## Estado y ciclo de vida
 
-FastAPI lifespan abrirá el engine SQLite y los clientes HTTP, compondrá los servicios e inicializará el registro de tareas. El cierre liberará los recursos y recogerá las tareas pendientes según la política documentada de la implementación.
+FastAPI lifespan abre el engine SQL seleccionado, aplica Alembic, compone los
+clientes y recupera el historial persistido. El servicio espera la confirmación
+de persistencia al iniciar, identificar y terminar cada ejecución. Los cambios
+del historial se guardan también antes de responder a consultas y al cerrar.
 
-Se mantendrá un proceso Uvicorn. Los bloqueos y límites no se comparten entre procesos y los trabajos pendientes no son durables. Un reinicio puede perder la cola y el historial, igual que el original.
+Se mantiene un proceso Uvicorn. Los bloqueos y límites no se comparten y los
+trabajos pendientes no son durables. PostgreSQL conserva su historial: las
+ejecuciones pendientes se marcan como interrumpidas al siguiente inicio, sin
+repetir escrituras. La retención predeterminada es ilimitada. Véase
+[PostgreSQL y operación](19-postgresql.md).
 
 SQLAlchemy utilizará operaciones Core y transacciones cortas. Alembic reconocerá una base heredada de las cuatro tablas sin eliminar filas ni exigir un borrado previo. La revisión inicial añadirá únicamente su metadato de versión si el esquema ya coincide.
 

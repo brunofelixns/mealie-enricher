@@ -39,8 +39,8 @@ Mealie Enricher acompaña a tu instalación de [Mealie](https://github.com/meali
 Es la migración a Python de [mealie-calorie-estimator 1.12.3](https://github.com/timo-reymann/mealie-calorie-estimator/tree/c2dc71a1d8effe29375391f2fe50da94d27cfd7d), con **uv, FastAPI y OpenAI Agents SDK**. Conserva sus reglas y limitaciones, con la adaptación solicitada de etiquetas automáticas al español.
 
 La versión actual incluye un modo opcional de **catálogos DuckDB + BEDCA** y
-**OpenAI Decisions** para resolver coincidencias ambiguas. SQLite se mantiene
-exclusivamente para caché. El modo anterior sigue disponible con
+**OpenAI Decisions** para resolver coincidencias ambiguas. El Compose utiliza
+PostgreSQL para la caché y el historial persistente. El modo anterior sigue disponible con
 `CATALOG_ENABLED=false`.
 
 | | Qué aporta |
@@ -49,7 +49,7 @@ exclusivamente para caché. El modo anterior sigue disponible con
 | **Etiquetas en español** | Clasificación por calorías y digestibilidad, visible en Mealie. |
 | **IA opcional** | Fallback para unidades o alimentos que no se resuelven directamente. |
 | **Actividad a la vista** | Receta, estado, cambios, duración y errores, con actualización cada dos segundos. |
-| **Menos trabajo repetido** | Caché SQLite, hash de ingredientes y agrupación de eventos por receta. |
+| **Datos persistentes** | PostgreSQL para caché e historial; compatibilidad con SQLite. |
 | **Tu instalación Mealie** | Conexión por API y tokens específicos por hogar cuando los necesites. |
 
 ## Empezar con Docker
@@ -140,7 +140,12 @@ Ahí puedes:
 - Filtrar por origen del evento y estado.
 - Recibir actualizaciones cada **dos segundos**, con tema claro y oscuro.
 
-Usa el puerto que hayas publicado. El historial conserva **200 entradas** por defecto durante un máximo de **24 horas** y se pierde al reiniciar.
+Usa el puerto que hayas publicado. Con `DATABASE_URL` (configurado por Compose),
+el historial sobrevive al reinicio y se conserva sin caducidad por defecto.
+`HISTORY_MAX_ENTRIES=200` determina el tamaño de página y
+`HISTORY_RETENTION_DAYS=0` conserva todas las ejecuciones. El JSON admite
+`since`, `limit` y `offset`. Sin `DATABASE_URL`, se mantiene el historial
+heredado de 200 entradas en memoria durante 24 horas. [PostgreSQL](19-postgresql.md).
 
 Para ver datos sintéticos en desarrollo, configura DEV_SEED_HISTORY=true. [Más sobre la vista web y el historial](09-etiquetas-y-vista-web.md).
 
@@ -156,6 +161,13 @@ Para ver datos sintéticos en desarrollo, configura DEV_SEED_HISTORY=true. [Más
 La digestibilidad se etiqueta como **Digestión:Fácil**, **Digestión:Moderada**, **Digestión:Lenta** o **Digestión:Desconocida**, siguiendo las reglas del original.
 
 Las etiquetas automáticas inglesas se sustituyen al volver a procesar la receta. Si los ingredientes no han cambiado, se reutiliza la nutrición guardada y se actualizan solo las etiquetas y sus extras. Las etiquetas personales se conservan.
+
+Con `NOVA_ENABLED=true`, OpenAI Decisions añade una etiqueta de procesamiento
+estimado: **NOVA:1**, **NOVA:2**, **NOVA:3**, **NOVA:4** o **NOVA:Desconocida**.
+Reutiliza `DECISIONS_API_KEY` o `OPENAI_API_KEY` y los límites `DECISIONS_*`;
+no requiere activar el catálogo, su selector Decisions ni el fallback LLM.
+La aplicación adapta NOVA a los ingredientes de una receta; no es una
+clasificación oficial del plato. [Criterio, fuentes y reintentos](18-clasificacion-nova.md).
 
 ## Cómo funciona
 
@@ -188,7 +200,10 @@ El [.env.example principal](../.env.example) sirve para el desarrollo y la const
 | ESTIMATE_STRATEGY | all para todas las recetas o tagged para filtrar. |
 | ESTIMATE_TAG | Etiqueta que selecciona recetas cuando la estrategia es tagged. |
 | OFF_LANGUAGE | Idioma de búsqueda de Open Food Facts. |
-| CACHE_DB_PATH | Ruta de la caché; en Docker, /app/data/cache.db. |
+| DATABASE_URL | Conexión PostgreSQL; Compose configura el servicio interno. |
+| POSTGRES_PASSWORD | Contraseña propia del PostgreSQL de Compose. |
+| HISTORY_RETENTION_DAYS | Días de historial terminado; 0 conserva todo. |
+| CACHE_DB_PATH | Caché SQLite heredada, utilizada sin DATABASE_URL. |
 | PORT | Puerto del proceso; 8000 por defecto. |
 | PUBLISHED_PORT | Puerto del servidor en el Compose independiente de docker/. |
 
@@ -256,7 +271,7 @@ Prepara y edita .env como en el arranque Docker; después:
 uv run --env-file .env python -m mealie_enricher
 ~~~
 
-El entrypoint respeta PORT. Ejecuta **un solo proceso**, ya que cola, limitadores e historial viven en memoria.
+El entrypoint respeta PORT. Ejecuta **un solo proceso**, ya que cola, bloqueos y limitadores viven en memoria.
 
 ## Validación
 

@@ -20,6 +20,7 @@ In PowerShell, use `Copy-Item .env.example .env` instead. Edit at least:
 MEALIE_ENRICHER_IMAGE=ghcr.io/brunofelixns/mealie-enricher:latest
 MEALIE_URL=https://your-mealie.example.com
 MEALIE_API_TOKEN=your-mealie-api-token
+POSTGRES_PASSWORD=choose-a-private-database-password
 LLM_ENABLED=false
 ~~~
 
@@ -30,6 +31,14 @@ Household-specific tokens can be configured using the comments in `.env.example`
 Mealie must be reachable from the container. `localhost` inside the container refers to the container itself. Use your Mealie server URL, or a shared Docker network when connecting services by container name.
 
 The fallback LLM is disabled initially. To enable it, set `LLM_ENABLED=true` and configure the provider URL, model and `LLM_API_KEY`. Decisions has separate settings and is also disabled initially.
+
+PostgreSQL, NOVA and supermarket pricing require **1.3.0 or later**. Version
+`1.2.0` includes BEDCA without these additions. Update the application image and
+deployment files together; do not use this Compose with a pre-1.3.0 image.
+
+When refreshing an existing installation, merge the new settings into your `.env`
+and preserve its tokens, database password and custom values. The legacy
+`.env.bedca.example` is a complete alternative example for the same single image.
 
 ## 2. Pull and start
 
@@ -73,9 +82,39 @@ docker buildx imagetools inspect ghcr.io/brunofelixns/mealie-enricher:latest
 
 The reference format is `ghcr.io/brunofelixns/mealie-enricher@sha256:YOUR_VERIFIED_DIGEST`.
 
-The `estimator-cache` volume preserves `/app/data/cache.db`. Keep `CACHE_DB_PATH=/app/data/cache.db` and the same Compose project name to reuse it.
+The `postgres` service stores the cache and execution history in the
+`estimator-postgres` volume. It has a readiness check and no host port. Compose
+passes credentials separately through `PGUSER`/`PGPASSWORD`, so special password
+characters do not need URL encoding. Keep the same Compose project name and volume.
 
-Stop with `docker compose down`. This preserves volumes. History and pending tasks are in memory and are lost on restart; run a single application instance.
+Stop with `docker compose down` to preserve volumes. History survives container
+recreation and is retained indefinitely by default. `HISTORY_RETENTION_DAYS=90`,
+for example, removes completed executions after 90 days; `0` retains all history.
+`HISTORY_MAX_ENTRIES` is the default JSON page size. Older records are available
+through `/estimator/history.json?limit=200&offset=200`; the activity page initially
+shows the latest page.
+
+Pending tasks remain in memory; run one application instance. Unfinished stored
+executions are marked as interrupted errors after restart, without repeating
+writes to Mealie. PostgreSQL does not make the queue durable.
+
+When upgrading an older installation, add `POSTGRES_PASSWORD` to `.env` and use
+an application image that includes PostgreSQL support. Startup applies Alembic
+migrations automatically. The old `estimator-cache` volume is preserved; its
+SQLite cache is not imported into PostgreSQL and will refill on demand. Historical
+in-memory activity from older versions cannot be recovered. BEDCA is unchanged.
+Changing `POSTGRES_PASSWORD` in `.env` does not change an existing PostgreSQL role's password;
+rotate that password in PostgreSQL too.
+
+For backups, create a dump inside PostgreSQL and copy it to the host (this avoids
+binary redirection differences between shells):
+
+~~~sh
+docker compose exec -T postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc -f /tmp/enricher.dump'
+docker compose cp postgres:/tmp/enricher.dump ./enricher.dump
+~~~
+
+[PostgreSQL configuration and recovery, in Spanish](../docs/19-postgresql.md).
 
 ## Included BEDCA catalog
 
@@ -98,10 +137,40 @@ docker compose --profile catalog run --rm catalog-import
 
 After a custom import, set `CATALOG_ENABLED=true` and
 `CATALOG_DB_PATH=/app/catalogs/catalogos.duckdb` in `.env` and recreate the service.
-The custom catalog lives in `estimator-catalogs`, mounted read-only. The cache
-remains in its own writable volume.
+The custom catalog lives in `estimator-catalogs`, mounted read-only. Runtime
+cache and history remain in PostgreSQL.
 
 Optional Decisions match selection requires `DECISIONS_ENABLED=true` and `OPENAI_API_KEY` or `DECISIONS_API_KEY`. The fallback LLM remains independent.
+
+For estimated NOVA recipe tags, set `NOVA_ENABLED=true` using the same OpenAI key
+and `DECISIONS_*` request settings. This works with `DECISIONS_ENABLED=false`
+and without a catalog or fallback LLM. Existing recipes receive the tag the next
+time they are processed; unchanged nutrition is preserved. Unknown outcomes are
+retained until recipe context changes or `/estimate` explicitly retries them.
+[NOVA interpretation and sources](../docs/18-clasificacion-nova.md).
+
+## Mercadona prices
+
+Pricing is off by default. Reuse your configured `OPENAI_API_KEY` or
+`DECISIONS_API_KEY`, then set these values in `.env` with a private random admin
+token of at least 16 characters:
+
+~~~dotenv
+PRICING_ENABLED=true
+MERCADONA_POSTAL_CODE=27004
+PRICING_SYNC_INTERVAL_HOURS=168
+PRICING_AUTO_SYNC=true
+PRICING_ADMIN_TOKEN=replace-with-your-private-random-token
+~~~
+
+The first startup acquires the full catalog; subsequent scheduled acquisitions
+use the configured interval. Products, price snapshots and scheduling state stay
+in `/app/data/supermarkets` on the persistent `estimator-cache` volume, separately
+from BEDCA and PostgreSQL. Keep one pricing owner for that data directory.
+Request pacing, product/candidate limits and the Decisions budget are configurable
+in the example. The protected `/pricing/status`, `/pricing/sync` and
+`/pricing/refresh` controls use `PRICING_ADMIN_TOKEN`, independently of the OpenAI
+key. [Costs, exact tags, API controls and limitations, in Spanish](../docs/20-precios-supermercados.md).
 
 [Catalog preparation and safe updates, in Spanish](../docs/11-catalogos-duckdb.md).
 

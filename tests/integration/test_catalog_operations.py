@@ -73,7 +73,7 @@ async def test_sqlite_upgrade_preserves_every_legacy_cache_table(tmp_path):
     with closing(sqlite3.connect(path)) as db:
         for table in tables:
             assert db.execute(f"SELECT * FROM {table}").fetchall() == before[table]
-        assert db.execute("SELECT version_num FROM alembic_version").fetchone() == ("0002",)
+        assert db.execute("SELECT version_num FROM alembic_version").fetchone() == ("0003",)
         assert db.execute("SELECT COUNT(*) FROM catalog_resolution_cache").fetchone() == (0,)
 
     cache = await SqliteCache.open(str(path), 86400000, clock_ms=lambda: now)

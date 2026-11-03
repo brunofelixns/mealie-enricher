@@ -8,6 +8,9 @@ Esta carpeta conserva el alcance, las decisiones, el diseño y el avance de la m
 
 ## Estado actual
 
+- Integración PostgreSQL: caché e historial persistentes, retención configurable,
+  migraciones automáticas y servicio incluido en Compose. [Configuración y copias](19-postgresql.md).
+
 - Versión propia inicial: **1.0.0**. Main exige PR y CI. Release Please propone las siguientes versiones; fusionar su PR desencadena la validación y publicación de las imágenes. [Flujo, permisos y recuperación](16-github-actions.md).
 - Plan aprobado para ejecución el 2026-10-29.
 - Fase 0 completada: referencia fijada, typecheck correcto y 140 pruebas upstream aprobadas.
@@ -26,6 +29,8 @@ Esta carpeta conserva el alcance, las decisiones, el diseño y el avance de la m
 
 | Documento | Contenido |
 |---|---|
+| [20-precios-supermercados.md](20-precios-supermercados.md) | Mercadona en DuckDB, selección con Decisions, costes y actualización configurable |
+| [19-postgresql.md](19-postgresql.md) | PostgreSQL, historial permanente, migraciones y copias de seguridad |
 | [01-alcance-y-decisiones.md](01-alcance-y-decisiones.md) | Objetivo, tecnologías y decisiones vigentes |
 | [02-arquitectura.md](02-arquitectura.md) | Módulos, flujo e integración con Agents SDK |
 | [03-compatibilidad-y-validacion.md](03-compatibilidad-y-validacion.md) | Contratos que conservar y cómo comprobarlos |
@@ -35,6 +40,7 @@ Esta carpeta conserva el alcance, las decisiones, el diseño y el avance de la m
 | [07-operacion-y-retorno.md](07-operacion-y-retorno.md) | Arranque, copia de caché y retorno al original |
 | [08-revision-y-resoluciones.md](08-revision-y-resoluciones.md) | Revisión final, decisiones de ejecución y límites |
 | [09-etiquetas-y-vista-web.md](09-etiquetas-y-vista-web.md) | Etiquetas en español y consulta de la actividad |
+| [18-clasificacion-nova.md](18-clasificacion-nova.md) | Etiqueta NOVA opcional con Decisions, criterio de recetas y resultados desconocidos |
 | [10-publicacion-github.md](10-publicacion-github.md) | Primera publicación del código y recursos del README |
 | [11-catalogos-duckdb.md](11-catalogos-duckdb.md) | BEDCA, catálogos DuckDB, Decisions y preparación con Docker |
 | [12-validacion-catalogos.md](12-validacion-catalogos.md) | Pruebas del flujo completo, reinicios, actualización y recuperación |

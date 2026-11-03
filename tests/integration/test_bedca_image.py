@@ -40,14 +40,27 @@ def test_compose_uses_bundled_catalog_path_by_default(tmp_path, compose_path, ex
     (tmp_path / ".env").write_text("", encoding="utf-8")
     env_file = tmp_path / "bundle.env"
     env_file.write_text(
-        "MEALIE_ENRICHER_IMAGE=synthetic:complete\n"
+        "MEALIE_ENRICHER_IMAGE=synthetic:complete\nPOSTGRES_PASSWORD=synthetic-compose-test\n"
         + ("CATALOG_DB_PATH=/opt/bedca/catalogos.duckdb\n" if explicit_path else ""),
         encoding="utf-8",
     )
     environment = {
         key: value
         for key, value in os.environ.items()
-        if not key.startswith(("MEALIE_", "CATALOG_", "OPENAI_", "DECISIONS_"))
+        if not key.startswith(
+            (
+                "MEALIE_",
+                "CATALOG_",
+                "OPENAI_",
+                "DECISIONS_",
+                "POSTGRES_",
+                "PG",
+                "DATABASE_",
+                "NOVA_",
+                "PRICING_",
+                "MERCADONA_",
+            )
+        )
     }
     result = subprocess.run(
         [

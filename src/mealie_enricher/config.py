@@ -7,6 +7,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .models import WireModel, camel_case
+from .pricing.config import PricingSettings
 
 
 class MealieSettings(WireModel):
@@ -63,6 +64,7 @@ class HistorySettings(WireModel):
     recipe_url_template: str = ""
     seed_dev_data: bool = False
     max_entries: float = 200
+    retention_days: int = Field(default=0, ge=0, exclude=True)
 
 
 class CatalogSettings(WireModel):
@@ -93,9 +95,12 @@ class Settings(BaseSettings):
     estimate: EstimateSettings = Field(default_factory=EstimateSettings)
     events: EventSettings = Field(default_factory=EventSettings)
     cache: CacheSettings = Field(default_factory=CacheSettings)
+    database_url: str = Field(default="", repr=False, exclude=True)
     history: HistorySettings = Field(default_factory=HistorySettings)
     catalog: CatalogSettings = Field(default_factory=CatalogSettings, exclude=True)
     decisions: DecisionSettings = Field(default_factory=DecisionSettings, exclude=True)
+    nova_enabled: bool = Field(default=False, exclude=True)
+    pricing: PricingSettings = Field(default_factory=PricingSettings, exclude=True)
     log_level: str = "info"
     token_overrides: dict[str, str] = Field(default_factory=dict, exclude=True)
 
@@ -154,6 +159,23 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         max_tokens_grams=integer("LLM_MAX_TOKENS_GRAMS", 1024 if reasoning_tokens else 10),
         max_tokens_nutrients=integer("LLM_MAX_TOKENS_NUTRIENTS", 2048 if reasoning_tokens else 200),
     )
+    pricing = PricingSettings(
+        enabled=value("PRICING_ENABLED", "false").lower() == "true",
+        postal_code=value("MERCADONA_POSTAL_CODE", "27004"),
+        data_dir=value("PRICING_DATA_DIR", "data/supermarkets"),
+        sync_interval_hours=float(value("PRICING_SYNC_INTERVAL_HOURS", "168")),
+        auto_sync=value("PRICING_AUTO_SYNC", "true").lower() == "true",
+        request_delay_seconds=float(value("PRICING_REQUEST_DELAY_SECONDS", "2")),
+        max_products=int(value("PRICING_MAX_PRODUCTS", "10000")),
+        max_candidates=int(value("PRICING_MAX_CANDIDATES", "12")),
+        max_decisions_per_run=int(value("PRICING_MAX_DECISIONS_PER_RUN", "500")),
+        admin_token=value("PRICING_ADMIN_TOKEN"),
+    )
+    if pricing.enabled:
+        if not value("DECISIONS_API_KEY", value("OPENAI_API_KEY")):
+            raise ValueError("PRICING_ENABLED requires DECISIONS_API_KEY or OPENAI_API_KEY")
+        if len(pricing.admin_token) < 16:
+            raise ValueError("PRICING_ADMIN_TOKEN must contain at least 16 characters")
     return Settings(
         port=integer("PORT", 8000),
         mealie=mealie,
@@ -164,10 +186,12 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         ),
         events=EventSettings(debounce_ms=integer("EVENT_DEBOUNCE_MS", 2000)),
         cache=CacheSettings(db_path=value("CACHE_DB_PATH", "data/cache.db")),
+        database_url=value("DATABASE_URL"),
         history=HistorySettings(
             recipe_url_template=value("MEALIE_RECIPE_URL_TEMPLATE", mealie.url + "/recipe/{slug}"),
             seed_dev_data=value("DEV_SEED_HISTORY", "false").lower() == "true",
             max_entries=integer("HISTORY_MAX_ENTRIES", 200),
+            retention_days=int(integer("HISTORY_RETENTION_DAYS", 0)),
         ),
         catalog=CatalogSettings(
             enabled=value("CATALOG_ENABLED", "false").lower() == "true",
@@ -181,6 +205,8 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
             min_confidence=_parse_float(value("DECISIONS_MIN_CONFIDENCE", "0.9")),
             max_concurrency=int(integer("DECISIONS_MAX_CONCURRENCY", 2)),
         ),
+        nova_enabled=value("NOVA_ENABLED", "false").lower() == "true",
+        pricing=pricing,
         log_level=value("LOG_LEVEL", "info"),
         token_overrides=tokens,
     )
