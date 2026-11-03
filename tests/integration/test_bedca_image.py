@@ -182,6 +182,7 @@ def test_bundled_image_starts_in_deployment_compose_without_importing(bundles, t
     values = {
         "MEALIE_ENRICHER_IMAGE": sources[0][0],
         "MEALIE_API_TOKEN": "synthetic-unused",
+        "POSTGRES_PASSWORD": "synthetic-bundle-test",
         "MEALIE_URL": "http://unused.invalid",
         "PUBLISHED_PORT": str(_free_port()),
         "DECISIONS_ENABLED": "false",

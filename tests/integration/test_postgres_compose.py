@@ -39,7 +39,7 @@ def test_deployment_compose_retains_history_after_both_containers_are_recreated(
     project = "enricher-pg-test-" + uuid.uuid4().hex[:12]
 
     def compose(*args, check=True):
-        return subprocess.run(
+        result = subprocess.run(
             [
                 "docker",
                 "compose",
@@ -56,7 +56,7 @@ def test_deployment_compose_retains_history_after_both_containers_are_recreated(
             text=True,
             encoding="utf-8",
             timeout=180,
-            check=check,
+            check=False,
             env={
                 key: value
                 for key, value in os.environ.items()
@@ -72,6 +72,9 @@ def test_deployment_compose_retains_history_after_both_containers_are_recreated(
                 }
             },
         )
+        if check and result.returncode:
+            pytest.fail(f"Isolated Compose failed: {args}\n{result.stdout}\n{result.stderr}")
+        return result
 
     def url():
         published = compose("port", "calorie-estimator", "8000").stdout.splitlines()[0]

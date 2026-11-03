@@ -144,7 +144,7 @@ jobs:
               --file docker/Dockerfile.bedca --tag mealie-enricher:ci-bedca .
           fi
       - name: Descargar imágenes del Mealie aislado
-        run: docker compose --profile test pull mealie mock-off
+        run: docker compose --profile test pull mealie mock-off postgres
       - name: Ejecutar toda la suite, incluido Mealie real
         run: |
           mkdir -p .cache
