@@ -1,6 +1,6 @@
 import json
 import logging
-import sys
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -28,12 +28,25 @@ def test_logging_outputs_machine_readable_events():
     assert isinstance(result["time"], int)
 
 
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows psycopg requires a selector loop")
-def test_postgres_entrypoint_selects_a_psycopg_compatible_windows_loop(monkeypatch):
+@pytest.mark.parametrize(
+    ("platform", "database_url", "expected"),
+    [
+        (
+            "win32",
+            "postgresql://localhost/enricher",
+            "mealie_enricher.runtime.event_loop:selector_loop_factory",
+        ),
+        ("linux", "postgresql://localhost/enricher", "auto"),
+        ("win32", "", "auto"),
+        ("linux", "", "auto"),
+    ],
+)
+def test_entrypoint_uses_selector_only_for_windows_postgres(
+    monkeypatch, platform, database_url, expected
+):
+    monkeypatch.setattr("mealie_enricher.__main__.sys", SimpleNamespace(platform=platform))
     monkeypatch.setenv("MEALIE_API_TOKEN", "synthetic")
-    monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/enricher")
+    monkeypatch.setenv("DATABASE_URL", database_url)
     with patch("mealie_enricher.__main__.uvicorn.run") as run:
         main()
-    assert (
-        run.call_args.kwargs["loop"] == "mealie_enricher.runtime.event_loop:selector_loop_factory"
-    )
+    assert run.call_args.kwargs["loop"] == expected
