@@ -176,8 +176,7 @@ por versión: sigue existiendo una ventana entre la última lectura y el patch.
 La comprobación inicial de acceso reconoció `27004`, devolvió el almacén `4450`
 y permitió consultar categorías y un producto. La adquisición usa la API de la
 tienda documentada por la comunidad. El catálogo online puede diferir de
-una tienda física. No se ha publicado una versión ni activado el servicio del
-usuario como parte de esta implementación local.
+una tienda física. Estas pruebas no modificaron la instalación Mealie del usuario.
 
 Validación real adicional del 2026-11-03: el adaptador importó una muestra del
 producto `10005` para `27004`, se consultó en DuckDB y Decisions seleccionó ese
@@ -217,6 +216,18 @@ Los artefactos locales, ignorados por Git, están en
 `latest-report.json` contiene la evidencia de descarga y SQL, y
 `offline-report.json` contiene la comprobación sin red. La ejecución fechada
 conserva las respuestas de la API para reproducir incidencias.
+
+Prueba conjunta real del 2026-11-04: una receta sintética recorrió el procesamiento
+con Mealie y PostgreSQL aislados, los 4.291 productos del catálogo local y
+Decisions real. Para 200 ml del producto `10005` y dos raciones, los importes
+fueron `0,49 €` consumidos, `0,25 €/ración` y `2,45 €` de compra. Una segunda
+ejecución reutilizó las decisiones y NOVA sin llamadas adicionales. Un cambio
+de precio simulado en una copia del catálogo produjo `0,52 €`, `0,26 €/ración`
+y `2,60 €`, sustituyendo las etiquetas anteriores. Se conservaron las calorías
+manuales, la etiqueta personal y los extras, y el historial PostgreSQL sobrevivió
+al reinicio. Es una comprobación funcional concreta, no una evaluación general
+de la calidad de selección del modelo. Su informe local queda en
+`.cache/combined-real-flow/latest-report.json`.
 
 Verificación final del checkout tras la corrección: `757 passed, 37 skipped`; los omitidos son
 pruebas optativas, incluida la de precios con Mealie, que se ejecutó aparte y
