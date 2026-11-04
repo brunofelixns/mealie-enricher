@@ -16,7 +16,7 @@ RUN uv sync --locked --no-dev --no-editable --no-cache
 
 FROM python-base AS app-runtime
 # x-release-please-start-version
-ARG VERSION=1.2.0
+ARG VERSION=1.3.0
 # x-release-please-end
 ARG VCS_REF=unknown
 LABEL org.opencontainers.image.title="Mealie Enricher" \

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/brunofelixns/mealie-enricher/compare/v1.2.0...v1.3.0) (2026-11-04)
+
+
+### Funcionalidades
+
+* add PostgreSQL, NOVA and Mercadona pricing ([#20](https://github.com/brunofelixns/mealie-enricher/issues/20)) ([2c6a88d](https://github.com/brunofelixns/mealie-enricher/commit/2c6a88d33dcbc79c37a7898d91d8147a0ce179b6))
+
 ## [1.2.0](https://github.com/brunofelixns/mealie-enricher/compare/v1.1.0...v1.2.0) (2026-11-02)
 
 
