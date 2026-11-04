@@ -25,7 +25,11 @@ Alembic se ejecuta al iniciar. Reconoce las tablas heredadas, conserva filas y a
 
 Las escrituras ya hechas sobre recetas Mealie permanecen en Mealie; restaurar la caché no las revierte. El hash y las etiquetas mantienen las reglas del original. Si se necesita revertir una receta, debe utilizarse un respaldo de Mealie; este procedimiento no inventa un undo.
 
-El historial se pierde al detener cada proceso y las tareas en memoria no se recuperan automáticamente. No hay persistencia de jobs ni cambio de estas limitaciones.
+Sin `DATABASE_URL`, el historial heredado se pierde al detener el proceso. El
+Compose actual utiliza PostgreSQL para conservarlo; consulta
+[la guía de PostgreSQL](19-postgresql.md) para actualización y copias.
+Las tareas en memoria no se recuperan automáticamente: su historial guardado
+se marca como interrumpido al siguiente arranque.
 
 ## Comprobación LLM real pendiente
 
@@ -35,7 +39,11 @@ Cuando se autorice esa comprobación, hacer una única estimación sintética ac
 
 ## Catálogos en Mealie Enricher 1.0.0
 
-SQLite sigue dedicado a caché y ejecuta Alembic al inicio (revisión 0002). El catálogo DuckDB es un archivo persistente separado, preparado mediante `mealie-catalog import-bedca` o el perfil Docker `catalog-import`. La aplicación lo abre en solo lectura. Véanse la primera preparación, actualización con parada controlada y volúmenes separados en [11-catalogos-duckdb.md](11-catalogos-duckdb.md).
+La caché y el historial actuales usan PostgreSQL en Compose; el modo heredado
+SQLite sigue disponible. Alembic aplica la revisión `0003` al iniciar y conserva
+las filas SQLite anteriores. El catálogo DuckDB sigue siendo un archivo separado
+de solo lectura. Véanse su preparación y actualización en
+[11-catalogos-duckdb.md](11-catalogos-duckdb.md).
 
 Para volver al flujo anterior, configura `CATALOG_ENABLED=false` y recrea el servicio. La caché heredada se conserva. No elimines volúmenes para cambiar de modo. Las recetas previamente procesadas con catálogo llevan un hash contextual distinto: al volver al modo anterior se volverán a evaluar cuando corresponda; no se revierten automáticamente las escrituras previas de Mealie.
 

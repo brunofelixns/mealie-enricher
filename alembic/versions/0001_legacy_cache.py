@@ -1,7 +1,12 @@
 """Recognize or create the original cache without deleting existing data."""
 
 from alembic import op
-from mealie_enricher.storage.schema import metadata
+from mealie_enricher.storage.schema import (
+    llm_estimate_cache,
+    llm_nutrient_cache,
+    nutrient_cache,
+    unmatched_foods,
+)
 
 revision = "0001"
 down_revision = None
@@ -10,8 +15,10 @@ depends_on = None
 
 
 def upgrade() -> None:
-    metadata.create_all(op.get_bind(), checkfirst=True)
+    for table in (nutrient_cache, unmatched_foods, llm_estimate_cache, llm_nutrient_cache):
+        table.create(op.get_bind(), checkfirst=True)
 
 
 def downgrade() -> None:
-    metadata.drop_all(op.get_bind(), checkfirst=True)
+    for table in (llm_nutrient_cache, llm_estimate_cache, unmatched_foods, nutrient_cache):
+        table.drop(op.get_bind(), checkfirst=True)

@@ -14,12 +14,14 @@ class _Handle:
         if self.finished:
             return None
         self.history._purge()
-        return self.history.records.get(self.record_id)
+        return self.history._lookup(self.record_id)
 
     def _touch(self, record: ExecutionRecord) -> None:
         record.updated_at = int(self.history.clock_ms())
-        self.history.records.move_to_end(self.record_id)
-        self.history.expires[self.record_id] = self.history.clock_ms() + 86400000
+        if self.record_id in self.history.records:
+            self.history.records.move_to_end(self.record_id)
+            self.history.expires[self.record_id] = self.history.clock_ms() + 86400000
+        self.history._record_changed(record)
 
     def set_recipe(self, name: str, household_id: str | None) -> None:
         record = self._get()
@@ -61,6 +63,21 @@ class ExecutionHistory:
         self.records: OrderedDict[str, ExecutionRecord] = OrderedDict()
         self.expires: dict[str, float] = {}
 
+    def _lookup(self, record_id: str) -> ExecutionRecord | None:
+        return self.records.get(record_id)
+
+    def _record_changed(self, record: ExecutionRecord) -> None:
+        pass
+
+    async def flush(self) -> None:
+        """Persistence boundary; the legacy memory-only history has no writes."""
+
+    async def fetch_history(
+        self, since: float | None = None, *, limit: int | None = None, offset: int = 0
+    ) -> list[ExecutionRecord]:
+        records = self.get_history(since)
+        return records[offset : offset + (limit if limit is not None else self.max_entries)]
+
     def _purge(self) -> None:
         for key in list(self.records):
             if self.clock_ms() > self.expires[key]:
@@ -74,6 +91,7 @@ class ExecutionHistory:
             id=record_id, started_at=now, updated_at=now, trigger=trigger, slug=slug
         )
         self.expires[record_id] = self.clock_ms() + 86400000
+        self._record_changed(self.records[record_id])
         while len(self.records) > self.max_entries:
             key, _ = self.records.popitem(last=False)
             self.expires.pop(key)
@@ -95,6 +113,7 @@ class ExecutionHistory:
         self._purge()
         self.records[record.id] = record
         self.expires[record.id] = self.clock_ms() + 86400000
+        self._record_changed(record)
         while len(self.records) > self.max_entries:
             key, _ = self.records.popitem(last=False)
             self.expires.pop(key)

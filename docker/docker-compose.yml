@@ -8,13 +8,68 @@ services:
       - .env
     environment:
       PORT: ${PORT:-8000}
+      MEALIE_URL: ${MEALIE_URL:-http://mealie:9000}
+      MEALIE_API_TOKEN: ${MEALIE_API_TOKEN:-}
+      MEALIE_TIMEOUT_MS: ${MEALIE_TIMEOUT_MS:-30000}
+      OFF_LANGUAGE: ${OFF_LANGUAGE:-en}
+      OFF_BASE_URL: ${OFF_BASE_URL:-https://world.openfoodfacts.org}
+      OFF_SEARCH_BASE_URL: ${OFF_SEARCH_BASE_URL:-https://search.openfoodfacts.org}
+      OFF_USER_AGENT: ${OFF_USER_AGENT:-MealieCalorieEstimator/1.0 (calories@example.com)}
+      OFF_SEARCH_RATE_LIMIT: ${OFF_SEARCH_RATE_LIMIT:-10}
+      OFF_PRODUCT_RATE_LIMIT: ${OFF_PRODUCT_RATE_LIMIT:-15}
+      OFF_CACHE_TTL: ${OFF_CACHE_TTL:-86400}
+      OFF_MAX_RETRIES: ${OFF_MAX_RETRIES:-3}
+      OFF_RETRY_BACKOFF_MS: ${OFF_RETRY_BACKOFF_MS:-500}
+      LLM_ENABLED: ${LLM_ENABLED:-false}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
+      LLM_ENDPOINT_URL: ${LLM_ENDPOINT_URL:-/chat/completions}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_RATE_LIMIT: ${LLM_RATE_LIMIT:-30}
+      LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.1}
+      LLM_MAX_TOKENS_GRAMS: ${LLM_MAX_TOKENS_GRAMS:-}
+      LLM_MAX_TOKENS_NUTRIENTS: ${LLM_MAX_TOKENS_NUTRIENTS:-}
+      ESTIMATE_STRATEGY: ${ESTIMATE_STRATEGY:-all}
+      ESTIMATE_TAG: ${ESTIMATE_TAG:-estimate}
+      EVENT_DEBOUNCE_MS: ${EVENT_DEBOUNCE_MS:-2000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CACHE_DB_PATH: ${CACHE_DB_PATH:-/app/data/cache.db}
+      HISTORY_MAX_ENTRIES: ${HISTORY_MAX_ENTRIES:-200}
+      MEALIE_RECIPE_URL_TEMPLATE: ${MEALIE_RECIPE_URL_TEMPLATE:-}
+      DEV_SEED_HISTORY: ${DEV_SEED_HISTORY:-false}
+      CATALOG_ENABLED: ${CATALOG_ENABLED:-true}
       CATALOG_DB_PATH: ${CATALOG_DB_PATH:-/opt/bedca/catalogos.duckdb}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://postgres:5432/${POSTGRES_DB:-mealie_enricher}}
+      PGUSER: ${POSTGRES_USER:-mealie_enricher}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      HISTORY_RETENTION_DAYS: ${HISTORY_RETENTION_DAYS:-0}
+      DECISIONS_ENABLED: ${DECISIONS_ENABLED:-false}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      DECISIONS_API_KEY: ${DECISIONS_API_KEY:-}
+      DECISIONS_MODEL: ${DECISIONS_MODEL:-gpt-6-luna}
+      DECISIONS_MIN_CONFIDENCE: ${DECISIONS_MIN_CONFIDENCE:-0.9}
+      DECISIONS_TIMEOUT_SECONDS: ${DECISIONS_TIMEOUT_SECONDS:-20}
+      DECISIONS_MAX_CONCURRENCY: ${DECISIONS_MAX_CONCURRENCY:-2}
+      NOVA_ENABLED: ${NOVA_ENABLED:-false}
+      PRICING_ENABLED: ${PRICING_ENABLED:-false}
+      MERCADONA_POSTAL_CODE: ${MERCADONA_POSTAL_CODE:-27004}
+      PRICING_DATA_DIR: ${PRICING_DATA_DIR:-/app/data/supermarkets}
+      PRICING_SYNC_INTERVAL_HOURS: ${PRICING_SYNC_INTERVAL_HOURS:-168}
+      PRICING_AUTO_SYNC: ${PRICING_AUTO_SYNC:-true}
+      PRICING_REQUEST_DELAY_SECONDS: ${PRICING_REQUEST_DELAY_SECONDS:-2}
+      PRICING_MAX_PRODUCTS: ${PRICING_MAX_PRODUCTS:-10000}
+      PRICING_MAX_CANDIDATES: ${PRICING_MAX_CANDIDATES:-12}
+      PRICING_MAX_DECISIONS_PER_RUN: ${PRICING_MAX_DECISIONS_PER_RUN:-500}
+      PRICING_ADMIN_TOKEN: ${PRICING_ADMIN_TOKEN:-}
     ports:
       - "${PUBLISHED_PORT:-8000}:${PORT:-8000}"
     volumes:
       - estimator-cache:/app/data
       - estimator-catalogs:/app/catalogs:ro
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test:
         - CMD
@@ -25,6 +80,22 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mealie_enricher}
+      POSTGRES_USER: ${POSTGRES_USER:-mealie_enricher}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - estimator-postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
 
   catalog-import:
     image: ${MEALIE_ENRICHER_IMAGE:?Set MEALIE_ENRICHER_IMAGE in .env}
@@ -43,5 +114,6 @@ services:
       - ${BEDCA_INPUT_DIR:-./bedca}:/input:ro
 
 volumes:
+  estimator-postgres:
   estimator-cache:
   estimator-catalogs:

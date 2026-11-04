@@ -28,6 +28,7 @@ Edita al menos:
 MEALIE_ENRICHER_IMAGE=ghcr.io/brunofelixns/mealie-enricher:latest
 MEALIE_URL=https://tu-mealie.example.com
 MEALIE_API_TOKEN=tu-token-de-mealie
+POSTGRES_PASSWORD=elige-una-clave-privada-para-la-base
 ~~~
 
 Puedes utilizar exclusivamente tokens por hogar, siguiendo los comentarios de .env.example. Compose carga todas esas variables mediante env_file, sin necesidad de enumerar cada hogar en el YAML.
@@ -37,6 +38,14 @@ PUBLISHED_PORT es el puerto del servidor; PORT es el puerto dentro del contenedo
 MEALIE_URL debe ser accesible desde el contenedor: localhost apuntaría al propio contenedor. Usa la URL de tu servidor Mealie. Si ambos servicios se conectan por nombre de contenedor, deben compartir una red Docker.
 
 El fallback LLM queda deshabilitado inicialmente. Para activarlo, configura LLM_ENABLED=true, LLM_API_KEY y la URL/modelo de tu proveedor. Se conservan las mismas variables de la aplicación.
+
+PostgreSQL, NOVA y precios de supermercados requieren **1.3.0 o posterior**.
+La versión `1.2.0` incluye BEDCA sin estas ampliaciones. Actualiza conjuntamente
+la imagen y los archivos de despliegue; no uses este Compose con una imagen anterior.
+
+Al actualizar una instalación, incorpora las variables nuevas a tu `.env`
+conservando sus tokens, contraseña y valores propios. El antiguo
+`.env.bedca.example` también contiene la configuración completa para la misma imagen.
 
 ## 2. Descargar y arrancar
 
@@ -94,15 +103,38 @@ El tag o digest debe existir y corresponder a una imagen compatible con la arqui
 
 ## Datos y parada
 
-El volumen estimator-cache conserva /app/data/cache.db entre actualizaciones. Mantén CACHE_DB_PATH=/app/data/cache.db y el mismo nombre de proyecto Compose para reutilizarlo.
+El servicio `postgres` guarda la caché y el historial en el volumen
+`estimator-postgres`. No publica puertos en el servidor y el enriquecedor espera
+a que esté preparado. Mantén el nombre del proyecto Compose para reutilizarlo.
+La contraseña se pasa mediante `PGPASSWORD`, por separado de la URL, por lo que
+admite caracteres especiales sin codificarlos como URL.
 
 ~~~sh
 docker compose down
 ~~~
 
-Este comando conserva el volumen. La opción --volumes eliminaría la caché y no forma parte de la parada habitual.
+Este comando conserva los volúmenes. La opción `--volumes` eliminaría también la
+base PostgreSQL y no forma parte de la parada habitual.
 
-El historial y las tareas continúan en memoria y se pierden al reiniciar, igual que en la aplicación original. Ejecuta una sola instancia.
+El historial sobrevive a reinicios y no caduca por defecto.
+`HISTORY_RETENTION_DAYS=90` elimina ejecuciones terminadas tras 90 días; `0`
+conserva todo. `HISTORY_MAX_ENTRIES` determina el tamaño inicial de página, no
+el límite de filas guardadas. Puedes consultar páginas anteriores mediante
+`/estimator/history.json?limit=200&offset=200`; la interfaz muestra inicialmente
+la página más reciente.
+
+Las tareas y los bloqueos siguen en memoria: ejecuta una sola instancia.
+Las ejecuciones pendientes guardadas se marcan como interrumpidas al reiniciar,
+sin repetir automáticamente escrituras sobre Mealie.
+
+Al actualizar desde una instalación anterior, añade `POSTGRES_PASSWORD` y usa
+una imagen que contenga esta integración. Alembic actualiza las tablas al
+arrancar. El antiguo volumen SQLite se conserva; la caché no se copia a
+PostgreSQL y se vuelve a poblar al procesar recetas. El historial que antes
+estaba en memoria no se puede recuperar. Cambiar la clave en `.env` no modifica
+la contraseña de un rol PostgreSQL ya creado: hay que cambiarla también en la base.
+
+[Configuración, copias de seguridad y recuperación](../docs/19-postgresql.md).
 
 ## Catálogo BEDCA incluido
 
@@ -124,9 +156,39 @@ docker compose --profile catalog run --rm catalog-import
 Después activa `CATALOG_ENABLED=true`, configura
 `CATALOG_DB_PATH=/app/catalogs/catalogos.duckdb` en `.env` y arranca el servicio. El catálogo
 se guarda en `estimator-catalogs`; la aplicación lo monta en solo lectura y la
-caché continúa en `estimator-cache`. Para Decisions configura también
+caché y el historial continúan en PostgreSQL. Para Decisions configura también
 `DECISIONS_ENABLED=true` y `OPENAI_API_KEY`. El fallback LLM conserva su
 configuración independiente.
+
+Para añadir etiquetas NOVA estimadas, configura `NOVA_ENABLED=true` con esa
+misma clave y los límites `DECISIONS_*`. Funciona sin activar el selector de
+catálogo ni el fallback LLM. Se aplica cuando las recetas vuelven a procesarse;
+la nutrición existente se conserva si no ha cambiado su hash. Los resultados
+desconocidos se reutilizan hasta que cambie el contexto o se fuerce `/estimate`.
+[Criterio, fuentes y reintentos](../docs/18-clasificacion-nova.md).
+
+## Precios de Mercadona
+
+La función viene desactivada. Reutiliza la clave `OPENAI_API_KEY` o
+`DECISIONS_API_KEY` configurada y establece estos valores en `.env`, con un token
+de administración privado y aleatorio de al menos 16 caracteres:
+
+~~~dotenv
+PRICING_ENABLED=true
+MERCADONA_POSTAL_CODE=27004
+PRICING_SYNC_INTERVAL_HOURS=168
+PRICING_AUTO_SYNC=true
+PRICING_ADMIN_TOKEN=sustituye-por-tu-token-privado-aleatorio
+~~~
+
+El primer arranque descarga el catálogo completo; después se actualiza con el
+intervalo configurado. Los productos, versiones de precios y programación quedan
+en `/app/data/supermarkets`, dentro del volumen persistente `estimator-cache`,
+separados de BEDCA y PostgreSQL. Usa un único propietario de precios para ese
+directorio. El ejemplo permite ajustar pausas, límites de productos/candidatos y
+presupuesto de Decisions. Los controles `/pricing/status`, `/pricing/sync` y
+`/pricing/refresh` exigen `PRICING_ADMIN_TOKEN`, independiente de la clave OpenAI.
+[Costes, etiquetas exactas, controles y límites](../docs/20-precios-supermercados.md).
 
 [Instrucciones completas y actualización segura](../docs/11-catalogos-duckdb.md).
 

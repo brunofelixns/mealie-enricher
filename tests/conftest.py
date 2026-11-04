@@ -1,6 +1,12 @@
+import asyncio
+
 import pytest
 
 from mealie_enricher.storage.cache import SqliteCache
+
+
+def pytest_asyncio_loop_factories():
+    return {"selector": asyncio.SelectorEventLoop}
 
 
 @pytest.fixture

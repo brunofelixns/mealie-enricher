@@ -62,9 +62,16 @@ async def history_json(request: Request) -> LegacyJSONResponse:
         return LegacyJSONResponse(
             {"error": "since must be a timestamp in milliseconds"}, status_code=400
         )
-    return LegacyJSONResponse(
-        [
-            record.model_dump(by_alias=True)
-            for record in request.app.state.history.get_history(since)
-        ]
-    )
+    try:
+        limit_raw = request.query_params.get("limit")
+        limit = int(limit_raw) if limit_raw is not None else None
+        offset = int(request.query_params.get("offset", "0"))
+        if (limit is not None and not 1 <= limit <= 1000) or offset < 0:
+            raise ValueError
+    except ValueError:
+        return LegacyJSONResponse(
+            {"error": "limit must be 1..1000 and offset must be a non-negative integer"},
+            status_code=400,
+        )
+    records = await request.app.state.history.fetch_history(since, limit=limit, offset=offset)
+    return LegacyJSONResponse([record.model_dump(by_alias=True) for record in records])

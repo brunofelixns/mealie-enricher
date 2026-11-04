@@ -21,6 +21,11 @@ Si las kcal son desconocidas, se omite la etiqueta de calorías, igual que antes
 
 Los nombres se envían a Mealie, que devuelve sus identificadores y slugs. El servicio conserva esos valores de la API; no calcula los identificadores de las etiquetas.
 
+La familia opcional `NOVA:1` a `NOVA:4`, junto con `NOVA:Desconocida`, se activa
+con `NOVA_ENABLED=true`. Usa Decisions sobre el contexto de la receta y mantiene
+su propia huella de evidencia, sin deducir el procesamiento a partir de las
+calorías o la digestibilidad. [Clasificación NOVA y límites de interpretación](18-clasificacion-nova.md).
+
 ## Recetas que ya tenían etiquetas inglesas
 
 Cuando un webhook o un backfill vuelva a procesar una receta con el mismo hash, las etiquetas inglesas registradas en calorie_estimator_tags se consideran pendientes de actualizar. Se utilizan los nutrientes ya guardados para obtener las etiquetas españolas y se actualizan tags/extras, sin enviar nutrition ni consultar OFF/LLM por el cambio de idioma.
@@ -48,7 +53,16 @@ La vista muestra:
 - Filtros por origen y estado; actualización cada dos segundos.
 - Tema claro/oscuro y colores procedentes de Mealie.
 
-El JSON para consultar la misma actividad está en /estimator/history.json. El historial sigue en memoria: 200 entradas por defecto, TTL de 24 horas y pérdida al reiniciar. Su contenido es actividad del enriquecedor, no los logs completos del servidor Mealie.
+El JSON para consultar la misma actividad está en `/estimator/history.json`.
+Con `DATABASE_URL`, configurado por Compose, la actividad se guarda en PostgreSQL
+y sobrevive a reinicios. `HISTORY_MAX_ENTRIES=200` determina la página inicial;
+`limit` (1–1000) y `offset` permiten consultar páginas anteriores. `since` sigue
+filtrando por fecha de actualización en milisegundos. No hay caducidad por defecto;
+`HISTORY_RETENTION_DAYS` permite eliminar ejecuciones terminadas antiguas.
+Las pendientes se marcan como interrumpidas tras reiniciar, sin repetirlas.
+Sin `DATABASE_URL`, el historial heredado conserva 200 entradas en memoria con
+TTL de 24 horas. Su contenido es actividad del enriquecedor, no los logs completos
+del servidor Mealie. [Configuración y copias](19-postgresql.md).
 
 Para datos sintéticos de demostración puede utilizarse DEV_SEED_HISTORY=true; esos ejemplos se conservan como caracterización de la referencia.
 

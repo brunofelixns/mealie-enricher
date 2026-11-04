@@ -27,9 +27,11 @@ def test_deployment_imports_catalog_then_opens_it_read_only(tmp_path):
     values = {
         "MEALIE_ENRICHER_IMAGE": os.getenv("CATALOG_TEST_IMAGE", "mealie-enricher:local"),
         "MEALIE_API_TOKEN": "synthetic-not-used",
+        "POSTGRES_PASSWORD": "synthetic-catalog-test",
         "MEALIE_URL": "http://unused.invalid",
         "PUBLISHED_PORT": str(port),
         "CATALOG_ENABLED": "true",
+        "CATALOG_DB_PATH": "/app/catalogs/catalogos.duckdb",
         "DECISIONS_ENABLED": "false",
         "LLM_ENABLED": "false",
         "BEDCA_INPUT_DIR": source.as_posix(),

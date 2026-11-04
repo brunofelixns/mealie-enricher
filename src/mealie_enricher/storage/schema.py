@@ -35,3 +35,13 @@ catalog_resolution_cache = Table(
     Column("resolution", Text, nullable=False),
     Column("updated_at", BigInteger, nullable=False),
 )
+execution_history = Table(
+    "execution_history",
+    metadata,
+    Column("id", Text, primary_key=True),
+    Column("started_at", BigInteger, nullable=False, index=True),
+    Column("updated_at", BigInteger, nullable=False, index=True),
+    Column("slug", Text, nullable=False, index=True),
+    Column("status", Text, nullable=False, index=True),
+    Column("payload", Text, nullable=False),
+)

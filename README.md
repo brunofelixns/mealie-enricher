@@ -33,6 +33,12 @@
 
 Mealie Enricher runs alongside [Mealie](https://github.com/mealie-recipes/mealie). It receives recipe events, resolves ingredients, and writes estimated nutrition and automatic tags back to the recipe. A small web interface shows each run and its outcome.
 
+Optional supermarket pricing imports Mercadona into a separate local DuckDB
+catalog. It supports a configurable weekly sync, protected manual updates,
+Decisions product selection, exact cost-per-serving and purchase tags, and a
+product breakdown in recipe extras. Start with postal code `27004`; the feature
+is off by default. [Configuration and limitations, in Spanish](docs/20-precios-supermercados.md).
+
 It started as a Python migration of [mealie-calorie-estimator 1.12.3](https://github.com/timo-reymann/mealie-calorie-estimator/tree/c2dc71a1d8effe29375391f2fe50da94d27cfd7d), preserving its HTTP contracts and processing rules. The current release includes optional local **DuckDB/BEDCA catalogs** and **OpenAI Decisions** for ambiguous ingredient matches. The original Open Food Facts path remains available with `CATALOG_ENABLED=false`.
 
 | Feature | What you get |
@@ -40,9 +46,9 @@ It started as a Python migration of [mealie-calorie-estimator 1.12.3](https://gi
 | **Nutrition per serving** | Estimated calories, macronutrients and other available nutrients. |
 | **Automatic Spanish tags** | Calorie and digestibility categories visible in Mealie. |
 | **Optional AI** | Fallback for unresolved unit weights or nutrients; optional catalog match selection. |
-| **Local food catalogs** | Import your own BEDCA export into DuckDB; SQLite stays dedicated to caching. |
+| **Local food catalogs** | Included BEDCA catalog or your own DuckDB export, separate from runtime data. |
 | **Visible activity** | Recipe links, status, changes, duration, nutrients and errors. |
-| **Less repeated work** | Ingredient hashes, a SQLite cache and event grouping per recipe. |
+| **Persistent runtime data** | PostgreSQL cache and execution history, with SQLite compatibility. |
 
 ## Quick start
 
@@ -71,6 +77,7 @@ Edit these values in `.env`:
 MEALIE_ENRICHER_IMAGE=ghcr.io/brunofelixns/mealie-enricher:latest
 MEALIE_URL=https://your-mealie.example.com
 MEALIE_API_TOKEN=your-mealie-api-token
+POSTGRES_PASSWORD=choose-a-private-database-password
 LLM_ENABLED=false
 ~~~
 
@@ -97,7 +104,15 @@ The web interface at `/estimator/history` lets you:
 - Filter by event source and state.
 - Receive updates every **two seconds**, with light and dark themes.
 
-History defaults to **200 entries**, expires after **24 hours** and is lost when the process restarts. Use `DEV_SEED_HISTORY=true` only for synthetic development activity. The banner above is an illustration, not a screenshot.
+Compose now includes PostgreSQL for the cache and execution history. History survives
+application restarts and has no retention deadline by default. `HISTORY_MAX_ENTRIES=200`
+controls the default page size, not the number of stored rows. Set
+`HISTORY_RETENTION_DAYS` to a positive number for automatic cleanup of completed
+executions. The JSON endpoint supports `since`, `limit` (1–1000) and `offset`.
+Unfinished executions become interrupted errors after restart; they are not automatically retried.
+Without `DATABASE_URL`, source deployments retain the legacy SQLite cache and
+memory-only history (200 entries, 24 hours). Use `DEV_SEED_HISTORY=true` only for
+synthetic development activity. [PostgreSQL and backups, in Spanish](docs/19-postgresql.md).
 
 ## Automatic tags
 
@@ -111,6 +126,15 @@ The application currently writes automatic tags in **Spanish**, regardless of th
 | Above 850 kcal | **Calorías:Muy altas** |
 
 Digestibility tags are `Digestión:Fácil`, `Digestión:Moderada`, `Digestión:Lenta` and `Digestión:Desconocida`, following the original rules. Legacy English tags are replaced when a recipe is processed again. If its ingredient hash has not changed, existing nutrition is reused and only tags and related extras are updated.
+
+Enable `NOVA_ENABLED=true` to add an estimated processing tag, `NOVA:1` through
+`NOVA:4`, using OpenAI Decisions. It reuses `DECISIONS_API_KEY` or `OPENAI_API_KEY`
+and the `DECISIONS_*` model, confidence and request limits; catalog match selection
+and the fallback LLM can remain disabled. Missing evidence, low confidence or
+provider failures produce `NOVA:Desconocida`. This is an application estimate for
+the recipe's ingredients, not an official NOVA rating of a mixed dish. Ordinary
+home cooking with oil, salt or sugar does not itself raise the processing group.
+[Recipe policy, sources and retry behavior](docs/18-clasificacion-nova.md).
 
 [Tags and history, in Spanish](docs/09-etiquetas-y-vista-web.md).
 
@@ -144,11 +168,15 @@ aliases point to this same image for compatibility. Historical tags through
 
 For a custom catalog, use the optional importer and explicitly set
 `CATALOG_DB_PATH=/app/catalogs/catalogos.duckdb`; its volume is mounted read-only.
-SQLite uses a separate writable volume. [Custom catalog preparation, in Spanish](docs/11-catalogos-duckdb.md).
+Runtime cache and history use PostgreSQL in Compose. [Custom catalog preparation, in Spanish](docs/11-catalogos-duckdb.md).
 
 ## Configuration
 
-The deployment [.env.example](docker/.env.example) lists available settings. The [root example](.env.example) supports development and building from source.
+The deployment [.env.example](docker/.env.example) lists available settings. The
+[root example](.env.example) targets the development Compose and source image
+build, including the bundled BEDCA path. For a bare Python process, use host
+paths such as `CACHE_DB_PATH=data/cache.db` and `PRICING_DATA_DIR=data/supermarkets`;
+disable the catalog or point `CATALOG_DB_PATH` to a prepared host DuckDB file.
 
 | Variable | Purpose |
 |---|---|
@@ -159,10 +187,14 @@ The deployment [.env.example](docker/.env.example) lists available settings. The
 | `LLM_API_KEY` / `LLM_MODEL` | Fallback provider credentials and model. |
 | `CATALOG_ENABLED` / `CATALOG_DB_PATH` | Enable a prepared local DuckDB catalog. |
 | `DECISIONS_ENABLED` | Enable optional selection of ambiguous catalog matches. |
+| `NOVA_ENABLED` | Enable optional NOVA recipe tags through Decisions, independently of catalog matching. |
 | `DECISIONS_API_KEY` / `OPENAI_API_KEY` | Decisions credentials; the former takes precedence. |
 | `ESTIMATE_STRATEGY` / `ESTIMATE_TAG` | Process all recipes or only those carrying a selected tag. |
 | `OFF_LANGUAGE` | Open Food Facts search language. |
-| `CACHE_DB_PATH` | SQLite cache; keep `/app/data/cache.db` in Docker. |
+| `DATABASE_URL` | SQLAlchemy PostgreSQL URL; Compose sets an internal URL automatically. |
+| `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | Bundled PostgreSQL database and credentials. |
+| `HISTORY_RETENTION_DAYS` | Completed history retention; `0` keeps all rows. |
+| `CACHE_DB_PATH` | Legacy SQLite cache path when `DATABASE_URL` is empty. |
 | `PORT` / `PUBLISHED_PORT` | Container and host port in the deployment Compose. |
 
 Code defaults retain Mistral and German OFF search from the original application. The Compose examples use an OpenAI-compatible endpoint and English OFF search. Configure your provider and language explicitly. The Agents SDK adapter does not require changing providers.
@@ -235,7 +267,8 @@ For a local Docker build, first prepare the three verified BEDCA CSVs in
 `data/bedca` following the [build preparation guide](docs/15-imagen-con-bedca.md#construcción-para-mantenedores).
 They are external build inputs, including when catalog use is disabled at runtime.
 Then use `docker compose up -d --build calorie-estimator` from the repository root.
-Run **one application process**: its queue, rate limiters and history are in memory.
+Run **one application process**: its queue, recipe locks and rate limiters are in memory.
+For source-only PostgreSQL development, set `DATABASE_URL` to your database's URL.
 
 ### Checks
 
@@ -253,7 +286,7 @@ Ordinary tests use synthetic data and mocked transports. Docker integration and 
 - Nutrition and digestibility values are estimates. The legacy OFF path uses the first match and retains approximations such as ml=g.
 - Missing nutrients and LLM-parsed zeros retain legacy behavior outside the catalog path.
 - Webhooks and backfill preserve manually entered calories; `POST /estimate` forces recalculation.
-- Pending tasks and history do not survive a restart. Run a single instance.
+- Pending tasks do not survive a restart. PostgreSQL history records interrupted work; run a single instance.
 - HTTP routes retain upstream access behavior and do not add authentication. Deploy on a trusted network or behind your authenticated reverse proxy.
 - Included BEDCA data retain their own non-commercial terms. Real-provider success is distinct from mocked tests.
 

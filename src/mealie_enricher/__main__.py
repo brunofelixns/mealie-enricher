@@ -1,3 +1,5 @@
+import sys
+
 import uvicorn
 
 from .app import create_app
@@ -14,6 +16,11 @@ def main() -> None:
         port=int(settings.port),
         workers=1,
         log_config=None,
+        loop=(
+            "mealie_enricher.runtime.event_loop:selector_loop_factory"
+            if sys.platform == "win32" and settings.database_url.startswith("postgres")
+            else "auto"
+        ),
     )
 
 
