@@ -16,9 +16,11 @@ from ..clients.mealie import MealieClient, get_recipe_household_id
 from ..config import Settings
 from ..models import MealieRecipe, MealieRecipePatch
 from ..runtime.slug_queue import SlugQueue
+from ..services.ingredient_recovery import recover_ingredient
 from .costs import calculate_costs
 from .mercadona import MercadonaClient
 from .models import Product, Snapshot
+from .progress import PricingProgress
 from .selection import ProductSelector
 from .state import PricingOwner, PricingState
 from .store import CatalogStore
@@ -29,6 +31,10 @@ PRICING_EXTRA = "mealie_enricher_pricing"
 
 class PricingDeferred(RuntimeError):
     """A later bounded batch must finish this valuation."""
+
+
+class PricingCatalogUnavailable(PricingDeferred):
+    """Recipe pricing must wait for a complete catalog instead of erasing old prices."""
 
 
 def _recipe_input(recipe: MealieRecipe) -> dict[str, Any]:
@@ -88,11 +94,14 @@ class PricingService:
         self.owner = PricingOwner(self.config.data_dir)
         try:
             self.state = PricingState(self.config.data_dir)
+            self.state.data.setdefault("pending_sync", False)
+            self.progress = PricingProgress(self.state)
             self.store = CatalogStore(self.config.data_dir)
             self.source = MercadonaClient(
                 http,
                 delay_seconds=self.config.request_delay_seconds,
                 max_products=self.config.max_products,
+                on_progress=self.progress.update,
             )
             self.selector = selector or ProductSelector(
                 settings.decisions.model_copy(update={"enabled": True})
@@ -116,6 +125,10 @@ class PricingService:
                 )
                 if self.state.data.get("valued_fingerprint") != active.fingerprint:
                     self.state.data["pending_refresh"] = True
+            else:
+                self.state.data.update(
+                    fingerprint=None, warehouse=None, product_count=0, observed_at=None
+                )
             self.state.save()
         except BaseException:
             self.owner.close()
@@ -136,14 +149,18 @@ class PricingService:
             if self._job is None or self._job.done():
                 if now >= self.state.data["next_run"]:
                     self.trigger("scheduled")
-                elif self.state.data["pending_refresh"] and now >= self.state.data.get(
-                    "refresh_retry_at", 0
-                ):
-                    self.trigger("refresh")
+                elif (
+                    self.state.data["pending_refresh"] or self.state.data["pending_sync"]
+                ) and now >= self.state.data.get("refresh_retry_at", 0):
+                    self.trigger(
+                        "retry"
+                        if self.state.data["pending_sync"] or not self.state.data.get("fingerprint")
+                        else "refresh"
+                    )
             await asyncio.sleep(10)
 
     def trigger(self, kind: str, *, force: bool = False) -> bool:
-        if self._job_lock.locked() or (self._job is not None and not self._job.done()):
+        if self.is_busy():
             return False
         self._job = asyncio.create_task(
             self.refresh(force=force)
@@ -152,14 +169,33 @@ class PricingService:
         )
         return True
 
+    def is_busy(self) -> bool:
+        return self._job_lock.locked() or (self._job is not None and not self._job.done())
+
+    async def _active_catalog(self) -> Snapshot | None:
+        async with self._catalog_lock:
+            return await asyncio.to_thread(self.store.load, "mercadona", self.config.postal_code)
+
+    async def catalog_available(self) -> bool:
+        return await self._active_catalog() is not None
+
     async def sync(self, *, manual: bool = True) -> None:
         async with self._job_lock:
-            self.state.data.update(running=True, phase="downloading", last_attempt=time.time())
+            self.state.data.update(
+                running=True,
+                phase="downloading",
+                last_attempt=time.time(),
+                last_error=None,
+                last_error_detail=None,
+                pending_sync=True,
+            )
+            self.progress.begin("selecting_postal_code")
             if not manual:
                 self.state.data["next_run"] = time.time() + self.config.sync_interval_hours * 3600
             self.state.save()
             try:
                 snapshot = await self.source.download(self.config.postal_code)
+                self.progress.update("publishing", 0, None)
                 # Persist intent before the manifest can become active, including crash windows.
                 self.state.data["pending_refresh"] = True
                 self.state.save()
@@ -167,63 +203,127 @@ class PricingService:
                 self.state.data.update(
                     last_success=time.time(),
                     last_error=None,
+                    last_error_detail=None,
                     fingerprint=fingerprint,
                     warehouse=snapshot.warehouse,
                     product_count=len(snapshot.products),
                     observed_at=snapshot.observed_at,
                     pending_refresh=True,
+                    pending_sync=False,
                 )
                 self.state.save()
                 await self._refresh_all()
             except asyncio.CancelledError:
                 self.state.data.update(phase="interrupted", last_error="interrupted")
+                self.state.data["refresh_retry_at"] = time.time() + 300
                 raise
             except Exception as error:
-                self.state.data.update(phase="error", last_error=type(error).__name__)
-                logger.warning("Pricing sync failed type=%s", type(error).__name__)
+                self._record_error("sync", error)
             finally:
                 self.state.data["running"] = False
+                self.progress.finish()
                 self.state.save()
 
     async def refresh(self, *, force: bool = False) -> None:
         async with self._job_lock:
-            self.state.data.update(running=True, pending_refresh=True)
+            self.state.data.update(
+                running=True, pending_refresh=True, last_error=None, last_error_detail=None
+            )
+            self.progress.begin("refreshing")
             self.state.save()
             try:
                 await self._refresh_all(force=force)
+            except PricingCatalogUnavailable as error:
+                self._record_error("refresh", error)
+                self.state.data.update(phase="waiting_catalog", pending_sync=True)
+                self.progress.update("waiting_catalog", 0, None)
             except asyncio.CancelledError:
                 self.state.data.update(phase="interrupted", last_error="interrupted")
                 raise
             except Exception as error:
-                self.state.data.update(phase="error", last_error=type(error).__name__)
-                logger.warning("Pricing refresh failed type=%s", type(error).__name__)
+                self._record_error("refresh", error)
             finally:
                 self.state.data["running"] = False
+                self.progress.finish()
                 self.state.save()
 
+    def _record_error(self, operation: str, error: Exception) -> None:
+        detail = str(error)
+        for secret in (
+            self.config.admin_token,
+            self.settings.decisions.api_key,
+            self.settings.mealie.api_token,
+            *self.settings.token_overrides.values(),
+        ):
+            if secret:
+                detail = detail.replace(secret, "[redacted]")
+        detail = detail[:500]
+        self.state.data.update(
+            phase="error",
+            last_error=type(error).__name__,
+            last_error_detail=detail,
+            pending_refresh=True,
+            refresh_retry_at=time.time() + 300,
+        )
+        logger.warning(
+            "Pricing %s failed type=%s detail=%s", operation, type(error).__name__, detail
+        )
+
     async def _refresh_all(self, *, force: bool = False) -> None:
+        active_catalog = await self._active_catalog()
+        if active_catalog is None:
+            raise PricingCatalogUnavailable(
+                "Mercadona catalog unavailable; download the catalog first"
+            )
+        self.state.data.update(
+            fingerprint=active_catalog.fingerprint,
+            warehouse=active_catalog.warehouse,
+            product_count=len(active_catalog.products),
+            observed_at=active_catalog.observed_at,
+        )
+        if force:
+            # Invalidate once so bounded retries reuse new choices and revisit the rest.
+            self.state.data["selections"].clear()
+            self.state.save()
         generation = self.state.data.get("refresh_generation", 0)
         self.state.data["phase"] = "refreshing"
+        self.progress.update_recipes(0, 0, None)
         self.state.save()
-        processed = failed = 0
+        processed = failed = priced = incomplete = 0
         budget = [self.config.max_decisions_per_run]
         scopes: list[str | None] = [None] if self.settings.mealie.api_token else []
         scopes.extend(
             key.removeprefix("MEALIE_API_TOKEN_") for key in self.settings.token_overrides
         )
-        for scope in scopes:
-            slugs = await self.mealie.get_all_recipes(household_id=scope)
+        groups = [
+            (scope, await self.mealie.get_all_recipes(household_id=scope)) for scope in scopes
+        ]
+        total = sum(len(slugs) for _, slugs in groups)
+        self.progress.update_recipes(0, 0, total)
+        for scope, slugs in groups:
             for slug in slugs:
+                outcome: dict[str, Any] | None = None
 
                 async def price_recipe(slug: str = slug, scope: str | None = scope) -> None:
-                    await self.process_slug(slug, scope, force=force, budget=budget)
+                    nonlocal outcome
+                    self.progress.update_recipes(
+                        processed, failed, total, slug, priced=priced, incomplete=incomplete
+                    )
+                    outcome = await self.process_slug(slug, scope, budget=budget)
 
                 try:
                     await self.queue.run_now(slug, price_recipe)
                     processed += 1
+                    if outcome is not None and outcome.get("complete"):
+                        priced += 1
+                    else:
+                        incomplete += 1
                 except Exception as error:
                     failed += 1
                     logger.warning("Recipe pricing failed type=%s", type(error).__name__)
+                self.progress.update_recipes(
+                    processed, failed, total, slug, priced=priced, incomplete=incomplete
+                )
         pending = bool(failed) or self.state.data.get("refresh_generation", 0) != generation
         self.state.data.update(
             phase="partial" if pending else "idle",
@@ -263,6 +363,18 @@ class PricingService:
                     or ingredient.original_text
                     or ingredient.display
                 )
+                if not ingredient.food or not ingredient.food.name.strip():
+                    search_view = ingredient.model_copy(
+                        update={"original_text": ingredient.original_text or ingredient.display}
+                    )
+                    recovered = recover_ingredient(search_view)
+                    if (
+                        recovered is not None
+                        and recovered.ingredient.food is not None
+                        and recovered.pending_reason
+                        in {None, "quantity_missing", "package_weight_unknown"}
+                    ):
+                        name = recovered.ingredient.food.name
                 candidates = (
                     await asyncio.to_thread(
                         self.store.search,
@@ -290,12 +402,12 @@ class PricingService:
         *,
         force: bool = False,
         budget: list[int] | None = None,
-    ) -> None:
+    ) -> dict[str, Any] | None:
         if self._closed:
-            return
+            return None
         try:
             recipe = await self.mealie.get_recipe(slug, household_id)
-            await self.process_recipe(recipe, force=force, budget=budget)
+            return await self.process_recipe(recipe, force=force, budget=budget)
         except Exception, asyncio.CancelledError:
             retry_at = time.time() + 300
             if self.state.data["pending_refresh"]:
@@ -310,8 +422,12 @@ class PricingService:
 
     async def process_recipe(
         self, recipe: MealieRecipe, *, force: bool = False, budget: list[int] | None = None
-    ) -> None:
+    ) -> dict[str, Any]:
         snapshot, catalog_inputs = await self._catalog_inputs(recipe)
+        if snapshot is None:
+            raise PricingCatalogUnavailable(
+                "Mercadona catalog unavailable; recipe pricing deferred"
+            )
         selections: list[Product | None] = []
         decision_details: list[dict[str, Any]] = []
         budget = budget if budget is not None else [self.config.max_decisions_per_run]
@@ -400,7 +516,7 @@ class PricingService:
         } == result and existing_names == set(names):
             if deferred:
                 raise PricingDeferred("Decisions budget exhausted")
-            return
+            return result
         tags = (
             await self.mealie.get_or_create_tags(names, get_recipe_household_id(recipe))
             if names
@@ -433,6 +549,7 @@ class PricingService:
             raise RuntimeError("Pricing write verification failed")
         if deferred:
             raise PricingDeferred("Decisions budget exhausted")
+        return result
 
     @staticmethod
     def _money(value: str) -> str:
@@ -446,6 +563,18 @@ class PricingService:
             "sync_interval_hours": self.config.sync_interval_hours,
             "auto_sync": self.config.auto_sync,
             **{key: value for key, value in self.state.data.items() if key != "selections"},
+            "progress": self.progress_status(),
+        }
+
+    def progress_status(self) -> dict[str, Any]:
+        return {
+            **self.progress.snapshot(),
+            "running": self.state.data["running"],
+            "phase": self.state.data["phase"],
+            "postal_code": self.config.postal_code,
+            "catalog_ready": bool(self.state.data.get("fingerprint")),
+            "last_error": self.state.data.get("last_error"),
+            "last_error_detail": self.state.data.get("last_error_detail"),
         }
 
     async def close(self) -> None:

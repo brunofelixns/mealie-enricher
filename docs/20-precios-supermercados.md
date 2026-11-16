@@ -54,7 +54,8 @@ y exige adquirir sus datos.
 ## Actualización y controles manuales
 
 Los controles HTTP requieren `Authorization: Bearer <PRICING_ADMIN_TOKEN>` y
-rechazan peticiones con cabecera `Origin`. No heredan el CORS abierto de las
+permiten peticiones del mismo origen y rechazan otros valores de `Origin`.
+No heredan el CORS abierto de las
 rutas heredadas. Usa un cliente HTTP de confianza o PowerShell, con el token
 guardado en una variable de entorno, sin imprimirlo:
 
@@ -71,9 +72,25 @@ Invoke-RestMethod -Method Post -Uri 'http://localhost:8000/pricing/sync' -Header
 - `POST /pricing/refresh`: revisar recetas usando el catálogo local sin volver a
   descargarlo. Añadir `?force=true` fuerza nuevas decisiones en los casos que
   requieren el selector, dentro del presupuesto configurado.
+- `POST /pricing/recipes/refresh`: forzar la revisión de todas las recetas con
+  el catálogo guardado y nuevas selecciones cuando sean necesarias. Devuelve
+  `409` si no hay catálogo y `202 running` si ya hay una operación activa.
+
+La revisión forzada invalida una vez las selecciones guardadas. Si agota el
+presupuesto, los reintentos reutilizan las decisiones nuevas y continúan con las
+pendientes; no recuperan selecciones anteriores para dar el trabajo por terminado.
 
 El `202` confirma la solicitud, no la terminación. Consulta el estado posterior.
 `PRICING_AUTO_SYNC=false` permite operar únicamente mediante estos controles.
+
+El panel incluye **Forzar actualización de recetas** y una sección de progreso
+de recetas en `/estimator/history`. `GET /pricing/progress` expone `recipes` con
+`running`, `completed`, `succeeded`, `failed`, `total`, `current`, `priced`,
+`incomplete`, `started_at` y `finished_at`. `succeeded` cuenta revisiones sin
+fallo técnico; `priced` cuenta resultados con coste completo. Los resultados
+sin cantidades o productos compatibles se cuentan como `incomplete` aunque la
+revisión haya terminado correctamente. Estos contadores describen el último
+lote de precios, no todas las operaciones individuales del historial.
 
 Cada adquisición utiliza una sesión aislada, resuelve el código postal y fija
 su almacén en las consultas de categorías y productos. Las respuestas inválidas,
@@ -88,6 +105,13 @@ un solo proceso activo con esta función en ese directorio. No es un bloqueo
 distribuido para un volumen de red entre distintos sistemas operativos.
 
 ## Selección de productos
+
+Cuando falta el alimento estructurado, la búsqueda reutiliza el parser de
+ingredientes para separar el alimento de cantidades y medidas explícitas de
+`originalText` o `display`: «Media taza de quinoa» puede buscar «quinoa».
+Esto solo prepara la consulta; no sustituye los ingredientes de Mealie ni
+rellena cantidades para calcular precios. Las conversiones no acreditadas
+siguen pendientes y el selector recibe el contexto original completo.
 
 La búsqueda normaliza nombres y consulta tokens en DuckDB. Una coincidencia
 única de nombre exacto se resuelve localmente; las demás listas admisibles se
@@ -146,6 +170,47 @@ registrado como propias. Se conservan las etiquetas personales y los extras
 ajenos; no se borran etiquetas globales compartidas. Las etiquetas de importes
 distintos pueden acumularse en el organizador global de Mealie.
 
+## Panel web y progreso
+
+La vista `/estimator/history` incluye ahora un panel de operaciones. Desde ella
+se puede consultar el servicio y el historial JSON (con `since`, `limit` y
+`offset`), procesar una receta mediante estimación o evento, y lanzar un lote.
+El lote requiere confirmación y queda bloqueado después de su aceptación hasta
+que se prepare expresamente otro; su terminación se comprueba en el historial.
+
+Para los controles de Mercadona, introduce `PRICING_ADMIN_TOKEN` y pulsa
+**Conectar**. El token se mantiene solo en memoria de la página: no se inserta en
+el HTML ni se conserva en almacenamiento del navegador. **Desconectar** descarta
+el token e ignora respuestas de consultas anteriores. El panel permite descargar
+el catálogo, recalcular con el catálogo local y forzar nuevas selecciones mediante
+la casilla correspondiente. Las operaciones activas bloquean los botones de envío.
+
+`GET /pricing/progress`, con la misma autenticación que `/pricing/status`, informa
+de `running`, `phase`, `stage`, `completed`, `total`, `percent`, `elapsed_seconds`,
+`eta_seconds`, `last_activity_at`, `seconds_since_activity`, `catalog_ready` y los
+errores registrados. `current` identifica el producto, categoría o receta del
+último avance. Los tiempos absolutos son segundos Unix y los contadores son
+peticiones completadas, no peticiones iniciadas. El tiempo restante es una
+estimación de la fase actual, no de todo el trabajo posterior.
+
+Los totales desconocidos y su porcentaje son `null`; la vista utiliza progreso
+indeterminado. Las fases distinguen selección postal, categorías, productos,
+publicación y revisión de recetas. También se conservan `downloaded_products` y
+`total_products` al pasar a la revisión. El panel consulta el progreso cada 2,5
+segundos mientras está conectado y avisa si no se puede renovar la información.
+
+El catálogo sigue publicándose de forma atómica al terminar. Durante la descarga
+se acumulan productos en memoria y `state.json` conserva checkpoints de progreso;
+estos checkpoints no permiten reanudar productos tras un reinicio. Los logs
+incluyen progreso al cambiar de fase, al completar el primer y último elemento y
+aproximadamente cada 30 segundos. Una interrupción conserva los últimos contadores
+y se presenta como interrumpida. `last_error_detail` aporta un mensaje acotado con
+los tokens configurados ocultos, además del tipo de error que ya existía.
+
+Las pruebas del cliente se ejecutan sin navegador ni dependencias adicionales:
+`node --test tests/ui/*.test.mjs`. La comprobación visual completa sigue siendo
+necesaria en el entorno de despliegue.
+
 ## Datos pendientes y fallos
 
 Los importes incompletos son `null` y no reciben una etiqueta numérica de total
@@ -158,6 +223,18 @@ activación del catálogo y la revisión de recetas se registran por separado;
 `partial` indica fallos de revisión que se pueden reintentar. Una operación
 interrumpida se reconoce al reiniciar. Los errores de precios no bloquean el
 flujo nutricional y tener calorías manuales no excluye valorar la compra.
+
+Sin catálogo, la valoración se difiere y conserva los precios previos de la
+receta. Los fallos de adquisición mantienen `pending_sync=true` y programan
+un reintento a los cinco minutos cuando la programación automática está activa;
+no esperan una semana ni intentan valorar un catálogo vacío. Una vez publicado
+el catálogo, los fallos del lote reintentan la revisión con ese catálogo.
+
+Mercadona se ejecuta tras el procesamiento de `/webhook`, `/estimate` y
+`/backfill`, incluso cuando la nutrición se filtra, ya estaba calculada o es
+manual. La descarga también inicia una revisión de recetas al publicar el
+catálogo. La selección de productos y las cantidades disponibles determinan
+si esa revisión obtiene un precio completo.
 
 La nutrición, los ingredientes y las instrucciones no se sustituyen por los de
 un producto seleccionado. Los cambios de precio tienen invalidación propia y

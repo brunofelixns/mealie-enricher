@@ -1,0 +1,105 @@
+<section id="operations" aria-labelledby="operations-title">
+  <h2 id="operations-title">Operaciones</h2>
+  <p class="op-muted">Consulta el servicio y procesa recetas desde esta página. Los trabajos continúan en segundo plano.</p>
+
+  <section class="op-section" id="pricing-panel" data-enabled="{{ pricing_enabled | lower }}" aria-labelledby="pricing-title">
+    <div class="op-heading">
+      <h3 id="pricing-title">Catálogo y precios de Mercadona</h3>
+      <span id="pricing-connection" class="op-muted" role="status">Sin conectar</span>
+    </div>
+    {% if not pricing_enabled %}
+    <p class="op-notice">Los precios están desactivados en este servicio. Actívalos en su configuración para utilizar estos controles.</p>
+    {% endif %}
+    <form id="pricing-connect-form" data-endpoint="/pricing/status" class="op-inline">
+      <div class="op-field op-token-field">
+        <label for="pricing-token">Token administrativo de precios</label>
+        <input id="pricing-token" type="password" minlength="16" required autocomplete="off" spellcheck="false" aria-describedby="pricing-token-help" {% if not pricing_enabled %}disabled{% endif %}>
+      </div>
+      <button type="submit" {% if not pricing_enabled %}disabled{% endif %}>Conectar</button>
+      <button type="button" id="pricing-disconnect" hidden>Desconectar</button>
+    </form>
+    <p id="pricing-token-help" class="op-muted">El token se usa solo mientras esta página está abierta. No se guarda en el navegador.</p>
+    <div id="pricing-live" hidden>
+      <div class="op-heading">
+        <strong id="pricing-stage">Esperando estado</strong>
+        <span id="pricing-counter"></span>
+      </div>
+      <progress id="pricing-progress" max="100" aria-label="Progreso de la operación de Mercadona" data-endpoint="/pricing/progress"></progress>
+      <p id="pricing-activity" class="op-muted" role="status" aria-live="polite"></p>
+      <dl class="op-facts">
+        <div><dt>Código postal</dt><dd id="pricing-postal">—</dd></div>
+        <div><dt>Catálogo activo</dt><dd id="pricing-catalog">—</dd></div>
+        <div><dt>Tiempo transcurrido</dt><dd id="pricing-elapsed">—</dd></div>
+        <div><dt>Tiempo restante estimado</dt><dd id="pricing-eta">—</dd></div>
+        <div><dt>Última descarga completa</dt><dd id="pricing-success">—</dd></div>
+        <div><dt>Próxima descarga programada</dt><dd id="pricing-next">—</dd></div>
+      </dl>
+      <p id="pricing-error" class="op-error" role="alert" hidden></p>
+      <section id="pricing-recipes" aria-labelledby="pricing-recipes-title" hidden>
+        <h4 id="pricing-recipes-title">Actualización de recetas con Mercadona</h4>
+        <p id="pricing-recipes-state" role="status" aria-live="polite"></p>
+        <progress id="pricing-recipes-progress" max="100" aria-label="Progreso de revisión de recetas"></progress>
+        <p id="pricing-recipes-count"></p>
+        <p id="pricing-recipes-prices"></p>
+        <p id="pricing-recipe-current" class="op-muted"></p>
+      </section>
+      <div class="op-inline op-actions">
+        <button type="button" data-pricing-action="sync" data-endpoint="/pricing/sync">Descargar catálogo</button>
+        <button type="button" data-pricing-action="refresh" data-endpoint="/pricing/refresh">Recalcular precios</button>
+        <button type="button" data-pricing-action="recipes" data-endpoint="/pricing/recipes/refresh">Forzar actualización de recetas</button>
+        <label class="op-check"><input type="checkbox" id="pricing-force">Forzar nueva selección de productos</label>
+        <button type="button" id="pricing-inspect" class="op-secondary" data-endpoint="/pricing/status">Ver estado completo</button>
+      </div>
+      <p class="op-muted">La descarga actualiza después los precios de las recetas. Recalcular utiliza el catálogo que ya está guardado.</p>
+      <p class="op-muted">Forzar actualización revisa todas las recetas con el catálogo guardado y solicita nuevas selecciones cuando sean necesarias. Los casos sin cantidades o productos compatibles permanecen pendientes.</p>
+    </div>
+  </section>
+
+  <div class="op-columns">
+    <section class="op-section" aria-labelledby="recipe-actions-title">
+      <h3 id="recipe-actions-title">Procesar recetas</h3>
+      <form id="recipe-action-form" data-endpoint="/estimate">
+        <div class="op-field">
+          <label for="recipe-slug">Identificador de la receta (slug)</label>
+          <input id="recipe-slug" required maxlength="512" placeholder="arroz-con-pollo" autocomplete="off">
+        </div>
+        <div class="op-field">
+          <label for="recipe-action">Operación</label>
+          <select id="recipe-action">
+            <option value="estimate" data-endpoint="/estimate">Solicitar estimación</option>
+            <option value="webhook" data-endpoint="/webhook">Procesar como evento de receta</option>
+          </select>
+        </div>
+        <button type="submit">Procesar receta</button>
+      </form>
+      <form id="backfill-form" data-endpoint="/backfill" class="op-batch">
+        <p>El procesamiento en lote aplica los criterios configurados a todas las recetas disponibles.</p>
+        <label class="op-check"><input type="checkbox" id="backfill-confirm" required>Quiero iniciar el procesamiento en lote</label>
+        <button type="submit" class="op-secondary">Procesar en lote</button>
+        <button type="button" id="backfill-rearm" class="op-secondary" hidden>Preparar otro lote</button>
+      </form>
+    </section>
+    <section class="op-section" aria-labelledby="queries-title">
+      <h3 id="queries-title">Consultas</h3>
+      <form id="health-form" data-endpoint="/health">
+        <button type="submit" class="op-secondary">Comprobar servicio</button>
+      </form>
+      <form id="history-query-form" data-endpoint="/estimator/history.json" class="op-batch">
+        <div class="op-field">
+          <label for="history-since">Actualizaciones desde (opcional)</label>
+          <input id="history-since" type="datetime-local" step="1">
+        </div>
+        <div class="op-inline">
+          <div class="op-field"><label for="history-limit">Resultados</label><input id="history-limit" type="number" min="1" max="1000" value="100" required></div>
+          <div class="op-field"><label for="history-offset">Omitir primeros</label><input id="history-offset" type="number" min="0" value="0" required></div>
+        </div>
+        <button type="submit" class="op-secondary">Consultar historial JSON</button>
+      </form>
+    </section>
+  </div>
+  <section id="operation-result" class="op-result" aria-labelledby="operation-result-title" hidden>
+    <h3 id="operation-result-title">Resultado de la operación</h3>
+    <p id="operation-message" role="status" aria-live="polite"></p>
+    <details><summary>Ver respuesta completa</summary><pre id="operation-json"></pre></details>
+  </section>
+</section>
