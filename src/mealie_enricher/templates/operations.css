@@ -34,6 +34,9 @@
   .op-batch .op-check { margin-bottom: 12px; }
   #pricing-live { margin-top: 24px; }
   #pricing-progress { width: 100%; height: 14px; margin: 12px 0 0; accent-color: var(--primary); }
+  #pricing-recipes { margin: 24px 0; padding: 16px 0; border-top: 1px solid rgba(var(--border-base), .16); }
+  #pricing-recipes h4 { font-size: 15px; margin: 0 0 8px; }
+  #pricing-recipes-progress { width: 100%; height: 12px; accent-color: var(--primary); }
   #pricing-counter, .op-facts dd { font-variant-numeric: tabular-nums; }
   .op-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 24px; margin: 24px 0; }
   .op-facts dd { margin: 4px 0 0; overflow-wrap: anywhere; }

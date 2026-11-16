@@ -14,7 +14,10 @@ class PricingProgress:
         self.state = state
         self._saved_at = self._logged_at = 0.0
         if state.data.get("phase") == "interrupted" and state.data.get("progress"):
-            state.data["progress"].setdefault("finished_at", time.time())
+            data = state.data["progress"]
+            data.setdefault("finished_at", time.time())
+            if data.get("recipes"):
+                data["recipes"].update(running=False, finished_at=data["finished_at"])
 
     def begin(self, stage: str) -> None:
         self.state.data["progress"] = {"started_at": time.time()}
@@ -53,7 +56,33 @@ class PricingProgress:
         data = self.state.data.get("progress")
         if data:
             data["finished_at"] = time.time()
+            if data.get("recipes"):
+                data["recipes"].update(running=False, finished_at=data["finished_at"])
             self.state.save()
+
+    def update_recipes(
+        self,
+        succeeded: int,
+        failed: int,
+        total: int | None,
+        current: str | None = None,
+        *,
+        priced: int = 0,
+        incomplete: int = 0,
+    ) -> None:
+        data = self.state.data.setdefault("progress", {"started_at": time.time()})
+        recipes = data.setdefault("recipes", {"started_at": time.time(), "finished_at": None})
+        recipes.update(
+            running=True,
+            completed=succeeded + failed,
+            succeeded=succeeded,
+            failed=failed,
+            total=total,
+            current=current,
+            priced=priced,
+            incomplete=incomplete,
+        )
+        self.update("refreshing", succeeded + failed, total, current)
 
     def snapshot(self) -> dict[str, Any]:
         data = dict(self.state.data.get("progress", {}))

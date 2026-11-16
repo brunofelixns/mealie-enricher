@@ -59,3 +59,14 @@ async def refresh(request: Request) -> LegacyJSONResponse:
         "refresh", force=request.query_params.get("force") == "true"
     )
     return LegacyJSONResponse({"status": "accepted" if started else "running"}, status_code=202)
+
+
+@router.post("/pricing/recipes/refresh")
+async def refresh_recipes(request: Request) -> LegacyJSONResponse:
+    service = _service(request)
+    if not service.is_busy():
+        available = await service.catalog_available()
+        if not available and not service.is_busy():
+            raise HTTPException(409, "Mercadona catalog unavailable; download the catalog first")
+    started = service.trigger("refresh", force=True)
+    return LegacyJSONResponse({"status": "accepted" if started else "running"}, status_code=202)

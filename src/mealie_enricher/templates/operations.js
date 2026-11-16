@@ -9,7 +9,7 @@
   var pricingEnabled = document.getElementById('pricing-panel').dataset.enabled === 'true';
   var stages = {
     selecting_postal_code: 'Seleccionando código postal', categories: 'Consultando categorías',
-    products: 'Descargando productos', publishing: 'Guardando catálogo', refreshing: 'Revisando recetas'
+    products: 'Descargando productos', publishing: 'Guardando catálogo', refreshing: 'Actualizando precios de recetas', waiting_catalog: 'Esperando el catálogo de Mercadona'
   };
   function byId(id) { return document.getElementById(id); }
   function text(id, value) { byId(id).textContent = value == null ? '—' : String(value); }
@@ -66,7 +66,7 @@
   }
   function renderProgress(data) {
     pricingRunning = Boolean(data.running);
-    var label = pricingRunning ? (stages[data.stage] || 'Preparando operación') : ({ idle: 'Sin operaciones activas', partial: 'Revisión pendiente', error: 'La operación ha fallado', interrupted: 'Operación interrumpida' }[data.phase] || 'Sin operaciones activas');
+    var label = pricingRunning ? (stages[data.stage] || 'Preparando operación') : ({ idle: 'Sin operaciones activas', partial: 'Revisión pendiente', error: 'La operación ha fallado', interrupted: 'Operación interrumpida', waiting_catalog: 'Esperando el catálogo de Mercadona' }[data.phase] || 'Sin operaciones activas');
     text('pricing-stage', label);
     text('pricing-counter', data.total == null ? 'Total todavía desconocido' : data.completed + ' / ' + data.total + (data.percent == null ? '' : ' · ' + data.percent + ' %'));
     if (data.percent == null) byId('pricing-progress').removeAttribute('value');
@@ -82,7 +82,19 @@
     text('pricing-activity', activity);
     byId('pricing-error').hidden = !data.last_error;
     text('pricing-error', data.last_error_detail || data.last_error);
+    renderRecipeProgress(data.recipes, data.phase);
     updatePricingButtons();
+  }
+  function renderRecipeProgress(recipes, phase) {
+    byId('pricing-recipes').hidden = !recipes;
+    if (!recipes) return;
+    text('pricing-recipes-state', recipes.running ? 'Actualización en curso' : (phase === 'idle' ? 'Revisión terminada' : 'Revisión pendiente o interrumpida'));
+    text('pricing-recipes-count', recipes.completed + ' / ' + (recipes.total == null ? '-' : recipes.total) + ' revisadas · ' + recipes.succeeded + ' sin fallo técnico · ' + recipes.failed + ' con error o pendientes');
+    text('pricing-recipes-prices', recipes.priced == null ? '' : recipes.priced + ' con coste completo · ' + recipes.incomplete + ' pendientes de datos');
+    text('pricing-recipe-current', recipes.current ? (recipes.running ? 'Receta actual: ' : 'Última receta revisada: ') + recipes.current : 'Preparando la revisión de recetas.');
+    if (recipes.total) byId('pricing-recipes-progress').value = Math.min(100, recipes.completed / recipes.total * 100);
+    else byId('pricing-recipes-progress').removeAttribute('value');
+    byId('pricing-recipes-progress').hidden = !recipes.running;
   }
   function renderStatus(data) {
     text('pricing-success', date(data.last_success));

@@ -26,9 +26,10 @@ function harness(respond) {
     nodes.set(match[2], node(match[2], match[1]));
   }
   nodes.get('pricing-panel').dataset.enabled = 'true';
-  const actions = ['sync', 'refresh'].map(action => {
+  const actions = [...markup.matchAll(/data-pricing-action="([^"]+)" data-endpoint="([^"]+)"/g)].map(match => {
+    const action = match[1];
     const button = node(action);
-    button.dataset = { pricingAction: action, endpoint: '/pricing/' + action };
+    button.dataset = { pricingAction: action, endpoint: match[2] };
     return button;
   });
   const calls = [];
@@ -113,4 +114,32 @@ test('forced pricing refresh uses the token and the existing force parameter', a
   assert.equal(command.url, '/pricing/refresh?force=true');
   assert.equal(command.headers.Authorization, 'Bearer synthetic-pricing-token');
   assert.equal(app.nodes.get('pricing-token').value, '');
+});
+
+test('dedicated recipe update sends the forced recipe endpoint', async () => {
+  const app = harness((url, options) => options.method === 'POST' ? response({ status: 'accepted' }, 202) : (url === '/pricing/progress' ? response({ running: false }) : status()));
+  await app.connect();
+  const button = app.actions.find(action => action.dataset.pricingAction === 'recipes');
+  assert.ok(button, 'Recipe update action is available in the rendered controls');
+  await button.fire('click');
+  const command = app.calls.find(call => call.method === 'POST');
+  assert.equal(command.url, '/pricing/recipes/refresh');
+  assert.equal(command.headers.Authorization, 'Bearer synthetic-pricing-token');
+});
+
+test('recipe progress shows real reviewed, failed and current recipe data', async () => {
+  const app = harness(() => response({ progress: {
+    phase: 'refreshing', running: true, stage: 'refreshing',
+    recipes: { running: true, completed: 3, total: 10, succeeded: 2, failed: 1, priced: 1, incomplete: 1, current: 'ensalada' }
+  }}));
+  await app.connect();
+  const count = app.nodes.get('pricing-recipes-count');
+  assert.ok(count, 'Recipe progress has a visible output');
+  assert.match(count.textContent, /3 \/ 10/);
+  assert.match(count.textContent, /2 sin fallo técnico/);
+  assert.match(count.textContent, /1 con error/);
+  assert.match(app.nodes.get('pricing-recipe-current').textContent, /ensalada/);
+  assert.match(app.nodes.get('pricing-recipes-prices').textContent, /1 con coste completo/);
+  assert.match(app.nodes.get('pricing-recipes-prices').textContent, /1 pendientes de datos/);
+  assert.ok(app.actions.every(button => button.disabled));
 });

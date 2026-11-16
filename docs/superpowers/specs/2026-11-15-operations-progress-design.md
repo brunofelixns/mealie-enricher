@@ -42,3 +42,18 @@ Los controles funcionan desde el origen de la página y rechazan orígenes ajeno
 el HTML no contiene tokens. La vista permite las operaciones documentadas y
 distingue `202 accepted` de trabajo terminado. Las pruebas existentes de catálogo,
 precios, rutas e historial siguen pasando con el cambio intencionado de interfaz.
+
+## Ampliación de recetas (2026-11-16)
+
+El panel ofrece una operación explícita `POST /pricing/recipes/refresh` para
+forzar la revisión con el catálogo guardado. Requiere la misma autenticación,
+rechaza la ausencia de catálogo y agrupa solicitudes concurrentes. El progreso
+separa revisiones sin fallo técnico de recetas con precio completo o datos
+pendientes. Conserva la receta actual, los errores y el estado tras un reinicio.
+
+La valoración forma parte de webhook, estimate y backfill, aunque no cambie la
+nutrición. Sin catálogo se conservan los precios anteriores; un fallo de descarga
+reintenta adquirirlo y no escribe resultados vacíos. El forzado invalida las
+selecciones una vez para que los lotes limitados continúen con las pendientes.
+La búsqueda de texto libre recupera solo el nombre de alimento; las cantidades
+y el cálculo mantienen su política de evidencia y los ingredientes originales.

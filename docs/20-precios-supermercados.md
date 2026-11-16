@@ -72,9 +72,25 @@ Invoke-RestMethod -Method Post -Uri 'http://localhost:8000/pricing/sync' -Header
 - `POST /pricing/refresh`: revisar recetas usando el catálogo local sin volver a
   descargarlo. Añadir `?force=true` fuerza nuevas decisiones en los casos que
   requieren el selector, dentro del presupuesto configurado.
+- `POST /pricing/recipes/refresh`: forzar la revisión de todas las recetas con
+  el catálogo guardado y nuevas selecciones cuando sean necesarias. Devuelve
+  `409` si no hay catálogo y `202 running` si ya hay una operación activa.
+
+La revisión forzada invalida una vez las selecciones guardadas. Si agota el
+presupuesto, los reintentos reutilizan las decisiones nuevas y continúan con las
+pendientes; no recuperan selecciones anteriores para dar el trabajo por terminado.
 
 El `202` confirma la solicitud, no la terminación. Consulta el estado posterior.
 `PRICING_AUTO_SYNC=false` permite operar únicamente mediante estos controles.
+
+El panel incluye **Forzar actualización de recetas** y una sección de progreso
+de recetas en `/estimator/history`. `GET /pricing/progress` expone `recipes` con
+`running`, `completed`, `succeeded`, `failed`, `total`, `current`, `priced`,
+`incomplete`, `started_at` y `finished_at`. `succeeded` cuenta revisiones sin
+fallo técnico; `priced` cuenta resultados con coste completo. Los resultados
+sin cantidades o productos compatibles se cuentan como `incomplete` aunque la
+revisión haya terminado correctamente. Estos contadores describen el último
+lote de precios, no todas las operaciones individuales del historial.
 
 Cada adquisición utiliza una sesión aislada, resuelve el código postal y fija
 su almacén en las consultas de categorías y productos. Las respuestas inválidas,
@@ -89,6 +105,13 @@ un solo proceso activo con esta función en ese directorio. No es un bloqueo
 distribuido para un volumen de red entre distintos sistemas operativos.
 
 ## Selección de productos
+
+Cuando falta el alimento estructurado, la búsqueda reutiliza el parser de
+ingredientes para separar el alimento de cantidades y medidas explícitas de
+`originalText` o `display`: «Media taza de quinoa» puede buscar «quinoa».
+Esto solo prepara la consulta; no sustituye los ingredientes de Mealie ni
+rellena cantidades para calcular precios. Las conversiones no acreditadas
+siguen pendientes y el selector recibe el contexto original completo.
 
 La búsqueda normaliza nombres y consulta tokens en DuckDB. Una coincidencia
 única de nombre exacto se resuelve localmente; las demás listas admisibles se
@@ -200,6 +223,18 @@ activación del catálogo y la revisión de recetas se registran por separado;
 `partial` indica fallos de revisión que se pueden reintentar. Una operación
 interrumpida se reconoce al reiniciar. Los errores de precios no bloquean el
 flujo nutricional y tener calorías manuales no excluye valorar la compra.
+
+Sin catálogo, la valoración se difiere y conserva los precios previos de la
+receta. Los fallos de adquisición mantienen `pending_sync=true` y programan
+un reintento a los cinco minutos cuando la programación automática está activa;
+no esperan una semana ni intentan valorar un catálogo vacío. Una vez publicado
+el catálogo, los fallos del lote reintentan la revisión con ese catálogo.
+
+Mercadona se ejecuta tras el procesamiento de `/webhook`, `/estimate` y
+`/backfill`, incluso cuando la nutrición se filtra, ya estaba calculada o es
+manual. La descarga también inicia una revisión de recetas al publicar el
+catálogo. La selección de productos y las cantidades disponibles determinan
+si esa revisión obtiene un precio completo.
 
 La nutrición, los ingredientes y las instrucciones no se sustituyen por los de
 un producto seleccionado. Los cambios de precio tienen invalidación propia y

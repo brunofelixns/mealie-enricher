@@ -53,6 +53,7 @@ async def test_history_view_exposes_operations_without_embedding_secrets(tmp_pat
         "/pricing/progress",
         "/pricing/sync",
         "/pricing/refresh",
+        "/pricing/recipes/refresh",
     } <= controls.endpoints
     assert {"rows", "filter-trigger", "filter-status", "pricing-token"} <= controls.ids
     assert "sessionStorage" not in response.text
