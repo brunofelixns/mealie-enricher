@@ -112,6 +112,11 @@ jobs:
         run: |
           npm ci --prefix ci/release-please --ignore-scripts --no-audit --no-fund
           npm test --prefix ci/release-please
+      - name: Probar controles del panel web
+        run: |
+          if [ -d tests/ui ]; then
+            node --test tests/ui/*.test.mjs
+          fi
       - name: Preparar uv y Python
         uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:

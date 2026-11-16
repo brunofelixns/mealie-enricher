@@ -8,6 +8,7 @@ import asyncio
 import math
 import re
 import time
+from collections.abc import Callable
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from email.utils import parsedate_to_datetime
@@ -206,7 +207,11 @@ def _product(data: Any, product_id: str, category: str = "") -> Product:
 
 class MercadonaClient:
     def __init__(
-        self, http: httpx.AsyncClient, delay_seconds: float = 2, max_products: int = 10000
+        self,
+        http: httpx.AsyncClient,
+        delay_seconds: float = 2,
+        max_products: int = 10000,
+        on_progress: Callable[[str, int, int | None, str | None], None] | None = None,
     ) -> None:
         if not math.isfinite(delay_seconds) or delay_seconds < 0:
             raise ValueError("Mercadona request delay must be finite and non-negative")
@@ -215,6 +220,7 @@ class MercadonaClient:
         self.http = http
         self.delay_seconds = delay_seconds
         self.max_products = max_products
+        self.on_progress = on_progress
         self._last_request: float | None = None
         self._lock = asyncio.Lock()
 
@@ -321,7 +327,9 @@ class MercadonaClient:
 
     async def download(self, postal_code: str) -> Snapshot:
         async with self._lock, self._session() as session:
+            self._progress("selecting_postal_code", 0, None)
             warehouse = await self._select(session, postal_code)
+            self._progress("categories", 0, None)
             roots: list[dict[str, Any]] = []
             path = "/api/categories/"
             pages: set[str] = set()
@@ -383,7 +391,8 @@ class MercadonaClient:
                 if len(category_ids) + len(pending) > 10000:
                     raise ValueError("Mercadona category traversal exceeded its safety limit")
             product_categories: dict[str, str] = {}
-            for category_id in sorted(category_ids):
+            self._progress("categories", 0, len(category_ids))
+            for category_index, category_id in enumerate(sorted(category_ids), start=1):
                 detail = await self._get(
                     session, f"/api/categories/{category_id}/", postal_code, warehouse
                 )
@@ -408,17 +417,26 @@ class MercadonaClient:
                         product_categories.setdefault(product_id, str(node.get("name") or ""))
                         if len(product_categories) > self.max_products:
                             raise ValueError("Mercadona complete catalog exceeds the product limit")
+                self._progress("categories", category_index, len(category_ids), category_id)
             if not product_categories:
                 raise ValueError("Mercadona returned an empty or incomplete catalog")
             products_out = []
+            self._progress("products", 0, len(product_categories))
             for product_id, category in sorted(product_categories.items()):
                 detail = await self._get(
                     session, f"/api/products/{product_id}/", postal_code, warehouse
                 )
                 products_out.append(_product(detail, product_id, category))
+                self._progress("products", len(products_out), len(product_categories), product_id)
             return Snapshot(
                 postal_code=postal_code,
                 warehouse=warehouse,
                 observed_at=datetime.now(UTC).isoformat(),
                 products=products_out,
             )
+
+    def _progress(
+        self, stage: str, completed: int, total: int | None, current: str | None = None
+    ) -> None:
+        if self.on_progress is not None:
+            self.on_progress(stage, completed, total, current)

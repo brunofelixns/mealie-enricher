@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -103,22 +103,24 @@
     .panel { overflow: visible; }
     table { min-width: 680px; }
   }
+  {% include 'operations.css' %}
 </style>
 </head>
 <body>
 <header class="appbar">
   <div class="appbar-inner">
     <h1>mealie-calorie-estimator</h1>
+    <nav class="op-nav" aria-label="Navegación principal"><a href="#operations">Operaciones</a><a href="#history-section">Historial</a></nav>
     <div class="controls">
       <span class="count" id="count"></span>
-      <select id="filter-trigger">
-        <option value="">All triggers</option>
+      <select id="filter-trigger" aria-label="Filtrar historial por origen">
+        <option value="">Todos los orígenes</option>
         <option value="webhook">webhook</option>
         <option value="estimate">estimate</option>
         <option value="backfill">backfill</option>
       </select>
-      <select id="filter-status">
-        <option value="">All statuses</option>
+      <select id="filter-status" aria-label="Filtrar historial por estado">
+        <option value="">Todos los estados</option>
         <option value="running">running</option>
         <option value="processed">processed</option>
         <option value="tags-added">tags-added</option>
@@ -132,16 +134,19 @@
   </div>
 </header>
 <main class="wrap">
+  {% include 'operations.html' %}
+  <section id="history-section" aria-labelledby="history-title">
+  <h2 id="history-title">Historial de ejecuciones</h2>
   <div class="panel">
     <table>
       <thead>
         <tr>
-          <th>Time</th>
-          <th>Trigger</th>
-          <th>Recipe</th>
-          <th>Status</th>
-          <th>Changes</th>
-          <th>Duration</th>
+          <th>Hora</th>
+          <th>Origen</th>
+          <th>Receta</th>
+          <th>Estado</th>
+          <th>Cambios</th>
+          <th>Duración</th>
         </tr>
       </thead>
       <tbody id="rows"></tbody>
@@ -152,6 +157,7 @@
       <code>DEV_SEED_HISTORY=true</code>.
     </div>
   </div>
+  </section>
 </main>
 <script>
 var RECIPE_URL_TEMPLATE = {{ recipe_url_json | safe }};
@@ -251,8 +257,8 @@ function render() {
   if (visible.length === 0) {
     emptyEl.hidden = false;
     emptyEl.textContent = records.length === 0
-      ? "No executions yet \u2014 trigger a recipe webhook or run POST /estimate. For sample data start the dev server with DEV_SEED_HISTORY=true."
-      : "No entries match the current filters.";
+      ? "Todavía no hay ejecuciones. Procesa una receta desde el panel de operaciones."
+      : "Ninguna ejecución coincide con los filtros actuales.";
   } else {
     emptyEl.hidden = true;
   }
@@ -347,5 +353,6 @@ setInterval(function () {
 
 render();
 </script>
+<script>{% include 'operations.js' %}</script>
 </body>
 </html>

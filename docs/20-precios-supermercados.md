@@ -54,7 +54,8 @@ y exige adquirir sus datos.
 ## Actualización y controles manuales
 
 Los controles HTTP requieren `Authorization: Bearer <PRICING_ADMIN_TOKEN>` y
-rechazan peticiones con cabecera `Origin`. No heredan el CORS abierto de las
+permiten peticiones del mismo origen y rechazan otros valores de `Origin`.
+No heredan el CORS abierto de las
 rutas heredadas. Usa un cliente HTTP de confianza o PowerShell, con el token
 guardado en una variable de entorno, sin imprimirlo:
 
@@ -145,6 +146,47 @@ Se sustituyen únicamente las asociaciones de etiquetas que este módulo había
 registrado como propias. Se conservan las etiquetas personales y los extras
 ajenos; no se borran etiquetas globales compartidas. Las etiquetas de importes
 distintos pueden acumularse en el organizador global de Mealie.
+
+## Panel web y progreso
+
+La vista `/estimator/history` incluye ahora un panel de operaciones. Desde ella
+se puede consultar el servicio y el historial JSON (con `since`, `limit` y
+`offset`), procesar una receta mediante estimación o evento, y lanzar un lote.
+El lote requiere confirmación y queda bloqueado después de su aceptación hasta
+que se prepare expresamente otro; su terminación se comprueba en el historial.
+
+Para los controles de Mercadona, introduce `PRICING_ADMIN_TOKEN` y pulsa
+**Conectar**. El token se mantiene solo en memoria de la página: no se inserta en
+el HTML ni se conserva en almacenamiento del navegador. **Desconectar** descarta
+el token e ignora respuestas de consultas anteriores. El panel permite descargar
+el catálogo, recalcular con el catálogo local y forzar nuevas selecciones mediante
+la casilla correspondiente. Las operaciones activas bloquean los botones de envío.
+
+`GET /pricing/progress`, con la misma autenticación que `/pricing/status`, informa
+de `running`, `phase`, `stage`, `completed`, `total`, `percent`, `elapsed_seconds`,
+`eta_seconds`, `last_activity_at`, `seconds_since_activity`, `catalog_ready` y los
+errores registrados. `current` identifica el producto, categoría o receta del
+último avance. Los tiempos absolutos son segundos Unix y los contadores son
+peticiones completadas, no peticiones iniciadas. El tiempo restante es una
+estimación de la fase actual, no de todo el trabajo posterior.
+
+Los totales desconocidos y su porcentaje son `null`; la vista utiliza progreso
+indeterminado. Las fases distinguen selección postal, categorías, productos,
+publicación y revisión de recetas. También se conservan `downloaded_products` y
+`total_products` al pasar a la revisión. El panel consulta el progreso cada 2,5
+segundos mientras está conectado y avisa si no se puede renovar la información.
+
+El catálogo sigue publicándose de forma atómica al terminar. Durante la descarga
+se acumulan productos en memoria y `state.json` conserva checkpoints de progreso;
+estos checkpoints no permiten reanudar productos tras un reinicio. Los logs
+incluyen progreso al cambiar de fase, al completar el primer y último elemento y
+aproximadamente cada 30 segundos. Una interrupción conserva los últimos contadores
+y se presenta como interrumpida. `last_error_detail` aporta un mensaje acotado con
+los tokens configurados ocultos, además del tipo de error que ya existía.
+
+Las pruebas del cliente se ejecutan sin navegador ni dependencias adicionales:
+`node --test tests/ui/*.test.mjs`. La comprobación visual completa sigue siendo
+necesaria en el entorno de despliegue.
 
 ## Datos pendientes y fallos
 

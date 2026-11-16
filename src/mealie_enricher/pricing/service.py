@@ -19,6 +19,7 @@ from ..runtime.slug_queue import SlugQueue
 from .costs import calculate_costs
 from .mercadona import MercadonaClient
 from .models import Product, Snapshot
+from .progress import PricingProgress
 from .selection import ProductSelector
 from .state import PricingOwner, PricingState
 from .store import CatalogStore
@@ -88,11 +89,13 @@ class PricingService:
         self.owner = PricingOwner(self.config.data_dir)
         try:
             self.state = PricingState(self.config.data_dir)
+            self.progress = PricingProgress(self.state)
             self.store = CatalogStore(self.config.data_dir)
             self.source = MercadonaClient(
                 http,
                 delay_seconds=self.config.request_delay_seconds,
                 max_products=self.config.max_products,
+                on_progress=self.progress.update,
             )
             self.selector = selector or ProductSelector(
                 settings.decisions.model_copy(update={"enabled": True})
@@ -154,12 +157,20 @@ class PricingService:
 
     async def sync(self, *, manual: bool = True) -> None:
         async with self._job_lock:
-            self.state.data.update(running=True, phase="downloading", last_attempt=time.time())
+            self.state.data.update(
+                running=True,
+                phase="downloading",
+                last_attempt=time.time(),
+                last_error=None,
+                last_error_detail=None,
+            )
+            self.progress.begin("selecting_postal_code")
             if not manual:
                 self.state.data["next_run"] = time.time() + self.config.sync_interval_hours * 3600
             self.state.save()
             try:
                 snapshot = await self.source.download(self.config.postal_code)
+                self.progress.update("publishing", 0, None)
                 # Persist intent before the manifest can become active, including crash windows.
                 self.state.data["pending_refresh"] = True
                 self.state.save()
@@ -167,6 +178,7 @@ class PricingService:
                 self.state.data.update(
                     last_success=time.time(),
                     last_error=None,
+                    last_error_detail=None,
                     fingerprint=fingerprint,
                     warehouse=snapshot.warehouse,
                     product_count=len(snapshot.products),
@@ -179,15 +191,18 @@ class PricingService:
                 self.state.data.update(phase="interrupted", last_error="interrupted")
                 raise
             except Exception as error:
-                self.state.data.update(phase="error", last_error=type(error).__name__)
-                logger.warning("Pricing sync failed type=%s", type(error).__name__)
+                self._record_error("sync", error)
             finally:
                 self.state.data["running"] = False
+                self.progress.finish()
                 self.state.save()
 
     async def refresh(self, *, force: bool = False) -> None:
         async with self._job_lock:
-            self.state.data.update(running=True, pending_refresh=True)
+            self.state.data.update(
+                running=True, pending_refresh=True, last_error=None, last_error_detail=None
+            )
+            self.progress.begin("refreshing")
             self.state.save()
             try:
                 await self._refresh_all(force=force)
@@ -195,15 +210,34 @@ class PricingService:
                 self.state.data.update(phase="interrupted", last_error="interrupted")
                 raise
             except Exception as error:
-                self.state.data.update(phase="error", last_error=type(error).__name__)
-                logger.warning("Pricing refresh failed type=%s", type(error).__name__)
+                self._record_error("refresh", error)
             finally:
                 self.state.data["running"] = False
+                self.progress.finish()
                 self.state.save()
+
+    def _record_error(self, operation: str, error: Exception) -> None:
+        detail = str(error)
+        for secret in (
+            self.config.admin_token,
+            self.settings.decisions.api_key,
+            self.settings.mealie.api_token,
+            *self.settings.token_overrides.values(),
+        ):
+            if secret:
+                detail = detail.replace(secret, "[redacted]")
+        detail = detail[:500]
+        self.state.data.update(
+            phase="error", last_error=type(error).__name__, last_error_detail=detail
+        )
+        logger.warning(
+            "Pricing %s failed type=%s detail=%s", operation, type(error).__name__, detail
+        )
 
     async def _refresh_all(self, *, force: bool = False) -> None:
         generation = self.state.data.get("refresh_generation", 0)
         self.state.data["phase"] = "refreshing"
+        self.progress.update("refreshing", 0, None)
         self.state.save()
         processed = failed = 0
         budget = [self.config.max_decisions_per_run]
@@ -211,8 +245,12 @@ class PricingService:
         scopes.extend(
             key.removeprefix("MEALIE_API_TOKEN_") for key in self.settings.token_overrides
         )
-        for scope in scopes:
-            slugs = await self.mealie.get_all_recipes(household_id=scope)
+        groups = [
+            (scope, await self.mealie.get_all_recipes(household_id=scope)) for scope in scopes
+        ]
+        total = sum(len(slugs) for _, slugs in groups)
+        self.progress.update("refreshing", 0, total)
+        for scope, slugs in groups:
             for slug in slugs:
 
                 async def price_recipe(slug: str = slug, scope: str | None = scope) -> None:
@@ -224,6 +262,7 @@ class PricingService:
                 except Exception as error:
                     failed += 1
                     logger.warning("Recipe pricing failed type=%s", type(error).__name__)
+                self.progress.update("refreshing", processed + failed, total, slug)
         pending = bool(failed) or self.state.data.get("refresh_generation", 0) != generation
         self.state.data.update(
             phase="partial" if pending else "idle",
@@ -446,6 +485,18 @@ class PricingService:
             "sync_interval_hours": self.config.sync_interval_hours,
             "auto_sync": self.config.auto_sync,
             **{key: value for key, value in self.state.data.items() if key != "selections"},
+            "progress": self.progress_status(),
+        }
+
+    def progress_status(self) -> dict[str, Any]:
+        return {
+            **self.progress.snapshot(),
+            "running": self.state.data["running"],
+            "phase": self.state.data["phase"],
+            "postal_code": self.config.postal_code,
+            "catalog_ready": bool(self.state.data.get("fingerprint")),
+            "last_error": self.state.data.get("last_error"),
+            "last_error_detail": self.state.data.get("last_error_detail"),
         }
 
     async def close(self) -> None:

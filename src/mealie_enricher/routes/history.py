@@ -49,6 +49,7 @@ async def history_html(request: Request) -> HTMLResponse:
             theme_css=_theme_css(theme),
             theme=theme,
             recipe_url_json=json_stringify(request.app.state.settings.history.recipe_url_template),
+            pricing_enabled=request.app.state.settings.pricing.enabled,
         ),
         headers={"Cache-Control": "private, max-age=7200"},
     )

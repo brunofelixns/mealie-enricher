@@ -1,3 +1,5 @@
+from html.parser import HTMLParser
+
 import httpx
 import respx
 
@@ -8,7 +10,7 @@ from mealie_enricher.storage.history import ExecutionHistory
 from tests.parity.cases import load_case
 
 
-async def test_html_matches_original_byte_for_byte(tmp_path):
+async def test_history_view_exposes_operations_without_embedding_secrets(tmp_path):
     case = load_case("history-html")
     settings = load_settings({**case["environment"], "CACHE_DB_PATH": str(tmp_path / "cache.db")})
     with respx.mock as mock:
@@ -25,7 +27,37 @@ async def test_html_matches_original_byte_for_byte(tmp_path):
     assert response.status_code == expected["status"]
     assert response.headers["content-type"] == expected["content_type"]
     assert response.headers["cache-control"] == expected["cache_control"]
-    assert response.text == expected["html"]
+
+    class Controls(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.endpoints = set()
+            self.ids = set()
+
+        def handle_starttag(self, tag, attrs):
+            values = dict(attrs)
+            if values.get("data-endpoint"):
+                self.endpoints.add(values["data-endpoint"])
+            if values.get("id"):
+                self.ids.add(values["id"])
+
+    controls = Controls()
+    controls.feed(response.text)
+    assert {
+        "/health",
+        "/estimator/history.json",
+        "/estimate",
+        "/webhook",
+        "/backfill",
+        "/pricing/status",
+        "/pricing/progress",
+        "/pricing/sync",
+        "/pricing/refresh",
+    } <= controls.endpoints
+    assert {"rows", "filter-trigger", "filter-status", "pricing-token"} <= controls.ids
+    assert "sessionStorage" not in response.text
+    assert "localStorage" not in response.text
+    assert settings.mealie.api_token not in response.text
 
 
 def test_dev_seed_matches_original_and_does_not_duplicate():
